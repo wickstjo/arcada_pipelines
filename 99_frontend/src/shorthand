@@ -1,0 +1,23 @@
+import { useState, useEffect } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+    
+// RESOURCE STATE
+// const [local, set_local] = useState([])
+
+// FETCH THE MISC GLOBAL STATE
+const misc = useSelector(state => state.misc)
+
+// FETCH THE GLOBAL STATE DISPATCHER
+const dispatch = useDispatch()
+
+// // ON LOAD, LOAD RESOURCE
+// useEffect(() => {
+//     console.log('FOO')
+// }, [misc])
+
+const run = () => {
+    dispatch({
+        type: 'misc/update',
+        value: 'Anecdote created' 
+    })
+}
