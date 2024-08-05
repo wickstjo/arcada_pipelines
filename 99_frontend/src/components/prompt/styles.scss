@@ -1,0 +1,98 @@
+#prompt {
+    background: rgba(0, 0, 0, 0.548);
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    height: 100%;
+    width: 100%;
+    z-index: 99;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+ 
+    #wrapper {
+        width: 80vw;
+        max-width: 500px;
+        transition: transform 0.1s, opacity 0.1s;
+        background: white;
+        padding: 3px;
+
+        #header {
+            text-transform: uppercase;
+            background: #414141c5;
+            border-bottom: 2px solid #2c2c2c52;
+            padding: 6px;
+            padding-left: 10px;
+            padding-right: 10px;
+            color: #F1F1F1;
+            text-shadow: 1px 1px #242424;
+        }
+
+        #form {
+            background: rgb(228, 228, 228);
+            margin-top: 3px;
+            padding: 4px;
+
+            input {
+                background: white;
+                padding: 6px 8px;
+                margin-bottom: 4px;
+                border-bottom: 2px solid #3636363d;
+                transition: border 0.2s;
+                width: 100%;
+            }
+            
+            input:focus {
+                border-bottom: 2px solid rgba(0, 112, 0, 0.452);
+            }
+            
+            input:last-child {
+                margin: 0px;
+            }
+        }
+
+        #buttons {
+            display: flex;
+
+            #submit, #reset {
+                background: rgba(0, 112, 0, 0.295);
+                border-bottom: 2px solid #36363625;
+                text-transform: uppercase;
+                cursor: pointer;
+                transition: background 0.2s;
+                padding: 4px;
+                width: 100%;
+                margin-top: 3px;
+                flex: 3;
+            }
+            
+            #submit:disabled {
+                background: rgba(214, 1, 1, 0.164);
+                cursor: default;
+            }
+
+            #reset {
+                background: rgba(143, 145, 29, 0.349);
+                text-align: center;
+                margin-left: 3px;
+                flex: 1;
+            }
+        }
+    }
+ 
+    #close {
+       background: url('./close.png') center center no-repeat;
+       position: absolute;
+       bottom: 0px;
+       right: 0px;
+       height: 80px;
+       width: 80px;
+       opacity: 0.6;
+       transition: 0.3s;
+       cursor: pointer;
+    }
+ 
+    #close:hover {
+       opacity: 1;
+    }
+}

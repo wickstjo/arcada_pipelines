@@ -2,28 +2,24 @@ import { createSlice } from '@reduxjs/toolkit'
 
 // DEFINE THE INITIAL STATE
 const init_state = {
-    foo: 'bar'
+    last_category: 'Actions'
 }
 
 // STATE ACTIONS
 const actions = {
 
-    update(state, action) {
+    update(state, args) {
         return {
             ...state,
-            foo: action.value
+            last_category: args.category
         }
     },
 
 }
 
 // EXPORT SLICE REDUER
-const reducer = createSlice({
-    name: 'misc',
+export default createSlice({
+    name: 'menu',
     initialState: init_state,
     reducers: actions,
 }).reducer
-
-export {
-    reducer
-}

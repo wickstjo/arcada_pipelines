@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit'
 import { Provider } from 'react-redux'
 
 // CREATE CUSTOM REDUCERS
-import { reducer as misc } from './misc'
+import menu_state from './components/menu/state'
+import prompt_state from './components/prompt/state'
 
 // MAKE THEM USABLE THROUGH THE GLOBAL STATE
 const store = configureStore({
     reducer: {
-        misc,
+        menu: menu_state,
+        prompt: prompt_state,
     }
 })
 
