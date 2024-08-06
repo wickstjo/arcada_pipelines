@@ -1,8 +1,7 @@
 import './styles.scss'
 import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-
-import FooWindow from './foo_window'
+import { WindowSelector } from './window_selector'
 
 function Prompt() {
 
@@ -12,46 +11,29 @@ function Prompt() {
 
     // VISIBILITY STATE
     const [style, set_style] = useState({
-        display: 'none',
+        top: '-100%',
+        opacity: '0'
     })
-
-    // VALID PROMPT WINDOWS
-    const valid_windows = {
-        'foo': FooWindow,
-    }
 
     // WHEN THE STATE CHANGES, EVALUATE VISIBILITY
     useEffect(() => {
         set_style({
-            display: prompt_state.window !== null ? 'flex' : 'none',
+            top: prompt_state.window !== null ? '0' : '-100%',
+            opacity: prompt_state.window !== null ? '100' : '0',
         })
     }, [prompt_state.window])
 
-    // IF PROMPT STATE IS NULL, RENDER NOTHING
-    if (prompt_state.window === null) return null
-
-    // IF A WHITELISTED WINDOW WAS DEFINED, RENDER IT
-    if (prompt_state.window in valid_windows) {
-
-        // FIRST, SELECT THE WINDOW COMPONENT
-        const Window = valid_windows[prompt_state.window]
-
-        return (
-            <div id={ 'prompt' } style={ style }>
-                <Window prompt_args={ prompt_state } />
-                <span
-                    id={ 'close' }
-                    onClick={() => {
-                        dispatch({ type: 'prompt/hide' })
-                    }}
-                />
-            </div>
-        )
-    }
-
-    // OTHERWISE, THROW ERROR FOR UNKNOWN INPUT
-    console.log('UNKNOWN PROMPT WINDOW TYPE')
-    return null
+    return (
+        <div id={ 'prompt' } style={ style }>
+            <WindowSelector prompt_state={ prompt_state } />
+            <span
+                id={ 'close' }
+                onClick={() => {
+                    dispatch({ type: 'prompt/hide' })
+                }}
+            />
+        </div>
+    )
 }
 
 export default Prompt

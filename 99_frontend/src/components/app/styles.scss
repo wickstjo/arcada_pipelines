@@ -33,3 +33,12 @@ a:link, a:visited {
 a:hover {
     color: white;
 }
+
+.main {
+    filter: blur(0px);
+    transition: filter 0.3s;
+}
+
+#blurred {
+    filter: blur(5px);
+}
