@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit'
 
 // DEFINE THE INITIAL STATE
 const init_state = {
-    last_category: 'Actions'
+    last_category: null
 }
 
 // STATE ACTIONS

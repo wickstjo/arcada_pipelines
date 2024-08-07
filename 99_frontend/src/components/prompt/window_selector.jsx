@@ -1,8 +1,8 @@
-import FooWindow from './windows/foo'
+import Settings from './windows/settings'
 
 // VALID PROMPT WINDOWS
 const whitelist = {
-    'foo': FooWindow,
+    'settings': Settings,
 }
 
 function WindowSelector({ prompt_state }) {

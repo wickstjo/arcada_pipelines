@@ -22,6 +22,7 @@
             position: relative;
             bottom: -2px;
             border-bottom: 2px solid rgba(0, 0, 0, 0);
+            text-shadow: 1px 1px 2px rgb(20, 20, 20);
 
             // SHARED ICON ALIGNMENT
             background-size: 18px;
@@ -50,5 +51,6 @@
         #list { background-image: url('./icons/list.svg'); }
         #lock { background-image: url('./icons/lock.svg'); }
         #file { background-image: url('./icons/file.svg'); }
+        #plus { background-image: url('./icons/plus.svg'); }
     }
 }

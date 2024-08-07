@@ -24,11 +24,9 @@ const actions = {
     },
 
     // HIDE PROMPT
-    hide () {
-        return {
-            window: null
-        }
-    }
+    hide () { return {
+        window: null
+    }}
 }
 
 // EXPORT SLICE REDUER

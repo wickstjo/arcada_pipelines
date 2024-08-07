@@ -1,70 +1,66 @@
 import './styles.scss'
-import { useDispatch, useSelector } from 'react-redux'
-import Item from './item'
+import { useDispatch } from 'react-redux'
+import { Internal, External, Trigger } from './items'
 
 function Menu() {
 
     // REDUX STATE
     const dispatch = useDispatch()
-    const menu_state = useSelector(state => state.menu)
-
-    // TEMP ACTION TRIGGER FOR MENU ITEMS
-    const trigger = (label) => {
-        dispatch({
-            type: 'menu/update',
-            category: label
-        })
-        dispatch({
-            type: 'prompt/show',
-            window: 'foo' 
-        })
-    }
-
-    // ALL MENU ITEMS
-    const items = [
-        {
-            label: 'Data',
-            icon: 'file',
-            action: trigger,
-        },
-        {
-            label: 'Pipelines',
-            icon: 'network',
-            action: trigger,
-        },
-        {
-            label: 'Actions',
-            icon: 'list',
-            action: trigger,
-        },
-        {
-            label: 'Models',
-            icon: 'db',
-            action: trigger,
-        },
-        {
-            label: 'Prometheus',
-            icon: 'chart',
-            action: trigger,
-        },
-        {
-            label: 'Settings',
-            icon: 'cog',
-            action: trigger,
-        },
-    ]
 
     return (
         <div className={ 'menu' }>
             <div className={ 'upper' } />
             <div className={ 'lower' }>
-                { items.map(item =>
-                    <Item
-                        item={ item }
-                        last_category={ menu_state.last_category }
-                        key={ item.label }
-                    />
-                )}
+                <Internal
+                    label={ 'Models' }
+                    goto={ 'models' }
+                    icon={ 'db' }
+                />
+                <Internal
+                    label={ 'Actions' }
+                    goto={ 'actions' }
+                    icon={ 'list' }
+                />
+                <External
+                    label={ 'Flink' }
+                    goto={ 'https://en.wikipedia.org/wiki/Apache_Flink' }
+                    icon={ 'network' }
+                />
+                <External
+                    label={ 'Prometheus' }
+                    goto={ 'https://en.wikipedia.org/wiki/Prometheus_(software)' }
+                    icon={ 'chart' }
+                />
+                <Trigger
+                    label={ 'Settings' }
+                    icon={ 'cog' }
+                    action={() => {
+                        dispatch({
+                            type: 'prompt/show',
+                            window: 'settings' 
+                        })
+                    }}
+                />
+                <Trigger
+                    label={ 'P' }
+                    icon={ 'plus' }
+                    action={() => {
+                        dispatch({
+                            type: 'notify/positive',
+                            message: 'Query returned successfully' 
+                        })
+                    }}
+                />
+                <Trigger
+                    label={ 'N' }
+                    icon={ 'plus' }
+                    action={() => {
+                        dispatch({
+                            type: 'notify/negative',
+                            message: 'Something went wrong' 
+                        })
+                    }}
+                />
             </div>
         </div>
     )

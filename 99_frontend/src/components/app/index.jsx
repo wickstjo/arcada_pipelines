@@ -1,26 +1,31 @@
 import './styles.scss';
-import { Fragment } from 'react';
 import { useSelector } from 'react-redux'
+import { BrowserRouter } from 'react-router-dom'
+
+import useKeyboard from '../../hooks/keyboard_events'
 
 import Menu from '../menu'
 import Prompt from '../prompt'
-import useKeyboard from '../../hooks/keyboard_events'
+import Notifications from '../notifications'
+import Pages from '../../pages'
 
 function App() {
     
     // FETCH THE PROMPT STATE TO SMOOTHEN TRANSITIONS
     const prompt_state = useSelector(state => state.prompt)
 
-    // REGISTER KEYBOARD LISTENER FOR SHORTCUTS
-    const _ = useKeyboard()
+    // REGISTER KEYBOARD LISTENER FOR ACTION SHORTCUTS
+    useKeyboard()
 
     return (
-        <Fragment>
+        <BrowserRouter>
             <div className={ 'main' } id={ prompt_state.window !== null ? 'blurred' : null }>
                 <Menu />
+                <Pages />
             </div>
             <Prompt />
-        </Fragment>
+            <Notifications />
+        </BrowserRouter>
     )
 }
 
