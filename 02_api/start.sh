@@ -1,1 +1,0 @@
-python3 fastapi dev main.py
