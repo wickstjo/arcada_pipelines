@@ -1,0 +1,67 @@
+######################################################################################################
+### SHARED KAFKA VARS
+######################################################################################################
+
+x-kafka_shared: &kafka_shared
+    image: confluentinc/cp-kafka:7.3.0
+    volumes:
+        # - ./configs/todo/kafka_config.properties:/etc/kafka/server.properties
+        - ./configs/kafka_scraper.yml:/usr/app/kafka_scraper.yml
+        - ./jars/jmx_prometheus_javaagent-0.17.2.jar:/usr/app/jmx_prometheus_javaagent.jar
+    depends_on:
+        - kafka_zookeeper
+
+x-kafka_env: &kafka_env
+    KAFKA_AUTO_CREATE_TOPICS_ENABLE: True
+    KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+    KAFKA_ZOOKEEPER_CONNECT: kafka_zookeeper:2181
+    KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    KAFKA_JMX_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=13000:/usr/app/kafka_scraper.yml"
+    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+######################################################################################################
+### SHARED CASSANDRA VARS
+######################################################################################################
+
+x-cassandra: &cassandra_shared
+    image: cassandra:4.1.0
+    expose:
+        - "7000" # intra-node communication
+        - "7001" # TLS intra node communication
+        - "7199" # JMX
+        - "9142" # CQL TLS
+        - "9160" # Thrift
+
+        # COMMENTING OUT THE BASE COMMUNICATION PORT
+        # SET A DIFFERENT PORT FOR EACH SERVICE
+        # - "9042" # CQL
+    volumes:
+        - ./configs/cassandra_scraper.yml:/usr/app/cassandra_scraper.yml
+        - ./jars/jmx_prometheus_javaagent-0.17.2.jar:/usr/app/jmx_prometheus_javaagent.jar
+    environment:
+        CASSANDRA_CLUSTER_NAME: MAILLEFER_SOLO
+        CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+        CASSANDRA_DC: DATACENTER1
+        JVM_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=13000:/usr/app/cassandra_scraper.yml"
+    
+        # LOCAL_JMX: "no"
+        # HEAP_NEWSIZE: 8M
+        # MAX_HEAP_SIZE: 512M
+
+        # COMMA SEPARATED LIST OF ALL YOUR CASSANDRA SERVICES
+        CASSANDRA_SEEDS: cassandra_1,cassandra_2
+
+######################################################################################################
+### SHARED FLINK VARS
+######################################################################################################
+
+x-taskmanagers: &flink_taskmasters
+    image: apache/flink:1.17.1-java8
+    command: taskmanager
+    volumes:
+        - ./configs/flink_config.yml:/opt/flink/conf/flink-conf.yaml
+        - ./jars/flink-metrics-prometheus-1.17.1.jar:/opt/flink/lib/flink-metrics.jar
+    depends_on:
+        - jobmanager
