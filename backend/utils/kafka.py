@@ -17,6 +17,13 @@ class create_admin_client:
     def topics_overview(self):
         container = {}
         
+        # CREATE A TEMP CONSUMBER TO READ TOPIC OFFSETS
+        temp_consumer = Consumer({
+            'bootstrap.servers': kafka_brokers,
+            'group.id': 'offset_checker_group',
+            'auto.offset.reset': 'earliest'
+        })
+
         # PARSE THROUGH TOPIC DETAILS
         for topic_name, topic_metadata in self.instance.list_topics().topics.items():
 
@@ -28,11 +35,17 @@ class create_admin_client:
 
             # PARTITION OFFSETS
             for partition_id, _ in topic_metadata.partitions.items():
-                tp = TopicPartition('eyylmao', partition_id)
-                container[topic_name]['offsets'][partition_id] = tp.offset
+                tp = TopicPartition(topic_name, partition_id)
+                earliest, latest = temp_consumer.get_watermark_offsets(tp, timeout=10)
+                # container[topic_name]['offsets'][partition_id] = tp.offset
+
+                container[topic_name]['offsets'][partition_id] = {
+                    'earliest': earliest,
+                    'latest': latest
+                }
         
         return container
-    
+
     # CHECK IF TOPIC ALREADY EXISTS
     def topic_exists(self, target_topic):
 
