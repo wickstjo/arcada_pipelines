@@ -43,7 +43,7 @@ async def create_table(table: Table, response: Response):
 ########################################################################################################
 
 @router.get('/cassandra/{keyspace_name}')
-async def overview(keyspace_name: str, response: Response):
+async def keyspace_overview(keyspace_name: str, response: Response):
     try:
         response.status_code = status.HTTP_200_OK
         return cassandra.keyspace_overview(keyspace_name)
@@ -56,7 +56,7 @@ async def overview(keyspace_name: str, response: Response):
 ########################################################################################################
 
 @router.get('/cassandra/{keyspace_name}/{table_name}')
-async def overview(keyspace_name: str, table_name: str, response: Response):
+async def table_overview(keyspace_name: str, table_name: str, response: Response):
     try:
         response.status_code = status.HTTP_200_OK
         return cassandra.table_overview(keyspace_name, table_name)

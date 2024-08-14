@@ -21,7 +21,9 @@ function App() {
         <BrowserRouter>
             <div className={ 'main' } id={ prompt_state.window !== null ? 'blurred' : null }>
                 <Menu />
-                <Pages />
+                <div className={ 'innerbody' }>
+                    <Pages />
+                </div>
             </div>
             <Prompt />
             <Notifications />

@@ -1,8 +1,7 @@
-import './styles.scss'
 import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 
-function NotFound() {
+function Cassandra() {
 
     // REDUX DISPATCHER
     const dispatch = useDispatch()
@@ -11,17 +10,13 @@ function NotFound() {
     useEffect(() => {
         dispatch({
             type: 'menu/update',
-            category: null
+            category: 'Cassandra'
         })
     })
     
     return (
-        <div className={ 'error_page' }>
-            <div className={ 'border' }>
-                <div className={ 'msg' }>PAGE NOT FOUND</div>
-            </div>
-        </div>
+        <div>Cassandra page</div>
     )
 }
 
-export default NotFound
+export default Cassandra

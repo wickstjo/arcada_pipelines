@@ -37,6 +37,16 @@ a:hover {
 .main {
     filter: blur(0px);
     transition: filter 0.3s;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+
+    .innerbody {
+        height: 100%;
+        flex: 1;
+        width: 650px;
+        margin: auto;
+    }
 }
 
 #blurred {

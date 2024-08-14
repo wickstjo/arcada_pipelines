@@ -14,12 +14,17 @@ function Menu() {
                 <Internal
                     label={ 'Models' }
                     goto={ 'models' }
+                    icon={ 'list' }
+                />
+                <Internal
+                    label={ 'Kafka' }
+                    goto={ 'kafka' }
                     icon={ 'db' }
                 />
                 <Internal
-                    label={ 'Actions' }
-                    goto={ 'actions' }
-                    icon={ 'list' }
+                    label={ 'Cassandra' }
+                    goto={ 'cassandra' }
+                    icon={ 'db' }
                 />
                 <External
                     label={ 'Flink' }
@@ -30,36 +35,6 @@ function Menu() {
                     label={ 'Prometheus' }
                     goto={ 'https://en.wikipedia.org/wiki/Prometheus_(software)' }
                     icon={ 'chart' }
-                />
-                <Trigger
-                    label={ 'Settings' }
-                    icon={ 'cog' }
-                    action={() => {
-                        dispatch({
-                            type: 'prompt/show',
-                            window: 'settings' 
-                        })
-                    }}
-                />
-                <Trigger
-                    label={ 'P' }
-                    icon={ 'plus' }
-                    action={() => {
-                        dispatch({
-                            type: 'notify/positive',
-                            message: 'Query returned successfully' 
-                        })
-                    }}
-                />
-                <Trigger
-                    label={ 'N' }
-                    icon={ 'plus' }
-                    action={() => {
-                        dispatch({
-                            type: 'notify/negative',
-                            message: 'Something went wrong' 
-                        })
-                    }}
                 />
             </div>
         </div>

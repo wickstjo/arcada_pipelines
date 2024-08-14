@@ -38,6 +38,7 @@ class create_cassandra_instance:
     def keyspace_overview(self, keyspace_name):
         container = {}
 
+        # STOP & THROW ERROR IF KEYSPACE DOESNT EXIST
         if keyspace_name not in self.db_overview().keys():
             raise Exception(f"KEYSPACE '{keyspace_name}' DOES NOT EXIST")
 
@@ -67,8 +68,6 @@ class create_cassandra_instance:
 
         # ADD TABLE ROW COUNT
         for table_name in container.keys():
-
-            # MAKE DB QUERY TO COUNT TABLE ROWS
             count_query = self.instance.execute(f"SELECT COUNT(*) FROM {keyspace_name}.{table_name}")
             container[table_name]['n_rows'] = count_query.one()[0]
 
@@ -149,3 +148,5 @@ class create_cassandra_instance:
 
         # CREATE THE TABLE
         self.instance.execute(query)
+
+
