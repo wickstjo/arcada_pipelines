@@ -16,7 +16,7 @@ const actions = {
         if (valid_windows.includes(args.window)) {
             return {
                 ...state,
-                window: args.window
+                ...args
             }
 
         // OTHERWISE, DO NOTHING AND THROW ERROR

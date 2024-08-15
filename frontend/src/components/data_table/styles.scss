@@ -1,17 +1,33 @@
+.page_title {
+    font-size: 20px;
+    text-transform: uppercase;
+    padding: 15px;
+    padding-left: 20px;
+    color: white;
+    text-shadow: 1px 1px 2px rgb(41, 41, 41);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+$outer_spacing: 2px;
+$inner_spacing: 1px;
+$padding: 6px;
+
 .data_table {
     background: rgba(0, 0, 0, 0.363);
-    padding: 2px;
+    padding: $outer_spacing;
 
     .row, .headers {
-        margin-bottom: 2px;
+        margin-bottom: $inner_spacing;
         display: flex;
         text-shadow: 1px 1px 2px rgb(41, 41, 41);
 
         .column {
-            padding: 6px 10px;
+            padding: $padding $padding+4;
             color: white;
             flex: 1;
-            margin-right: 2px;
+            margin-right: $inner_spacing;
             // text-align: right;
         }
 
@@ -45,4 +61,11 @@
             background: rgba(0, 0, 0, 0.300);
         }
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+.buttons {
+    background: red;
 }

@@ -12,6 +12,16 @@ const store = configureStore({
         menu: menu_state,
         prompt: prompt_state,
         notify: notifications_state,
+    },
+
+    // NECESSARY TO ENABLE PROMPT CALLBACKS
+    middleware: (getDefaultMiddleware) => {
+        return getDefaultMiddleware({
+            serializableCheck: {
+                ignoredActions: ['prompt/show'],
+                ignoredPaths: ['prompt.callback'],
+            },
+        })
     }
 })
 

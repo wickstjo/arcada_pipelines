@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 
-const useApi = (url) => {
+const useApi = (url, transformer=undefined) => {
 
     // RESOURCE STATE
     const [resource, set_resource] = useState([])
@@ -10,7 +10,15 @@ const useApi = (url) => {
     useEffect(() => {
         axios.get(url).then(response => {
             if (response.status === 200) {
-                set_resource(response.data)
+                let data = response.data
+
+                // IF A TRANSFORMER FUNC WAS DEFINED
+                // AND THERE IS DATA TO PARSE
+                if (transformer) {
+                    data = transformer(data)
+                }
+
+                set_resource(data)
                 return
             }
 

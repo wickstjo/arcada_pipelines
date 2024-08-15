@@ -1,3 +1,6 @@
+// ADD/REMOVE RELEVANT ICONS
+$icons: chart, cog, network, db, list, file;
+
 .menu {
     background: #3c444e91;
     height: 70px;
@@ -43,13 +46,10 @@
             color: white;
         }
 
-        #chart { background-image: url('./icons/chart.svg'); }
-        #cog { background-image: url('./icons/cog.svg'); }
-        #network { background-image: url('./icons/network.svg'); }
-        #db { background-image: url('./icons/db.svg'); }
-        #list { background-image: url('./icons/list.svg'); }
-        #lock { background-image: url('./icons/lock.svg'); }
-        #file { background-image: url('./icons/file.svg'); }
-        #plus { background-image: url('./icons/plus.svg'); }
+        @each $icon in $icons {
+            ##{$icon} {
+                background-image: url('./icons/#{$icon}.svg');
+            }
+        }
     }
 }
