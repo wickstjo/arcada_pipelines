@@ -1,0 +1,136 @@
+package com.example.myproject
+
+// SHARED
+import org.apache.flink.streaming.api.scala._
+// import scala.collection.JavaConverters._
+
+// // import utils.{kafka_utils, cassandra_utils, topo_utils}
+// import schemas.surface_data.{sensor_1A => SENSOR_SCHEMA, defective_tile => DEFECT_SCHEMA}
+// import utils.{kafka_utils, cassandra_utils, topo_utils}
+
+import org.apache.flink.api.common.functions.RichFlatMapFunction
+import org.apache.flink.configuration.Configuration
+import org.apache.flink.util.Collector
+import org.apache.flink.api.common.functions.FlatMapFunction
+
+import scala.util.Random
+import scala.annotation.tailrec
+import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime
+import java.time.Duration
+
+object Main extends App {
+
+    // CREATE STREAM PROCESSING ENVIRONMENT
+    val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
+
+    def generate_array(how_many: Int): Array[Int] = {
+
+        // val x: Int = 100000
+        // val y: Int = x + how_many
+        // val length = y - x + 1
+
+        // val sorted_list: Array[Int] = Array.tabulate(length)(i => x + i)
+        // val randomized: Array[Int] = Random.shuffle(sorted_list.toSeq).toArray
+
+        // randomized
+    
+        val foo: Array[Int] = Array.fill(how_many)(50000)
+
+        foo
+    }
+
+    def nthPrime(n: Int): Int = {
+        
+        @tailrec
+        def isPrime(num: Int, divisor: Int): Boolean = {
+            if (divisor <= 1) true
+            else if (num % divisor == 0) false
+            else isPrime(num, divisor - 1)
+        }
+        
+        @tailrec
+        def findNthPrime(count: Int, current: Int): Int = {
+            if (count == n) current - 1
+            else if (isPrime(current, math.sqrt(current).toInt)) findNthPrime(count + 1, current + 1)
+            else findNthPrime(count, current + 1)
+        }
+        
+        require(n > 0, "n must be a positive integer")
+        findNthPrime(0, 2)
+    }
+
+    class accumulator extends RichFlatMapFunction[Int, Int] {
+
+        // VECTOR ACCUMULATOR
+        private var container: Long = _
+        private var formatter: DateTimeFormatter = _
+        private var starting_time: String = _
+
+        // CONSTRUCTOR
+        override def open(parameters: Configuration): Unit = {
+            container = 0L
+
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            starting_time = LocalDateTime.now().format(formatter)
+        }
+
+        // STREAM OPERATION
+        override def flatMap(item: Int, out: Collector[Int]): Unit = {
+            container += item
+        }
+
+        override def close(): Unit = {
+
+            val ending_time: String = LocalDateTime.now().format(formatter)
+
+            val timestamp1 = LocalDateTime.parse(starting_time, formatter)
+            val timestamp2 = LocalDateTime.parse(ending_time, formatter)
+            val duration = Duration.between(timestamp1, timestamp2).getSeconds % 60
+
+            println("---------------------------------------------------\n\n\n")
+            
+            println("JOB FINISHED!\n")
+            println("FINAL NUM:\t" + container)
+            println("STARTED:\t" + starting_time)
+            println("ENDED:\t\t" + ending_time)
+            println("DURATION:\t" + duration + " SECONDS")
+
+            println("\n\n\n---------------------------------------------------")
+        }
+    }
+
+    // LCM FOR EACH STEP
+    val input_array = generate_array(6720)
+
+    // Create a data set from the array
+    val input_stream = env.fromElements(input_array: _*)
+        .setParallelism(1)
+        .name("input source")
+
+    val compute_stream = input_stream
+        .map(item => nthPrime(item))
+        .setParallelism(56)
+        .name("NTH PRIME COMPUTATION")
+
+        // 8
+        // 16
+
+        // 24
+        // 32
+
+        // 40
+        // 48
+
+        // 56
+        // 64
+
+    val accu_stream = compute_stream
+        .flatMap(new accumulator)
+        .setParallelism(1)
+        .name("RESULT VALIDATOR")
+        // 14297677
+
+    // FINALLY, START THE PIPELINE
+    env.execute("PRIME NUMBER COMPUTATION")
+}
