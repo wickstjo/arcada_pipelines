@@ -8,6 +8,12 @@
 *.ipynb_checkpoints
 *__pycache__
 
+# HIDE SBT COMPILATION DIRS
+*target
+
+
+
+
 /.pnp
 .pnp.js
 

@@ -33,6 +33,13 @@ version := "1.0"
 // https://mvnrepository.com/artifact/org.apache.flink/flink-streaming-scala
 libraryDependencies += "org.apache.flink" % "flink-streaming-scala_2.12" % "1.17.1"
 
+
+
+// https://mvnrepository.com/artifact/org.apache.flink/flink-streaming-scala
+libraryDependencies += "com.typesafe.play" %% "play-json" % "2.10.0-RC6"
+
+libraryDependencies += "com.lihaoyi" %% "ujson" % "2.0.0"
+
 // https://mvnrepository.com/artifact/org.apache.flink/flink-clients
 libraryDependencies += "org.apache.flink" % "flink-clients" % "1.17.1"
 
@@ -48,8 +55,8 @@ libraryDependencies ++= Seq(
 )
 
 // https://mvnrepository.com/artifact/org.apache.flink/flink-avro-confluent-registry
-libraryDependencies += "org.apache.flink" % "flink-avro-confluent-registry" % "1.17.1"
-resolvers += "confluent" at "https://packages.confluent.io/maven/"
+// libraryDependencies += "org.apache.flink" % "flink-avro-confluent-registry" % "1.17.1"
+// resolvers += "confluent" at "https://packages.confluent.io/maven/"
 
 // // https://mvnrepository.com/artifact/org.apache.flink/flink-scala
 // libraryDependencies += "org.apache.flink" %% "flink-scala" % "1.16.1"
