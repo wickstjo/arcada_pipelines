@@ -34,10 +34,10 @@ version := "1.0"
 libraryDependencies += "org.apache.flink" % "flink-streaming-scala_2.12" % "1.17.1"
 
 
+// // https://mvnrepository.com/artifact/org.apache.flink/flink-streaming-scala
+// libraryDependencies += "com.typesafe.play" %% "play-json" % "2.10.0-RC6"
 
-// https://mvnrepository.com/artifact/org.apache.flink/flink-streaming-scala
-libraryDependencies += "com.typesafe.play" %% "play-json" % "2.10.0-RC6"
-
+// FOR JSON PARSING
 libraryDependencies += "com.lihaoyi" %% "ujson" % "2.0.0"
 
 // https://mvnrepository.com/artifact/org.apache.flink/flink-clients

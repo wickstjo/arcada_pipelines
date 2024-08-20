@@ -6,8 +6,9 @@ import java.io.IOException
 
 object schema_utils {
 
-    // Define your data type
+    // THE SCHEMA
     case class STOCK_SCHEMA(
+        timestamp: Int,
         open: Float,
         high: Float,
         low: Float,
@@ -15,7 +16,7 @@ object schema_utils {
         volume: Int
     )
 
-    // Implement the custom deserialization schema
+    // THE SCHEMA DESERIALIZER
     class STOCK_DESERIALIZER extends DeserializationSchema[STOCK_SCHEMA] {
 
         @throws[IOException]
@@ -23,17 +24,19 @@ object schema_utils {
 
             // ATTEMPT TO DESERIALIZE THE DATA
             try {
-                // Implement your deserialization logic here
-                // For example, convert bytes to a string and parse JSON
+
+                // PARSE THE JSON DATA
                 val json_string = new String(message, "UTF-8")
                 val json_data = ujson.read(json_string)
                 
+                // CAST IT TO THE OBJECT
                 STOCK_SCHEMA(
+                    json_data("timestamp").num.toInt,
                     json_data("open").num.toFloat,
                     json_data("high").num.toFloat,
                     json_data("low").num.toFloat,
                     json_data("close").num.toFloat,
-                    json_data("volume").num.toInt,
+                    json_data("volume").num.toInt
                 )
 
             // CATCH ERRORS WITHOUT CRASHING

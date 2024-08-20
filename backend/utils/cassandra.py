@@ -8,10 +8,7 @@ class create_cassandra_instance:
     def __init__(self):
         cluster = Cluster([('localhost', 12001), ('localhost', 12002)])
         self.instance = cluster.connect()
-    
-        # ONLY EXPLORE THE PROJECT KEYSPACE
-        self.experiment_keyspace = 'experiment'
-
+        
     # FULL DATABASE OVERVIEW (KEYSPACES)
     def db_overview(self):
         container = {}
@@ -116,17 +113,6 @@ class create_cassandra_instance:
         # IF KEYSPACE DOES NOT EXIST, CREATE IT
         if keyspace_name not in db_content.keys():
             self.create_keyspace(keyspace_name)
-
-        # VALID COLUMN TYPES, FOR VALIDATION
-        valid_col_types = [
-            'text', 'int', 'double',
-            'list<text>', 'list<int>', 'list<double>'
-        ]
-
-        # MAKE SURE COLUMN TYPES ARE VALID
-        for type in columns.values():
-            if type not in valid_col_types:
-                raise Exception(f"COLUMN TYPE '{type}' IS NOT VALID")
 
         # MAKE SURE PRIMARY KEYS ARE OK
         for key in indexing:
