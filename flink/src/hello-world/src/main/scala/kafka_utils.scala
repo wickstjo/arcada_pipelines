@@ -2,11 +2,12 @@ package utils
 
 import org.apache.flink.streaming.api.scala._
 
-import org.apache.flink.api.common.eventtime.WatermarkStrategy
-import org.apache.flink.connector.kafka.source.KafkaSource
-import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer
+import org.apache.flink.api.common.eventtime.{WatermarkStrategy}
+import org.apache.flink.connector.kafka.source.{KafkaSource}
+import org.apache.flink.connector.kafka.source.enumerator.initializer.{OffsetsInitializer}
+import org.apache.flink.api.common.serialization.{DeserializationSchema, SerializationSchema}
+import org.apache.flink.connector.kafka.sink.{KafkaRecordSerializationSchema, KafkaSink}
 import scala.reflect.{ClassTag}
-import org.apache.flink.api.common.serialization.DeserializationSchema
 
 // import org.apache.flink.api.common.serialization.SimpleStringSchema
 
@@ -40,27 +41,25 @@ object kafka_utils {
         return (kafka_source, timestamp_strategy, source_name)
     }
 
-    // // CREATE AN KAFKA STREAM OUTPUT
-    // def output_sink [T <: SpecificRecordBase] (kafka_topic: String, input_stream: DataStream[T])(implicit ct: ClassTag[T]): Unit = {
+    // CREATE AN KAFKA OUTPUT OUTPUT SINK
+    def output_sink[SCHEMA, SERIALIZER <: SerializationSchema[SCHEMA]](
+        kafka_topic: String,
+        input_stream: DataStream[SCHEMA]
+    )(implicit ct: ClassTag[SERIALIZER]): Unit = {
 
-    //     // CREATE THE RECORD SERIALIZER
-    //     val sink_serializer =  KafkaRecordSerializationSchema.builder()
-    //         .setTopic(kafka_topic)
-    //         .setValueSerializationSchema(
-    //             ConfluentRegistryAvroSerializationSchema.forSpecific(
-    //                 ct.runtimeClass.asInstanceOf[Class[T]],
-    //                 kafka_topic, 
-    //                 schema_registry
-    //             )
-    //         )
-    //         .build()
+        // CREATE THE RECORD SERIALIZER
+        val sink_serializer = KafkaRecordSerializationSchema.builder[SCHEMA]()
+            .setTopic(kafka_topic)
+            .setValueSerializationSchema(ct.runtimeClass.getDeclaredConstructor().newInstance().asInstanceOf[SERIALIZER])
+            .build()
 
-    //     // CREATE & RETURN THE OUTPUT STREAM
-    //     val sink = KafkaSink.builder[T]()
-    //         .setBootstrapServers(kafka_brokers)
-    //         .setRecordSerializer(sink_serializer)
-    //         .build()
+        // CREATE & CONFIGURE THE OUTPUT SINK
+        val kafka_sink = KafkaSink.builder[SCHEMA]()
+            .setBootstrapServers(kafka_brokers)
+            .setRecordSerializer(sink_serializer)
+            .build()
 
-    //     input_stream.sinkTo(sink)
-    // }
+        // ADD THE SINK TO THE DATA STREAM
+        input_stream.sinkTo(kafka_sink)
+    }
 }

@@ -1,6 +1,6 @@
 package utils
 
-import org.apache.flink.api.common.serialization.DeserializationSchema
+import org.apache.flink.api.common.serialization.{DeserializationSchema, SerializationSchema}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import java.io.IOException
 
@@ -15,6 +15,9 @@ object schema_utils {
         close: Float,
         volume: Int
     )
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // THE SCHEMA DESERIALIZER
     class STOCK_DESERIALIZER extends DeserializationSchema[STOCK_SCHEMA] {
@@ -50,5 +53,38 @@ object schema_utils {
         
         override def isEndOfStream(nextElement: STOCK_SCHEMA): Boolean = false
         override def getProducedType: TypeInformation[STOCK_SCHEMA] = TypeInformation.of(classOf[STOCK_SCHEMA])
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // THE SCHEMA SERIALIZER
+    class STOCK_SERIALIZER extends SerializationSchema[STOCK_SCHEMA] {
+
+        @throws[IOException]
+        override def serialize(stock: STOCK_SCHEMA): Array[Byte] = {
+            try {
+
+                // CREATE A JSON OBJECT
+                val json_data = ujson.Obj(
+                    "timestamp" -> stock.timestamp,
+                    "open" -> stock.open,
+                    "high" -> stock.high,
+                    "low" -> stock.low,
+                    "close" -> stock.close,
+                    "volume" -> stock.volume
+                )
+
+                // STRINGIFY IT, THEN CONVERT IT TO BYTES
+                json_data.render().getBytes("UTF-8")
+
+            // CATCH ERRORS WITHOUT CRASHING
+            } catch {
+                case error: Throwable => {
+                    println(s"SERIALIZATION ERROR: ${error.getMessage}")
+                    Array.emptyByteArray
+                }
+            }
+        }
     }
 }
