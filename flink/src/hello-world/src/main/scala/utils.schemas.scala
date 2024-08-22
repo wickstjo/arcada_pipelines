@@ -24,8 +24,6 @@ object schema_utils {
 
         @throws[IOException]
         override def deserialize(message: Array[Byte]): STOCK_SCHEMA = {
-
-            // ATTEMPT TO DESERIALIZE THE DATA
             try {
 
                 // PARSE THE JSON DATA

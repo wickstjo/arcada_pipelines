@@ -6,6 +6,7 @@ import org.apache.flink.streaming.api.scala._
 import utils.schema_utils.{STOCK_SCHEMA, STOCK_DESERIALIZER}
 import utils.kafka_utils
 import utils.cassandra_utils
+import utils.processing_utils
 
 object Main extends App {
 
@@ -21,9 +22,15 @@ object Main extends App {
     kafka_stream.print()
 
     // PUSH STREAM ROWS DIRECTLY INTO KAFKA
-    val vector_query: String = "INSERT INTO foobar.testing_table (timestamp, open, close, high, low, volume) values (?, ?, ?, ?, ?, ?);"
+    val vector_query: String = "INSERT INTO foobar.test_table (timestamp, open, close, high, low, volume) values (?, ?, ?, ?, ?, ?);"
     cassandra_utils.output_sink[STOCK_SCHEMA](vector_query, kafka_stream)
 
+    // GATHER VECTORS INTO SLIDING MATRIX WINDOW
+    val matrix_stream: DataStream[Array[STOCK_SCHEMA]] = kafka_stream
+        .flatMap(new processing_utils.sliding_matrix[STOCK_SCHEMA](2, 1))
+        .name("SLIDING MATRIX")
+        .setParallelism(2)
+
     // FINALLY, START THE PIPELINE
-    env.execute("FOOBAR")
+    env.execute("TESTING PIPELINE")
 }
