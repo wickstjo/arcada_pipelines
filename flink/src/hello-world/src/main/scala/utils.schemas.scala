@@ -20,7 +20,7 @@ object schema_utils {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // THE SCHEMA DESERIALIZER
-    class STOCK_DESERIALIZER extends DeserializationSchema[STOCK_SCHEMA] {
+    class   extends DeserializationSchema[STOCK_SCHEMA] {
 
         @throws[IOException]
         override def deserialize(message: Array[Byte]): STOCK_SCHEMA = {
