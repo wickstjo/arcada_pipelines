@@ -45,3 +45,26 @@ async def create_topic(topic: Topic, response: Response):
 
 ########################################################################################################
 ########################################################################################################
+
+@router.get('/kafka/init')
+async def init_experiment_topics(response: Response):
+
+    topics = [
+        'input_data', 'pre_processing',
+        'model_usage', 'model_evaluation'
+    ]
+
+    try:
+        response.status_code = status.HTTP_201_CREATED
+
+        for topic in topics:
+            try:
+                kafka_admin.create_topic(topic, 1)
+            except:
+                pass
+
+        return topics
+    
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return f'ERROR: {str(error)}'
