@@ -50,8 +50,12 @@ async def create_topic(topic: Topic, response: Response):
 async def init_experiment_topics(response: Response):
 
     topics = [
-        'input_data', 'pre_processing',
-        'model_usage', 'model_evaluation'
+        'input_data',
+        'pre_processing',
+        'model_usage',
+        'model_evaluation',
+        'model_training',
+        'model_stats'
     ]
 
     try:
