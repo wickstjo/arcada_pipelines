@@ -1,4 +1,4 @@
-from utilz.dataset_utils import load_dataset
+import utilz.dataset_utils as dataset_utils
 from utilz.misc import log, create_lock, resize_array
 from utilz.kafka_utils import create_producer
 from utilz.types import DICT_NAMESPACE
@@ -16,7 +16,7 @@ config = DICT_NAMESPACE({
 
     # YOLO PARAMS
     'yolo': {
-        'dataset': 'mini',
+        'dataset': 'yolo_mini.hdf5',
         'max_frames': -1,
         'max_vehicles': -1,
         'fps': 5,
@@ -51,12 +51,8 @@ def run():
         kafka_producer = create_producer()
         kafka_producers.append(kafka_producer)
 
-    # TERMINATE IF KAFKA IS DOWN
-    if not kafka_producers[0].connected():
-        return
-
     # ATTEMPT TO LOAD THE DATASET
-    success, dataset = load_dataset(config.yolo)
+    success, dataset = dataset_utils.load_dataset(config.yolo)
     dataset_length = len(dataset)
 
     # TERMINATE IF IT COULD NOT BE FOUND

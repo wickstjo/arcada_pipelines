@@ -24,15 +24,15 @@ class create_producer:
             'bootstrap.servers': KAFKA_SERVERS,
         })
 
+        self.check_connection()
+
     # MAKE SURE KAFKA CONNECTION IS OK
-    def connected(self):
+    def check_connection(self):
         try:
             metadata = self.kafka_client.list_topics(timeout=2)
-            log('SUCCESSFULLY CONNECTED TO KAFKA')
             return True
         except:
-            log(f'COULD NOT CONNECT WITH KAFKA SERVER ({KAFKA_SERVERS})')
-            return False
+            raise Exception(f'COULD NOT CONNECT WITH KAFKA SERVER ({KAFKA_SERVERS})')
 
     # ON CONSUMER CALLBACK, DO..
     def ack_callback(self, error, message):
@@ -92,7 +92,10 @@ class create_consumer:
             # 'auto.offset.reset': 'earliest'
         })
 
-        # SUBSCRIBE TO THE KAFKA TOPIC
+        # MAKE SURE THE KAFKA CONNECTION IS OK
+        self.check_connection()
+
+        # FINALLY, SUBSCRIBE TO THE PROVIDED KAFKA TOPIC
         self.kafka_client.subscribe([kafka_topic], self.assigned, self.revoked, self.lost)
 
     # WHEN CLASS DIES, KILL THE KAFKA CLIENT
@@ -117,14 +120,12 @@ class create_consumer:
         log(f'CONSUMER ASSIGNMENT LOST: {consumer} {partition_data}')
 
     # MAKE SURE KAFKA CONNECTION IS OK
-    def connected(self):
+    def check_connection(self):
         try:
             metadata = self.kafka_client.list_topics(timeout=2)
-            log('SUCCESSFULLY CONNECTED TO KAFKA')
             return True
         except:
-            log(f'COULD NOT CONNECT WITH KAFKA SERVER ({KAFKA_SERVERS})') 
-            return False
+            raise Exception(f'COULD NOT CONNECT WITH KAFKA SERVER ({KAFKA_SERVERS})') 
 
     # AUTO CALLBACK WHEN CONSUMER COMMITS MESSAGE
     def ack_callback(self, error, partitions):
@@ -162,7 +163,7 @@ class create_consumer:
                 self.kafka_client.commit(msg, asynchronous=True)
 
                 # HANDLE THE EVENT VIA CALLBACK FUNC
-                if VERBOSE: log(f'EVENT RECEIVED ({self.kafka_topic})')
+                if VERBOSE: log(f'EVENT RECEIVED')
 
                 # CONVERT BYTES TO JSON DICT
                 success, result = self.json_deserializer(msg.value())
@@ -173,13 +174,16 @@ class create_consumer:
                     return
 
                 # OTHERWISE, RUN THE CALLBACK FUNC
-                on_message(result)
+                try:
+                    on_message(result)
+                except Exception as error:
+                    print('CUSTOM CALLBACK ERROR:', error)
 
                 if VERBOSE: log(f'EVENT HANDLED')
 
             # SILENTLY DEAL WITH OTHER ERRORS
             except Exception as error:
-                print('CONSUMER ERROR', error)
+                print('CONSUMER ERROR:', error)
                 continue
             
         # LOCK WAS KILLED, THEREFORE THREAD LOOP ENDS
@@ -223,7 +227,7 @@ class create_consumer_producer:
                 self.consumer.kafka_client.commit(msg, asynchronous=True)
 
                 # HANDLE THE EVENT VIA CALLBACK FUNC
-                if VERBOSE: log(f'EVENT RECEIVED ({self.kafka_topic})')
+                if VERBOSE: log(f'EVENT RECEIVED')
 
                 # PUSH THE RAW BYTES THROUGH THE GIVEN DESERIALIZER
                 success, result = self.consumer.json_deserializer(msg.value())
@@ -234,13 +238,16 @@ class create_consumer_producer:
                     continue
 
                 # OTHERWISE, RUN THE CALLBACK FUNC
-                handle_event(result, self.producer.push_msg)
+                try:
+                    handle_event(result, self.producer.push_msg)
+                except Exception as error:
+                    print('CUSTOM CALLBACK ERROR:', error)
 
                 if VERBOSE: log(f'EVENT HANDLED')
 
             # SILENTLY DEAL WITH OTHER ERRORS
             except Exception as error:
-                print('CONSUMER ERROR', error)
+                print('PRODUCER_CONSUMER ERROR:', error)
                 continue
             
         # LOCK WAS KILLED, THEREFORE THREAD LOOP ENDS

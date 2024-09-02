@@ -31,41 +31,18 @@ object Main extends App {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    val pre_processing = kafka_stream.map(item => {
-        // FILTER & FORMAT THE RAW DATA STREAM
-    })
-
-    pre_processing.map(item => {
-        // INJECT ALL 'CLEAN' DATA TO THE DB
-    })
-
-    val model_usage = pre_processing.map(item => {
-        // USE THE MODEL
-        // PUSH PREDICTION & STATISTICS FORWARD
-    }).setParallelism(10)
+    // PUSH EVERY ROW DIRECTLY INTO CASSANDRA
+    val vector_query: String = "INSERT INTO foobar.test_table (timestamp, open, close, high, low, volume) values (?, ?, ?, ?, ?, ?);"
+    cassandra_utils.output_sink[STOCK_SCHEMA](vector_query, kafka_stream)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    model_usage.map(item => {
-        // WRITE PREDICTIONS TO THE DB
-    })
-
-    model_usage.map(item => {
-        // PUBLISH MODEL OUTPUT ON PROMETHEUS
-    })
-
-    val post_processing = model_usage.map(item => {
-        // CHECK FOR CONDITIONAL MODEL DRIFTS
-        // ONLY OUTPUT SOMETHING IF THRESHOLD IS BREACHED
-    })
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    post_processing.map(item => {
-        // TRAIN & DEPLOY A NEW MODEL
-    })
+    // GATHER VECTORS INTO SLIDING MATRIX WINDOW
+    val matrix_stream: DataStream[Array[STOCK_SCHEMA]] = kafka_stream
+        .flatMap(new processing_utils.sliding_matrix[STOCK_SCHEMA](2, 1))
+        .name("SLIDING MATRIX")
+        .setParallelism(2)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////

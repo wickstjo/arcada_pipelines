@@ -53,9 +53,9 @@ async def init_experiment_topics(response: Response):
         'input_data',
         'pre_processing',
         'model_usage',
-        'model_evaluation',
+        'post_processing',
         'model_training',
-        'model_stats'
+        'drift_tracker'
     ]
 
     try:

@@ -1,12 +1,12 @@
 from utilz.kafka_utils import create_consumer_producer, create_consumer
 from utilz.misc import log, create_lock
 from typing import Callable
-from utilz.types import KAFKA_DICT, KAFKA_PUSH
+from utilz.types import KAFKA_DICT, KAFKA_PUSH_FUNC
 
 ########################################################################################
 ########################################################################################
 
-def start_consumer_producer(input_topic: str, handle_event: Callable[[KAFKA_DICT, KAFKA_PUSH], None]):
+def start_consumer_producer(input_topic: str, handle_event: Callable[[KAFKA_DICT, KAFKA_PUSH_FUNC], None]):
 
     # CREATE THE KAKFA CLIENT & CONTROL LOCK
     kafka_client = create_consumer_producer(input_topic)

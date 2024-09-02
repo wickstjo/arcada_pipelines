@@ -1,26 +1,19 @@
 import h5py, json, os
-from misc import log
-
-# CHECK WHETHER RESOURCE EXISTS
-def resource_exists(path):
-    if not os.path.exists(path):
-        log(f"RESOURCE NOT FOUND ({path})")
-        return False
-    
-    log(f"RESOURCE FOUND ({path})")
-    return True
+from misc import resource_exists
 
 # READ & PARSE HDF5 DATASET
 def load_dataset(yolo_args):
     container = []
 
-    # MAKE SURE THE HDF5 DATASET EXISTS
-    if not resource_exists(f'./datasets/{yolo_args.dataset}.hdf5'):
-        log(f'THE DATASET ({yolo_args.dataset}) COULD NOT BE LOCATED, TERMINATING..')
-        return False, []
+    # STITCH TOGETHER FILEPATH
+    file_path = f'./datasets/{yolo_args.dataset}'
+
+    # TERMINATE IF THE DATASET CANT BE FOUND
+    if not os.path.exists(file_path):
+        raise Exception(f'DATASET NOT FOUND ({file_path})')
 
     # EXTRACT DATASET COMPONENTS
-    dataset = h5py.File(f'./datasets/{yolo_args.dataset}.hdf5', 'r')
+    dataset = h5py.File(file_path, 'r')
     activity = dataset['is_enabled']
     sensors = dataset['sensors']
     metadata = json.loads(dataset['metadata'][()])
