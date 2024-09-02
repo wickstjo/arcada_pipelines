@@ -10,21 +10,21 @@ scrape_configs:
                 - kafka_broker_1:13000
                 - kafka_broker_2:13000
 
-    # CASSANDRA BROKER SCRAPERS
-    -   job_name: cassandra
-        metrics_path: '/metrics'
-        static_configs:
-            - targets:
-                - cassandra_1:13000
-                - cassandra_2:13000
+    # # CASSANDRA BROKER SCRAPERS
+    # -   job_name: cassandra
+    #     metrics_path: '/metrics'
+    #     static_configs:
+    #         - targets:
+    #             - cassandra_1:13000
+    #             - cassandra_2:13000
 
-    # FLINK CLUSTER SCRAPING
-    -   job_name: flink
-        metrics_path: /metrics
-        static_configs:
-            - targets:
-                - jobmanager:13000
-                - taskmanager_1:13000
+    # # FLINK CLUSTER SCRAPING
+    # -   job_name: flink
+    #     metrics_path: /metrics
+    #     static_configs:
+    #         - targets:
+    #             - jobmanager:13000
+    #             - taskmanager_1:13000
 
     # SCRAPE DOCKER CONTAINERS
     -   job_name: cadvisor

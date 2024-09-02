@@ -1949,7 +1949,7 @@
       ]
     },
     "timezone": "browser",
-    "title": "Docker Container & Host Metrics",
+    "title": "CADVISOR DOCKER METRICS",
     "uid": "4dMaCsRZz",
     "version": 1,
     "weekStart": ""
