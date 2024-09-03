@@ -14,7 +14,7 @@ config = DICT_NAMESPACE({
 
     # HOW LONG TO WAIT BETWEEN EVENTS
     'dataset': 'foo.csv',
-    'cooldown': 0.25
+    'cooldown': 0.5,
 })
 
 ########################################################################################

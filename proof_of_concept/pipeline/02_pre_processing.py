@@ -14,10 +14,8 @@ config = DICT_NAMESPACE({
 
 # HANDLE INCOMING KAFKA EVENTS
 def handle_event(input_data: KAFKA_DICT, kafka_push: KAFKA_PUSH_FUNC):
-    pass
-
-    ### THIS ONLY MAKES SENSE FOR STREAM PROCESSING
-    ### TODO: DEVELOP SOMETHING SIMILAR FOR MASS-SCALE BATCH PROCESSING
+    print(input_data)
+    kafka_push(config.output_topic, input_data)
 
 ########################################################################################
 ########################################################################################

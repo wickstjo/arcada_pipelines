@@ -13,10 +13,7 @@ config = DICT_NAMESPACE({
 
 # HANDLE INCOMING KAFKA EVENTS
 def handle_event(input_data: KAFKA_DICT):
-    pass
-
-    ### TODO: IMPLEMENT SOME PSEUDO MODEL TRAINING
-    ### TO TRAIN DIFFERENT MODELS, MAYBE USE SOME TYPE OF SWITCH STATEMENT?
+    print(input_data)
 
 ########################################################################################
 ########################################################################################

@@ -1,7 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from routes import model, kafka, cassandra
 
 # INITIALIZE COMPONENTS
@@ -18,7 +17,7 @@ app.add_middleware(
 )
 
 # CUSTOM ROUTES
-app.include_router(model.router)
+# app.include_router(model.router)
 app.include_router(kafka.router)
 app.include_router(cassandra.router)
 
