@@ -1,11 +1,20 @@
-CREATE CIRCULAR DEMO WITH WORKERS
+######################################################################
+### NOW ##############################################################
+######################################################################
+
+ADD CASSANDRA INSTANCE STUFF TO PIPELINES
+    WRITING
+    READING
+
+ADD DATA FETCHING ENDPOINT TO CASSANDRA BACKEND
+    MAYBE X TO Y INDEX IN URL?
+    cassandra/keyspace/table/x-y
+
+######################################################################
+### LATER ############################################################
+######################################################################
+
 MAYBE ADD BACKEND TO DOCKER COMPOSE?
+    MOUNT LOCAL DIR SINCE HOT-RELOAD PROTECTS?
 
-------------------------------------------------------------
-------------------------------------------------------------
-------------------------------------------------------------
-
-CASSANDRA ENDPOINT
-    ADD DATA FETCHING ENDPOINT
-    MAYBE X TO Y INDEX?
-        cassandra/keyspace/table/
+SPLIT DOCKER-COMPOSE INTO SEPARATE FILES?

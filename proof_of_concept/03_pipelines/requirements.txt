@@ -1,0 +1,7 @@
+confluent-kafka
+prometheus_client
+cassandra-driver
+pyyaml
+
+# AUDITED 03/09 -- OK
+# pip install -r requirements.txt

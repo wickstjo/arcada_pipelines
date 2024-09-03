@@ -1,0 +1,27 @@
+# SHARED FLINK TASK MANAGER VARS
+x-taskmanagers: &flink_taskmasters
+    image: apache/flink:1.17.1-java8
+    command: taskmanager
+    volumes:
+        - ./configs/flink_config.yml:/opt/flink/conf/flink-conf.yaml
+        - ./jars/flink-metrics-prometheus-1.17.1.jar:/opt/flink/lib/flink-metrics.jar
+    depends_on:
+        - jobmanager
+
+services:
+
+    # THE FLINK COORDINATOR
+    # THE CLUSTER CAN USE MORE THAN ONE, BUT REQUIRES EXTRA CONFIGURATION
+    jobmanager:
+        image: apache/flink:1.17.1-java8
+        command: jobmanager
+        ports:
+            - '8081:8081'
+        volumes:
+            - ./configs/flink_config.yml:/opt/flink/conf/flink-conf.yaml
+            - ./jars/flink-metrics-prometheus-1.17.1.jar:/opt/flink/lib/flink-metrics.jar
+
+    # TASK-EXECUTING ENTITIES
+    # COPY PASTE AS MANY TASK MANAGERS YOU WANT
+    taskmanager_1:
+        <<: *flink_taskmasters

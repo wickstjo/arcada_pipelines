@@ -1,0 +1,67 @@
+# CLUSTER CONNECTIONS
+cluster:
+
+    # KAFKA BROKER LOCATIONS
+    kafka_brokers:
+        - localhost:11001
+        - localhost:11002
+
+    # CASSANDRA BROKER LOCATIONS
+    cassandra_brokers:
+        - localhost:12001
+        - localhost:12002
+
+###############################################################################################################
+###############################################################################################################
+
+# BACKEND API SETTINGS
+backend:
+
+    # WHAT PORT SHOULD THE BACKEND API BE RUNNING ON?
+    api_port: 3003
+    api_host: localhost
+
+    # HIDE AUXILLARY TABLES AND TOPICS FROM BACKEND LISTINGS?
+    hide_auxillary: true
+
+    # WHAT CONTENT SHOULD BE AUTO-CREATED BY THE INIT ENDPOINTS?
+    create_on_init:
+
+        # KAFKA TOPICS
+        # JUST THE TOPIC NAME IS ENOUGH
+        kafka_topics:
+            - input_data
+            - pre_processing
+            - model_usage
+            - post_processing
+            - model_training
+            - drift_tracker
+
+        # CASSANDRA KEYSPACES/TABLES
+        # PROVIDE A KEYSPACE, TABLE NAME, ITS COLUMNS AND WHAT COLS SHOULD BE USED AS COMPOSITE KEYS
+        cassandra_tables:
+            -   keyspace: testing_keyspace
+                table_name: testing_table
+                columns: 
+                    timestamp: int
+                    open: float
+                    close: float
+                    high: float
+                    low: float
+                    volume: int
+                primary_keys:
+                    - timestamp
+
+###############################################################################################################
+###############################################################################################################
+
+# PYTHON PIPELINE SETTINGS
+pipeline:
+
+    # HIDE/SHOW LOG STATEMENTS
+    verbose_logging: true
+
+    # KAFKA CONSUMER SETTINGS
+    kafka:
+        consumer_stategy: latest      # latest OR earliest
+        async_commit: true

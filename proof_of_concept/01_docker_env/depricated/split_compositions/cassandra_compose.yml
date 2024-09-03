@@ -1,0 +1,34 @@
+# SHARED CASSANDRA VARS & ENV
+x-cassandra: &cassandra_shared
+    image: cassandra:4.1.0
+    expose:
+        - "7000" 
+        - "7001" 
+        - "7199" 
+        - "9142" 
+        - "9160"
+    volumes:
+        - ./configs/cassandra_scraper.yml:/usr/app/cassandra_scraper.yml
+        - ./jars/jmx_prometheus_javaagent-0.17.2.jar:/usr/app/jmx_prometheus_javaagent.jar
+    environment:
+        CASSANDRA_CLUSTER_NAME: MAILLEFER_SOLO
+        CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+        CASSANDRA_DC: DATACENTER1
+        JVM_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=13000:/usr/app/cassandra_scraper.yml"
+
+        # COMMA SEPARATED LIST OF ALL YOUR CASSANDRA BROKERS
+        CASSANDRA_SEEDS: cassandra_1,cassandra_2
+
+services:
+
+    # JUST CHANGE THE FORWARDED PORT FOR EACH BROKER
+    # AND ADD IT TO THE CASSANDRA_SEEDS COMMA-SEPARATED LIST ^
+    cassandra_1:
+        <<: *cassandra_shared
+        ports: 
+            - "12001:9042"
+
+    cassandra_2:
+        <<: *cassandra_shared
+        ports: 
+            - "12002:9042"
