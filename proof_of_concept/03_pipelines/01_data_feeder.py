@@ -1,12 +1,13 @@
 import utils.dataset_utils as dataset_utils
-from utils.misc import log, DICT_NAMESPACE
+from utils.misc import log
+from utils.types import TO_NAMESPACE
 from utils.kafka_utils import create_producer
 import time
 
 ########################################################################################
 ########################################################################################
 
-local_config = DICT_NAMESPACE({
+local_config = TO_NAMESPACE({
 
     # WHAT KAFKA TOPIC SHOULD WE PUSH DATA INTO?
     'output_topic': 'input_data',

@@ -1,11 +1,11 @@
-import json
 from confluent_kafka import Consumer, Producer
 from utils.misc import log, create_lock, load_global_config
-from utils.types import KAFKA_DICT, KAFKA_PUSH_FUNC
+from utils.cassandra_utils import create_cassandra_instance
 from typing import Callable
+import json
 
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE KAFKA CONNECTION STRING
-global_config = load_global_config('../global_config.yaml')
+global_config = load_global_config()
 KAFKA_BROKERS = ','.join(global_config.cluster.kafka_brokers)
 VERBOSE = global_config.pipeline.verbose_logging
 
@@ -41,31 +41,30 @@ class create_producer:
     def json_serializer(self, json_data: dict) -> list[bool, bytes|str]:
         try:
             json_bytes = json.dumps(json_data).encode('UTF-8')
-            return True, json_bytes
+            return json_bytes
         except:
-            return False, 'SERIALIZATION ERROR'
+            raise Exception('SERIALIZATION ERROR')
 
     # PUSH MESSAGE TO A KAFK TOPIC
     def push_msg(self, topic_name: str, data_dict: dict):
 
         # TRY TO CONVERT THE DICT TO BYTES
-        success, bytes_data = self.json_serializer(data_dict)
+        bytes_data = self.json_serializer(data_dict)
 
-        # SKIP IF SERIALIZATION FAILS
-        if not success:
-            if VERBOSE: log(bytes_data)
-            return
-
-        # OTHERWISE, PUSH MESSAGE TO KAFKA TOPIC
+        # THEN PUSH THE MESSAGE TO A KAFKA TOPIC
         self.kafka_client.produce(
             topic_name, 
             value=bytes_data,
             on_delivery=self.ack_callback,
         )
 
-        # ASYNCRONOUSLY AWAIT CONSUMER ACK BEFORE SENDING NEXT MSG
-        self.kafka_client.poll(1)
-        # self.kafka_client.flush()
+        # ASYNC ACKNOWLEDGE
+        if global_config.pipeline.kafka.async_producer_ack:
+            self.kafka_client.poll(1)
+        
+        # SYNCHRONOUS ACKNOWLEDGE
+        else:
+            self.kafka_client.flush()
 
 ###################################################################################################
 ###################################################################################################
@@ -137,9 +136,9 @@ class create_consumer:
     def json_deserializer(self, raw_bytes: bytes) -> list[bool, dict|str]:
         try:
             json_dict = json.loads(raw_bytes.decode('UTF-8'))
-            return True, json_dict
+            return json_dict
         except:
-            return False, 'DESERIALIZATION ERROR'
+            raise Exception('DESERIALIZATION ERROR')
 
     # START CONSUMING TOPIC EVENTS
     def poll_next(self, thread_lock, on_message, nth_thread='nth'):
@@ -161,24 +160,19 @@ class create_consumer:
                     continue
 
                 # COMMIT THE EVENT TO PREVENT OTHERS FROM TAKING IT
-                self.kafka_client.commit(msg, asynchronous=global_config.pipeline.kafka.async_commit)
+                self.kafka_client.commit(msg, asynchronous=global_config.pipeline.kafka.async_consumer_commit)
 
                 # HANDLE THE EVENT VIA CALLBACK FUNC
                 if VERBOSE: log(f'EVENT RECEIVED')
 
                 # CONVERT BYTES TO JSON DICT
-                success, result = self.json_deserializer(msg.value())
-
-                # SKIP IF DESERIALIZATION FAILS
-                if not success:
-                    if VERBOSE: log(result)
-                    return
+                result = self.json_deserializer(msg.value())
 
                 # OTHERWISE, RUN THE CALLBACK FUNC
                 try:
                     on_message(result)
                 except Exception as error:
-                    print('CUSTOM CALLBACK ERROR:', error)
+                    log('CUSTOM CALLBACK ERROR =>', error)
 
                 if VERBOSE: log(f'EVENT HANDLED')
 
@@ -189,24 +183,6 @@ class create_consumer:
             
         # LOCK WAS KILLED, THEREFORE THREAD LOOP ENDS
         log(f'CONSUMER MANUALLY KILLED')
-
-###################################################################################################
-###################################################################################################
-
-def start_consumer(input_topic: str, handle_event: Callable[[KAFKA_DICT], None]):
-
-    # CREATE THE KAKFA CLIENT & CONTROL LOCK
-    kafka_client = create_consumer(input_topic)
-    thread_lock = create_lock()
-    
-    # FINALLY, START CONSUMING EVENTS
-    try:
-        kafka_client.poll_next(thread_lock, handle_event)
-
-    # TERMINATE MAIN PROCESS AND KILL HELPER THREADS
-    except KeyboardInterrupt:
-        thread_lock.kill()
-        log('CONSUMER MANUALLY KILLED..', True)
 
 ########################################################################################
 ########################################################################################
@@ -243,7 +219,7 @@ class create_consumer_producer:
                     continue
 
                 # COMMIT THE EVENT TO PREVENT OTHERS FROM TAKING IT
-                self.consumer.kafka_client.commit(msg, asynchronous=global_config.pipeline.kafka.async_commit)
+                self.consumer.kafka_client.commit(msg, asynchronous=global_config.pipeline.kafka.async_consumer_commit)
 
                 # HANDLE THE EVENT VIA CALLBACK FUNC
                 if VERBOSE: log(f'EVENT RECEIVED')
@@ -275,10 +251,10 @@ class create_consumer_producer:
 ########################################################################################
 ########################################################################################
 
-def start_consumer_producer(input_topic: str, handle_event: Callable[[KAFKA_DICT, KAFKA_PUSH_FUNC], None]):
+def start_flex_consumer(input_topic: str, handle_event: Callable, include_kafka_push: bool = False, include_cassandra: bool = False):
 
     # CREATE THE KAKFA CLIENT & CONTROL LOCK
-    kafka_client = create_consumer_producer(input_topic)
+    kafka_client = create_flex_worker(input_topic, include_kafka_push, include_cassandra)
     thread_lock = create_lock()
 
     # FINALLY, START CONSUMING EVENTS
@@ -292,3 +268,81 @@ def start_consumer_producer(input_topic: str, handle_event: Callable[[KAFKA_DICT
 
 ########################################################################################
 ########################################################################################
+
+class create_flex_worker:
+
+    # ON LOAD, CREATE KAFKA CONSUMER CLIENT
+    def __init__(self, input_topic: str, include_kafka_push: bool, include_cassandra: bool):
+
+        # SAVE TOPICS IN STATE
+        self.input_topic = input_topic
+        self.include_kafka_push = include_kafka_push
+        self.include_cassandra = include_cassandra
+
+        # ALWAYS CREATE A KAFKA CONSUMER
+        self.consumer = create_consumer(input_topic)
+
+        # IF REQUESTED, CREATE A KAFKA PRODUCER
+        if include_kafka_push:
+            self.producer = create_producer()
+
+        # IF REQUESTED, CREATE A CASSANDRA CLIENT
+        if include_cassandra:
+            self.cassandra = create_cassandra_instance()
+
+    def poll_next(self, thread_lock, handle_event):
+        if VERBOSE: log(f'STARTED POLLING EVENTS (topic: {self.input_topic})')
+
+        # KEEP POLLING WHILE THE THREAD LOCK IS ACTIVE
+        while thread_lock.is_active():
+            try:
+
+                # POLL NEXT MESSAGE
+                msg = self.consumer.kafka_client.poll(1)
+
+                # NULL MESSAGE -- SKIP
+                if msg is None:
+                    continue
+
+                # CATCH ERRORS
+                if msg.error():
+                    print('FAULTY EVENT RECEIVED', msg.error())
+                    continue
+
+                # COMMIT THE EVENT TO PREVENT OTHERS FROM TAKING IT
+                self.consumer.kafka_client.commit(msg, asynchronous=global_config.pipeline.kafka.async_consumer_commit)
+
+                # HANDLE THE EVENT VIA CALLBACK FUNC
+                if VERBOSE: log(f'EVENT RECEIVED')
+
+                # PUSH THE RAW BYTES THROUGH THE GIVEN DESERIALIZER
+                result = self.consumer.json_deserializer(msg.value())
+
+                # CREATE DEFAULT CALLBACK FUNC INPUT
+                callback_input = {
+                    'input_data': result
+                }
+
+                # ADD CASSANDRA CLIENT WHEN REQUESTED
+                if self.include_cassandra:
+                    callback_input['cassandra'] = self.cassandra
+
+                # ADD KAFKA PRODUCER WHEN REQUESTED
+                if self.include_kafka_push:
+                    callback_input['kafka_push'] = self.producer.push_msg
+
+                # RUN THE CALLBACK FUNC
+                try:
+                    handle_event(**callback_input)
+                except Exception as error:
+                    print('CUSTOM CALLBACK ERROR =>', error)
+
+                if VERBOSE: log(f'EVENT HANDLED')
+
+            # SILENTLY DEAL WITH OTHER ERRORS
+            except Exception as error:
+                print('PRODUCER_CONSUMER ERROR:', error)
+                continue
+            
+        # LOCK WAS KILLED, THEREFORE THREAD LOOP ENDS
+        log('WORKER MANUALLY KILLED')

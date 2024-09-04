@@ -19,9 +19,9 @@ backend:
 
     # WHAT PORT SHOULD THE BACKEND API BE RUNNING ON?
     api_port: 3003
-    api_host: localhost
 
     # HIDE AUXILLARY TABLES AND TOPICS FROM BACKEND LISTINGS?
+    # MAKES IT EASIER TO READ/FIND RELEVANT DATA
     hide_auxillary: true
 
     # WHAT CONTENT SHOULD BE AUTO-CREATED BY THE INIT ENDPOINTS?
@@ -64,4 +64,5 @@ pipeline:
     # KAFKA CONSUMER SETTINGS
     kafka:
         consumer_stategy: latest      # latest OR earliest
-        async_commit: true
+        async_consumer_commit: true
+        async_producer_ack: true

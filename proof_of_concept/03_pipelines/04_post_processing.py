@@ -1,11 +1,10 @@
 import utils.kafka_utils as kafka_utils
-from utils.misc import DICT_NAMESPACE
-from utils.types import KAFKA_DICT, KAFKA_PUSH_FUNC
+from utils.types import TO_NAMESPACE, KAFKA_DICT, KAFKA_PUSH_FUNC, CASSANDRA_INSTANCE
 
 ########################################################################################
 ########################################################################################
 
-local_config = DICT_NAMESPACE({
+local_config = TO_NAMESPACE({
     'input_topic': 'post_processing',
     'training_topic': 'model_training',
     'tracker_topic': 'drift_tracker',
@@ -14,8 +13,7 @@ local_config = DICT_NAMESPACE({
 ########################################################################################
 ########################################################################################
 
-# HANDLE INCOMING KAFKA EVENTS
-def handle_event(input_data: KAFKA_DICT, kafka_push: KAFKA_PUSH_FUNC):
+def handle_event(input_data: KAFKA_DICT, kafka_push: KAFKA_PUSH_FUNC, cassandra: CASSANDRA_INSTANCE):
     print(input_data)
 
     kafka_push(local_config.training_topic, input_data)
@@ -24,6 +22,12 @@ def handle_event(input_data: KAFKA_DICT, kafka_push: KAFKA_PUSH_FUNC):
 ########################################################################################
 ########################################################################################
 
-kafka_utils.start_consumer_producer(
-    local_config.input_topic, handle_event
+kafka_utils.start_flex_consumer(
+    local_config.input_topic,
+    handle_event,
+
+    # DO YOU NEED A KAFKA PRODUCER OR CASSANDRA CLIENT?
+    # REMEMBER TO ADD/REMOVE THEM AS INPUT ARGS TO handle_events ^
+    include_kafka_push=True,
+    include_cassandra=True,
 )
