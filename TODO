@@ -1,19 +1,20 @@
-CREATE INIT SCRIPT FOR A FEW CASSANDRA TABLES
-CREATE INIT SCRIPT FOR KAFKA TOPICS
+######################################################################
+### NOW ##############################################################
+######################################################################
 
-INTEGRATE TOPIC CHECK FOR API
-    REJECT IF TOPIC EXISTS
-    PASS IF IT DOESNT
+ADD CASSANDRA INSTANCE STUFF TO PIPELINES
+    WRITING
+    READING
 
-INTEGRATE YAML PROCESSING?
-EXPERIMENT WITH FEATURE ENGINEERING OPTIONS
+ADD DATA FETCHING ENDPOINT TO CASSANDRA BACKEND
+    MAYBE X TO Y INDEX IN URL?
+    cassandra/keyspace/table/x-y
 
-RESEARCH JS-BASED DRAWING/PUZZLING TOOL
+######################################################################
+### LATER ############################################################
+######################################################################
 
---------------------------------------------------------------------
---------------------------------------------------------------------
+MAYBE ADD BACKEND TO DOCKER COMPOSE?
+    MOUNT LOCAL DIR SINCE HOT-RELOAD PROTECTS?
 
-FIGURE OUT HOW TO ADD CUSTOM PROMETHEUS ENDPOINT
-    HOW DO PUSH DATA TO IT?
-
-    USE IT FOR MODEL STATISTICS
+SPLIT DOCKER-COMPOSE INTO SEPARATE FILES?
