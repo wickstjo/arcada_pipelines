@@ -45,3 +45,25 @@ def load_global_config():
     
 ########################################################################################################
 ########################################################################################################
+
+def validate_dict(input_data: dict, reference: dict):
+    container = {}
+
+    for prop_name, type_cast_func in reference.items():
+
+        # MAKE SURE DICT KEY EXIST
+        if prop_name not in input_data:
+            raise Exception(f'KEY ERROR: MISSING PROPERTY ({prop_name})')
+        
+        # MAKE SURE EVERY VALUE CAN BE CAST TO ITS EXPECTED TYPE
+        try:
+            input_value = input_data[prop_name]
+            container[prop_name] = type_cast_func(input_value)
+
+        except Exception as error:
+            raise Exception(f'CASTING ERROR (prop: {prop_name}): {error}')
+        
+    return container
+
+########################################################################################################
+########################################################################################################

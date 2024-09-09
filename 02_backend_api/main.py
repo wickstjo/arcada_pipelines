@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import kafka, cassandra
+from routes import kafka, cassandra, pipeline_config
 from utils.misc import load_global_config
 
 # LOAD THE GLOBAL CONFIG FOR SETTINGS & INITIALIZE COMPONENTS
@@ -20,6 +20,19 @@ app.add_middleware(
 # ADD CUSTOM ROUTES
 app.include_router(kafka.router)
 app.include_router(cassandra.router)
+app.include_router(pipeline_config.router)
+
+# LIST OUT ENDPOINTS AT ROOT
+@app.get('/')
+async def read_root():
+    return {
+        'endpoints': [
+            '/docs',
+            '/kafka',
+            '/cassandra',
+            '/config'
+        ]
+    }
 
 # LAUNCH SERVER
 if __name__ == "__main__":

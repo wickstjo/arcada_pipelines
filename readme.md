@@ -1,9 +1,3 @@
-<style>
-    table {
-        width: 100%;
-    }
-</style>
-
 ### CLUSTER BROKERS
 
 | Description | Endpoint |
@@ -52,3 +46,7 @@
 | - | -: |
 | `TODO` List entire latest config YAML. | `localhost:3003/config`|
 | `TODO` Update config. | `localhost:3003/config/update`|
+
+
+
+<style> table { width: 100%; } </style>

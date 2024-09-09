@@ -1,10 +1,11 @@
 from cassandra.cluster import Cluster
-from utils.misc import load_global_config
+import utils.misc as misc
 import re
 
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE CASSANDRA CONNECTION STRING
-global_config = load_global_config()
+global_config = misc.load_global_config()
 CASSANDRA_BROKERS = [(host, int(port)) for host, port in (item.split(':') for item in global_config.cluster.cassandra_brokers)]
+VERBOSE = global_config.pipeline.verbose_logging
 
 ########################################################################################################
 ########################################################################################################
@@ -54,12 +55,14 @@ class create_cassandra_instance:
             for item in query_result:
                 container.append(item._asdict())
 
+            if VERBOSE: misc.log('[CASSANDRA] READ FROM DATABASE')
+
             return container
         
         # SAFELY CATCH ERRORS
         except Exception as raw_error:
             parsed_error = self.parse_error(raw_error)
-            raise Exception(f'CASSANDRA READ ERROR => {parsed_error}')
+            raise Exception(f'[CASSANDRA] READ ERROR => {parsed_error}')
     
     ########################################################################################################
     ########################################################################################################
@@ -82,8 +85,10 @@ class create_cassandra_instance:
             # CONSTRUCT A PREPARED STATEMENT & EXECUTE THE DB WRITE
             prepared_statement = self.instance.prepare(query_string)
             self.instance.execute(prepared_statement, values)
+
+            if VERBOSE: misc.log('[CASSANDRA] WROTE TO DATABASE')
         
         # SAFELY CATCH ERRORS
         except Exception as raw_error:
             parsed_error = self.parse_error(raw_error)
-            raise Exception(f'CASSANDRA WRITE ERROR => {parsed_error}')
+            raise Exception(f'[CASSANDRA] WRITE ERROR => {parsed_error}')

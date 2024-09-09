@@ -1,5 +1,6 @@
 from typing import Dict, Any, Callable, TypeAlias
 from types import SimpleNamespace
+import random
 
 ########################################################################################################
 ########################################################################################################
@@ -8,6 +9,25 @@ from types import SimpleNamespace
 KAFKA_DICT: TypeAlias = Dict[str, Any]
 KAFKA_PUSH_FUNC: TypeAlias = Callable[[str, KAFKA_DICT], None]
 CASSANDRA_INSTANCE: TypeAlias = Callable
+NAMESPACE: TypeAlias = SimpleNamespace
+
+########################################################################################################
+########################################################################################################
+
+# REFERENCE TYPE: CLEAN STOCK DATA
+REF_STOCK_DATA = {
+    'timestamp': lambda x: int(random.uniform(10**3, 10**6)),
+    'high': float,
+    'low': float,
+    'open': float,
+    'close': float,
+    'volume': lambda x: int(float(x)),
+}
+
+# REFERENCE TYPE: NEW MODEL DEPLOYED EVENT DATA
+REF_MODEL_DEPLOYED = {
+    'model_topic_name': str,
+}
 
 ########################################################################################################
 ########################################################################################################

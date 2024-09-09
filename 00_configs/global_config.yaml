@@ -30,18 +30,22 @@ backend:
         # KAFKA TOPICS
         # JUST THE TOPIC NAME IS ENOUGH
         kafka_topics:
-            - input_data
-            - pre_processing
-            - model_usage
-            - post_processing
+            - data_refinery
+            - data_dispatch
             - model_training
-            - drift_tracker
+            - model_inference
+            - model_analysis
+            - decision_synthesis
+
+            # ASYNC PIPELINE EVENTS
+            - events.model_trained
+            - events.model_deployed
 
         # CASSANDRA KEYSPACES/TABLES
         # PROVIDE A KEYSPACE, TABLE NAME, ITS COLUMNS AND WHAT COLS SHOULD BE USED AS COMPOSITE KEYS
         cassandra_tables:
-            -   keyspace: testing_keyspace
-                table_name: testing_table
+            -   keyspace: refined
+                table_name: stock_data
                 columns: 
                     timestamp: int
                     open: float
@@ -63,6 +67,14 @@ pipeline:
 
     # KAFKA CONSUMER SETTINGS
     kafka:
-        consumer_stategy: latest      # latest OR earliest
+
+        # WHEN A CONSUMER IS BOOTED UP..
+        # WHAT INDEX SHOULD IT START READING FROM?
+        consumer_stategy: latest
+
+        # SHOULD CONSUMERS AUTO COMMIT OR NOT?
+        consumer_auto_commit: false
         async_consumer_commit: true
+
+        # HOW SHOULD PRODUCERS ACKNOWLEDGE?
         async_producer_ack: true
