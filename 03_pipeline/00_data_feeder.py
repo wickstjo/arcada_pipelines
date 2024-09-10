@@ -1,6 +1,6 @@
-import utils.dataset_utils as dataset_utils
-import utils.misc as misc
-from utils.kafka_utils import create_producer
+import funcs.dataset_utils as dataset_utils
+from funcs.kafka_utils import create_kafka_producer
+import funcs.misc as misc
 import time
 
 ########################################################################################
@@ -25,7 +25,7 @@ try:
     
     # CREATE A KAFKA PRODUCER
     # LOAD THE CSV DATASET INTO AN ARRAY OF DICTS
-    kafka_producer = create_producer()
+    kafka_producer = create_kafka_producer()
     dataset = dataset_utils.load_csv(state.dataset)
     
     # PUSH THE ROWS INTO KAFKA

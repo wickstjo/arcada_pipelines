@@ -1,8 +1,6 @@
 from confluent_kafka import Consumer, Producer
-import utils.misc as misc
-from utils.thread_utils import create_process_beacon
-from utils.cassandra_utils import create_cassandra_instance
-from typing import Callable
+import funcs.misc as misc
+import funcs.thread_utils as thread_utils
 import json
 
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE KAFKA CONNECTION STRING
@@ -13,7 +11,7 @@ VERBOSE = global_config.pipeline.verbose_logging
 ###################################################################################################
 ###################################################################################################
 
-class create_producer:
+class create_kafka_producer:
 
     # ON LOAD, CREATE KAFKA PRODUCER
     def __init__(self):
@@ -36,7 +34,8 @@ class create_producer:
         if error:
             print('ACK ERROR', error)
         else:
-            if VERBOSE: misc.log(f'[KAFKA] PUSHED EVENT')
+            target_topic: str = message.topic()
+            if VERBOSE: misc.log(f'[KAFKA] PUSHED EVENT ({target_topic})')
 
     # DATA SERIALIZER: JSON/DICT => BYTES
     def json_serializer(self, json_data: dict) -> list[bool, bytes|str]:
@@ -70,7 +69,7 @@ class create_producer:
 ###################################################################################################
 ###################################################################################################
 
-class create_consumer:
+class create_kafka_consumer:
 
     # ON LOAD, CREATE KAFKA CONSUMER CLIENT
     def __init__(self, kafka_topic: str|list[str]):
@@ -142,47 +141,16 @@ class create_consumer:
         except:
             raise Exception('[KAFKA] DESERIALIZATION ERROR')
 
-########################################################################################
-########################################################################################
-
-class create_flex_worker:
-
-    # ON LOAD, CREATE KAFKA CONSUMER CLIENT
-    def __init__(self, input_topic: str|list[str], include_kafka_producer: bool, include_cassandra: bool, include_yaml_config: bool):
-
-        # SAVE TOPICS IN STATE
-        self.input_topic = input_topic
-
-        # ALWAYS CREATE A KAFKA CONSUMER
-        self.consumer = create_consumer(input_topic)
-
-        # WHAT SUPPORT STRUCTS SHOULD BE PROVIDED IN THE EVENT CALLBACK FUNC?
-        # ORDER: KAFKA_PRODUCER, CASSANDRA_CLIENT, GLOBAL_CONFIG
-        self.callback_support_structs = []
-
-        # IF REQUESTED, CREATE A KAFKA PRODUCER
-        if include_kafka_producer:
-            self.producer = create_producer()
-            self.callback_support_structs.append(self.producer)
-
-        # IF REQUESTED, CREATE A CASSANDRA CLIENT
-        if include_cassandra:
-            self.cassandra = create_cassandra_instance()
-            self.callback_support_structs.append(self.cassandra)
-
-        # IF REQUESTED, PROVIDE THE GLOBAL CONFIG
-        if include_yaml_config:
-            self.callback_support_structs.append(global_config)
-
+    # START VACUUMING DATA FROM KAFKA
     def poll_next(self, beacon, handle_event):
-        if VERBOSE: misc.log(f'[KAFKA] STARTED POLLING EVENTS (topic: {self.input_topic})')
+        if VERBOSE: misc.log(f'[KAFKA] STARTED POLLING EVENTS (topic: {self.kafka_topic})')
 
         # KEEP POLLING WHILE THE THREAD LOCK IS ACTIVE
         while beacon.is_active():
             try:
 
                 # POLL NEXT MESSAGE
-                msg = self.consumer.kafka_client.poll(1)
+                msg = self.kafka_client.poll(1)
 
                 # NULL MESSAGE -- SKIP
                 if msg is None:
@@ -196,18 +164,19 @@ class create_flex_worker:
                 # IF AUTO-COMMITTING IS DISABLED
                 # COMMIT THE EVENT TO PREVENT OTHERS FROM TAKING IT
                 if not global_config.pipeline.kafka.consumer_auto_commit:
-                    self.consumer.kafka_client.commit(msg, asynchronous=global_config.pipeline.kafka.async_consumer_commit)
+                    self.kafka_client.commit(msg, asynchronous=global_config.pipeline.kafka.async_consumer_commit)
 
                 # DESERIALIZE THE MESSAGE, AND CHECK WHICH TOPIC IT CAME FROM
-                deserialized_dict: dict = self.consumer.json_deserializer(msg.value())
+                deserialized_dict: dict = self.json_deserializer(msg.value())
                 topic_name: str = msg.topic()
 
-                # HANDLE THE EVENT VIA CALLBACK FUNC
-                if VERBOSE: misc.log(f'[KAFKA] EVENT RECEIVED ({topic_name})')
+                if VERBOSE:
+                    print('----')
+                    misc.log(f'[KAFKA] EVENT RECEIVED ({topic_name})')
 
                 # RUN THE CALLBACK FUNC
                 try:
-                    handle_event(topic_name, deserialized_dict, self.callback_support_structs)
+                    handle_event(topic_name, deserialized_dict)
 
                 # THROW SPECIFIC ERROR WHEN USER TRIES TO DESTRUCTURE TOO MANY/FEW ARGS FROM THE SUPPORT_STRUCTS LIST
                 except ValueError as error:
@@ -228,18 +197,28 @@ class create_flex_worker:
 ########################################################################################
 ########################################################################################
 
-def start_flex_consumer(input_topic: str, handle_event: Callable, include_kafka_producer: bool = False, include_cassandra: bool = False, include_yaml_config: bool = False):
+def start_kafka_consumer(create_pipeline_state):
 
-    # CREATE THE KAKFA CLIENT & CONTROL LOCK
-    kafka_client = create_flex_worker(input_topic, include_kafka_producer, include_cassandra, include_yaml_config)
-    beacon = create_process_beacon()
+    # INSTANTIATE THE PIPELINE STATE
+    state = create_pipeline_state()
+
+    # MAKE SURE INPUT_TOPICS IS DEFINED
+    if not hasattr(state, 'input_topics'):
+        raise Exception("STATE ERROR: YOU MUST DEFINE THE STATE VARIABLE 'input_topics'")
+    
+    # MAKE SURE THE HANDLE_EVENTS METHOD IS DEFINED
+    if not hasattr(state, 'handle_event'):
+        raise Exception("STATE ERROR: YOU MUST DEFINE THE STATE METHOD 'handle_event'")
+
+    # CREATE THE KAKFA CONSUMER & CONTROL LOCK
+    kafka_client = create_kafka_consumer(state.input_topics)
+    beacon = thread_utils.create_process_beacon()
 
     # FINALLY, START CONSUMING EVENTS
     try:
-        kafka_client.poll_next(beacon, handle_event)
+        kafka_client.poll_next(beacon, state.handle_event)
 
     # TERMINATE MAIN PROCESS AND KILL HELPER THREADS
     except KeyboardInterrupt:
         beacon.kill()
-        misc.log('[KAFKA] POLLING HAS CORRECTLY ENDED..', True)
-
+        misc.log('POLLING WAS MANUALLY ENDED..', True)

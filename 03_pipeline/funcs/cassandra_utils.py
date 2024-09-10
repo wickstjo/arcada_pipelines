@@ -1,5 +1,5 @@
 from cassandra.cluster import Cluster
-import utils.misc as misc
+import funcs.misc as misc
 import re
 
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE CASSANDRA CONNECTION STRING
@@ -56,7 +56,7 @@ class create_cassandra_instance:
                 container.append(item._asdict())
 
             if VERBOSE: misc.log('[CASSANDRA] READ FROM DATABASE')
-
+            
             return container
         
         # SAFELY CATCH ERRORS
@@ -64,6 +64,13 @@ class create_cassandra_instance:
             parsed_error = self.parse_error(raw_error)
             raise Exception(f'[CASSANDRA] READ ERROR => {parsed_error}')
     
+    ########################################################################################################
+    ########################################################################################################
+
+    # COUNT TABLE ROWS
+    def count_rows(self, keyspace_table: str) -> int:
+        return int(self.read(f'SELECT COUNT(*) from {keyspace_table}')[0]['count'])
+
     ########################################################################################################
     ########################################################################################################
 

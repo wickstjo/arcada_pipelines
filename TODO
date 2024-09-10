@@ -1,22 +1,16 @@
-######################################################################
-### NOW ##############################################################
-######################################################################
+WRITE UNIFORM ML CLASS WITH STATIC METHODS
+    TRAIN
+    LOAD
+    USE
+    FEATURE ENGINEERING?
 
-ADD DATA FETCHING ENDPOINT TO CASSANDRA BACKEND
-    MAYBE X TO Y INDEX IN URL?
-    cassandra/keyspace/table/x-y
+REPLACE THE ML PARTS IN PIPELINE WITH ^
+    TRAINING
+    INFERENCE
 
+MAYBE
+    ALWAYS DIRECT DISPATCH STREAM TOWARDS INFERENCE?
+        EVEN WITH NO MODELS TRAINED 
+        (FOR NOW)
 
-
-
-
-
-    
-######################################################################
-### LATER ############################################################
-######################################################################
-
-MAYBE ADD BACKEND TO DOCKER COMPOSE?
-    MOUNT LOCAL DIR SINCE HOT-RELOAD PROTECTS?
-
-SPLIT DOCKER-COMPOSE INTO SEPARATE FILES?
+    _ADD REDIS CACHE?

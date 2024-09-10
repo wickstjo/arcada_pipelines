@@ -1,5 +1,5 @@
 from threading import Thread, Semaphore
-from utils.misc import log
+from funcs.misc import log
 from typing import Callable
 import time
 

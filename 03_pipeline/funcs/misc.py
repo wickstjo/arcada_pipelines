@@ -1,6 +1,6 @@
 import csv, yaml
 from datetime import datetime
-from utils.types import TO_NAMESPACE
+from types import SimpleNamespace
 
 ########################################################################################################
 ########################################################################################################
@@ -46,9 +46,11 @@ def load_global_config():
 ########################################################################################################
 ########################################################################################################
 
+# VALIDATE AN INPUT DICT BASED ON A REFERENCE DICT
 def validate_dict(input_data: dict, reference: dict):
     container = {}
 
+    # REFERENCE DICT: KEY_NAME => TYPE_FUNC
     for prop_name, type_cast_func in reference.items():
 
         # MAKE SURE DICT KEY EXIST
@@ -67,3 +69,21 @@ def validate_dict(input_data: dict, reference: dict):
 
 ########################################################################################################
 ########################################################################################################
+
+# CONVERT DICT TO CLASS NAMESPACE
+def TO_NAMESPACE(d):
+    if isinstance(d, dict):
+        # Recursively convert the dictionary to a namespace
+        for key, value in d.items():
+            if isinstance(value, dict):
+                d[key] = TO_NAMESPACE(value)
+            elif isinstance(value, list):
+                # Process each item in the list
+                d[key] = [TO_NAMESPACE(item) if isinstance(item, dict) else item for item in value]
+        return SimpleNamespace(**d)
+    elif isinstance(d, list):
+        # Process a list if the outermost structure is a list
+        return [TO_NAMESPACE(item) if isinstance(item, dict) else item for item in d]
+    else:
+        # If d is neither a dict nor a list, return it as is
+        return d
