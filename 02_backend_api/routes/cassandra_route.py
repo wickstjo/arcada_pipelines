@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
-import utils.cassandra as cassandra_utils
-from utils.misc import load_global_config
+import funcs.cassandra_utils as cassandra_utils
+import funcs.misc as misc
 
 ########################################################################################################
 ########################################################################################################
 
 router = APIRouter()
 cassandra = cassandra_utils.create_cassandra_instance()
-global_config = load_global_config()
+global_config = misc.load_global_config()
 
 ########################################################################################################
 ########################################################################################################
@@ -46,7 +46,7 @@ async def create_table(table: Table, response: Response):
 
 # CREATE DEFAULT TABLES AFTER A FRESH DOCKER LAUNCH
 @router.get('/cassandra/init')
-async def init_experiment_topics(response: Response):
+async def initialize_default_content(response: Response):
     try:
         response.status_code = status.HTTP_201_CREATED
         container = []

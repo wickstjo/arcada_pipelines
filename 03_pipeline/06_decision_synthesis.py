@@ -1,7 +1,6 @@
 from funcs.kafka_utils import create_kafka_producer, start_kafka_consumer
 from funcs.cassandra_utils import create_cassandra_instance
 import funcs.misc as misc
-import random
 
 ########################################################################################
 ########################################################################################
@@ -9,27 +8,19 @@ import random
 class create_pipeline_component:
     def __init__(self, process_beacon):
 
-        # CREATE INSTANCED CLIENTS
-        self.cassandra = create_cassandra_instance()
+        # CREATE KAFKA PRODUCER & CASSANDRA CLIENT
         self.kafka_producer = create_kafka_producer()
+        self.cassandra = create_cassandra_instance()
 
         # RELEVANT KAFKA TOPICS
-        self.input_topics: str|list[str] = 'data_refinery'
-        self.output_topic: str = 'data_dispatch'
+        self.input_topics: str|list[str] = 'decision_synthesis'
 
-        # WHAT SHOULD CLEAN STOCK DATA LOOK LIKE?
-        self.stock_data_type: dict = {
-            'timestamp': lambda x: int(random.uniform(10**3, 10**6)),
-            'high': float,
-            'low': float,
-            'open': float,
-            'close': float,
-            'volume': lambda x: int(float(x)),
+        # WHAT FORMAT SHOULD KAFKA INPUT FOLLOW?
+        self.expected_input_format: dict = {
+            'input_row': str,
+            'predictions': dict
         }
-    
-        # CASSANDRA TABLE FOR STORING REFINED DATA
-        self.cassandra_table: str = 'refined.stock_data'
-        
+
     ########################################################################################
     ########################################################################################
 
@@ -37,14 +28,11 @@ class create_pipeline_component:
     # THIS METHOD IS CALLED FOR EVERY EVENT
     def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
 
-        # ATTEMPT TO VALIDATE DICT AGAINST REFERENCE OBJECT
-        valid_row: dict = misc.validate_dict(kafka_input, self.stock_data_type)
-        misc.log('ROW PASSED VALIDATION')
+        # MAKE SURE THE KAFKA INPUT IS VALID
+        valid_input = misc.validate_dict(kafka_input, self.expected_input_format)
 
-        # VALIDATION SUCCEEDED, WRITE THE ROW TO DB
-        # AND PUSH REFINED DATA BACK TO KAFKA
-        self.cassandra.write(self.cassandra_table, valid_row)
-        self.kafka_producer.push_msg(self.output_topic, valid_row)
+        # MAKE DECISION
+        print(valid_input)
 
 ########################################################################################
 ########################################################################################

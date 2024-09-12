@@ -100,7 +100,6 @@ class create_kafka_consumer:
 
     # WHEN CLASS DIES, KILL THE KAFKA CLIENT
     def __del__(self):
-        misc.log('[KAFKA] CONSUMER CLOSED')
         self.kafka_client.close()
 
     # PARTITION ASSIGNMENT SUCCESS
@@ -143,7 +142,7 @@ class create_kafka_consumer:
 
     # START VACUUMING DATA FROM KAFKA
     def poll_next(self, beacon, handle_event):
-        if VERBOSE: misc.log(f'[KAFKA] STARTED POLLING EVENTS (topic: {self.kafka_topic})')
+        if VERBOSE: misc.log(f'[KAFKA] STARTED POLLING ({self.kafka_topic})')
 
         # KEEP POLLING WHILE THE THREAD LOCK IS ACTIVE
         while beacon.is_active():
@@ -171,7 +170,6 @@ class create_kafka_consumer:
                 topic_name: str = msg.topic()
 
                 if VERBOSE:
-                    print('----')
                     misc.log(f'[KAFKA] EVENT RECEIVED ({topic_name})')
 
                 # RUN THE CALLBACK FUNC
@@ -199,26 +197,28 @@ class create_kafka_consumer:
 
 def start_kafka_consumer(create_pipeline_state):
 
+    # CREATE A PROCESS BEACON TO KILL OFF HELPER THREADS
+    beacon = thread_utils.create_process_beacon()
+
     # INSTANTIATE THE PIPELINE STATE
-    state = create_pipeline_state()
+    state = create_pipeline_state(beacon)
 
     # MAKE SURE INPUT_TOPICS IS DEFINED
     if not hasattr(state, 'input_topics'):
         raise Exception("STATE ERROR: YOU MUST DEFINE THE STATE VARIABLE 'input_topics'")
     
     # MAKE SURE THE HANDLE_EVENTS METHOD IS DEFINED
-    if not hasattr(state, 'handle_event'):
-        raise Exception("STATE ERROR: YOU MUST DEFINE THE STATE METHOD 'handle_event'")
+    if not hasattr(state, 'on_kafka_event'):
+        raise Exception("STATE ERROR: YOU MUST DEFINE THE STATE METHOD 'on_kafka_event'")
 
     # CREATE THE KAKFA CONSUMER & CONTROL LOCK
     kafka_client = create_kafka_consumer(state.input_topics)
-    beacon = thread_utils.create_process_beacon()
 
     # FINALLY, START CONSUMING EVENTS
     try:
-        kafka_client.poll_next(beacon, state.handle_event)
+        kafka_client.poll_next(beacon, state.on_kafka_event)
 
     # TERMINATE MAIN PROCESS AND KILL HELPER THREADS
     except KeyboardInterrupt:
         beacon.kill()
-        misc.log('POLLING WAS MANUALLY ENDED..', True)
+        misc.log('[MAIN] PROCESS WAS MANUALLY ENDED..', True)

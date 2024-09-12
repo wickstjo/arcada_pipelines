@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
-import utils.kafka as kafka_utils
-from utils.misc import load_global_config
+import funcs.kafka_utils as kafka_utils
+import funcs.misc as misc
 
 ########################################################################################################
 ########################################################################################################
 
 router = APIRouter()
 kafka_admin = kafka_utils.create_admin_client()
-global_config = load_global_config()
+global_config = misc.load_global_config()
 
 ########################################################################################################
 ########################################################################################################
@@ -49,7 +49,7 @@ async def create_topic(topic: Topic, response: Response):
 ########################################################################################################
 
 @router.get('/kafka/init')
-async def init_experiment_topics(response: Response):
+async def initialize_default_content(response: Response):
 
     # READ WHAT TOPICS TO CREATE FROM THE GLOBAL CONFIG
     topics = global_config.backend.create_on_init.kafka_topics
@@ -75,7 +75,7 @@ async def init_experiment_topics(response: Response):
 ########################################################################################################
 
 @router.get('/kafka/{topic_name}')
-async def overview(topic_name: str, response: Response):
+async def topic_overview(topic_name: str, response: Response):
     try:
         response.status_code = status.HTTP_200_OK
 

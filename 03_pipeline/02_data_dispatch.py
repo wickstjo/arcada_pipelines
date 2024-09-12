@@ -5,13 +5,13 @@ import funcs.misc as misc
 ########################################################################################
 
 class create_pipeline_component:
-    def __init__(self):
+    def __init__(self, process_beacon):
 
         # CREATE KAFKA PRODUCER & CASSANDRA CLIENT 
         self.kafka_producer = create_kafka_producer()
 
         # RELEVANT KAFKA TOPICS
-        self.input_topics: list[str] = ['data_dispatch', 'events.model_deployed']
+        self.input_topics: str|list[str] = 'data_dispatch'
         self.model_training_topic: str = 'model_training'
         self.model_inference_topic: str = 'model_inference'
 
@@ -28,7 +28,7 @@ class create_pipeline_component:
 
     # HANDLE INCOMING KAFKA EVENTS
     # THIS METHOD IS CALLED FOR EVERY EVENT
-    def handle_event(self, kafka_topic: str, kafka_input: dict):
+    def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
 
         # WHEN A NEW MODEL IS TRAINED & DEPLOYED -- ADD IT TO THE STATE
         if kafka_topic == 'events.model_deployed':

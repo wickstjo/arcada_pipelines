@@ -1,8 +1,8 @@
 from cassandra.cluster import Cluster
-from utils.misc import load_global_config
+import funcs.misc as misc
 
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE CASSANDRA CONNECTION STRING
-global_config = load_global_config()
+global_config = misc.load_global_config()
 cassandra_brokers = [(host, int(port)) for host, port in (item.split(':') for item in global_config.cluster.cassandra_brokers)]
 
 # HIDE MANAGEMENT KEYSPACES AND TABLES

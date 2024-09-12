@@ -3,6 +3,7 @@ uvicorn
 confluent-kafka
 cassandra-driver
 pyyaml
+redis
 
 # AUDITED 03/09 -- OK
 # pip install -r requirements.txt

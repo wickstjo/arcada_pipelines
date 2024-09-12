@@ -1,9 +1,9 @@
 from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka import Consumer, TopicPartition
-from utils.misc import load_global_config
+import funcs.misc as misc
 
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE KAFKA CONNECTION STRING
-global_config = load_global_config()
+global_config = misc.load_global_config()
 kafka_brokers = ','.join(global_config.cluster.kafka_brokers)
 
 ########################################################################################################
@@ -17,8 +17,18 @@ class create_admin_client:
             'bootstrap.servers': kafka_brokers,
         })
 
+        self.check_connection()
+
     ########################################################################################################
     ########################################################################################################
+
+    # MAKE SURE KAFKA CONNECTION IS OK
+    def check_connection(self):
+        try:
+            metadata = self.instance.list_topics(timeout=2)
+            return True
+        except:
+            raise Exception(f'COULD NOT CONNECT WITH KAFKA SERVER ({kafka_brokers})') 
 
     # FETCH ALL EXISTING TOPICS
     def topics_overview(self):
