@@ -17,8 +17,7 @@ class create_redis_instance:
     # DATA SERIALIZER: JSON/DICT => BYTES
     def json_serializer(self, json_data: dict) -> bytes:
         try:
-            json_bytes = json.dumps(json_data).encode('UTF-8')
-            return json_bytes
+            return json.dumps(json_data).encode('UTF-8')
         except Exception as error:
             raise Exception(f'[REDIS] SERIALIZATION ERROR: {error}')
 
@@ -28,8 +27,7 @@ class create_redis_instance:
     # DATA DESERIALIZER: BYTES => JSON DICT
     def json_deserializer(self, raw_bytes: bytes) -> dict:
         try:
-            json_dict = json.loads(raw_bytes.decode('UTF-8'))
-            return json_dict
+            return json.loads(raw_bytes.decode('UTF-8'))
         except Exception as error:
             raise Exception(f'[REDIS] DESERIALIZATION ERROR: {error}')
 

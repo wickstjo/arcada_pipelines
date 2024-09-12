@@ -1,11 +1,9 @@
 from funcs.kafka_utils import create_kafka_producer, start_kafka_consumer
 from funcs.cassandra_utils import create_cassandra_instance
 from funcs.redis_utils import create_redis_instance
+import funcs.constants as constants
 import funcs.misc as misc
 import time
-
-# import funcs.ml_utils as ml_utils
-import funcs.machine_learning.utils as ml_utils
 
 ########################################################################################
 ########################################################################################
@@ -18,22 +16,11 @@ class create_pipeline_component:
         self.cassandra = create_cassandra_instance()
         self.redis = create_redis_instance(process_beacon)
 
-        # RELEVANT KAFKA TOPICS
-        self.input_topics: str|list[str] = 'model_training'
-        self.output_topic: str = 'events.model_trained'
-
-        # THE CASSANDRA TABLE WITH REFINED DATA
-        self.cassandra_table: str = 'refined.stock_data'
-
-        # WHAT SHOULD A MODEL TRAINING REQUEST CONTAIN?
-        self.model_training_request_type: dict = {
-            'model_name': str,
-            'model_type': lambda x: str(x).lower(),
-            'dataset_rows': int,
-        }
-
+        # WHAT KAFKA TOPIC DO YOU WANT TO CONSUME DATA FROM?
+        self.kafka_input_topics: str|list[str] = constants.kafka.MODEL_TRAINING
+        
         # WHAT ML MODEL SUITES ARE CURRENTLY AVAILABLE?
-        self.model_options: dict = ml_utils.IMPLEMENTED_MODELS()
+        self.model_options: dict = constants.IMPLEMENTED_MODELS()
 
     ########################################################################################
     ########################################################################################
@@ -43,16 +30,21 @@ class create_pipeline_component:
     def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
 
         # MAKE SURE THE REQUEST CONTAINS THE NECESSARY PARAMS
-        request = misc.validate_dict(kafka_input, self.model_training_request_type)
-        model_type = request['model_type']
-        model_name = request['model_name']
+        training_request = misc.validate_dict(kafka_input, constants.types.MODEL_TRAINING_REQUEST)
+        model_name = training_request['model_name']
+        model_type = training_request['model_type']
+        model_version = training_request['model_version']
+
+        ### TODO: ADD MODEL VERSIONING
+        ### TODO: ADD MODEL VERSIONING
+        ### TODO: ADD MODEL VERSIONING
 
         # THROW ERROR IF THE REQUESTED MODEL TYPE IS NOT AVAILABLE
         if model_type not in self.model_options.keys():
             raise Exception(f'MODEL TYPE NOT AVAILABLE ({model_type})')
 
         # ATTEMPT TO LOAD DATASET -- BLOCKING UNTIL DATABASE HAS ENOUGH ROWS
-        dataset = self.fetch_dataset(request['dataset_rows'])
+        dataset = self.fetch_dataset(training_request['dataset_rows'])
 
         # MEASURE STARTING TIME
         misc.log(f'MODEL TRAINING STARTED ({model_type})..')
@@ -68,23 +60,23 @@ class create_pipeline_component:
 
         # MEASURE DELTA TIME
         training_ended: float = time.time()
-        delta_time: float = round(training_ended - training_started, 2)
+        delta_time: float = round(training_ended - training_started, 3)
         misc.log(f'MODEL TRAINING FINISHED ({model_type}) IN {delta_time} SECONDS')
 
+        ### TODO: CONDITIONALLY, RETIRE THE OLD MODEL VERSION IN DB
+        ### TODO: CONDITIONALLY, RETIRE THE OLD MODEL VERSION IN DB
+        ### TODO: CONDITIONALLY, RETIRE THE OLD MODEL VERSION IN DB
 
+        # self.cassandra.query(f"UPDATE {constants.CASSANDRA_MODELS_TABLE} SET active_status = False WHERE model_name = {}")
 
-
-
-
-        ### CHANGE THIS TO REDIS
-        ### CHANGE THIS TO REDIS
-        ### CHANGE THIS TO REDIS
-
-        # # NOTIFY THE MODEL INFERENCE PROCESS THAT A NEW MODEL IS AVAILABLE
-        # self.kafka_producer.push_msg(self.output_topic, {
-        #     'model_name': request['model_name'],
-        #     'model_type': request['model_type'],
-        # })
+        # PUSH MODEL REFERENCE TO CASSANDRA
+        self.cassandra.write(constants.cassandra.MODELS_TABLE, {
+            'timestamp': int(training_ended),
+            'model_name': model_id,
+            'model_type': model_type,
+            'model_version': model_version+1,
+            'active_status': True,
+        })
 
     ########################################################################################
     ########################################################################################
@@ -94,7 +86,7 @@ class create_pipeline_component:
     def fetch_dataset(self, minimum_num_rows: int):
         
         # QUERY HOW MANY ROWS THE DATABASE HAS RIGHT NOW
-        current_num_rows = self.cassandra.count_rows(self.cassandra_table)
+        current_num_rows = self.cassandra.count_rows(constants.cassandra.STOCKS_TABLE)
 
         # IF THERE ARENT ENOUGH ROWS YET..
         # SLEEP FOR ABIT WHILE THE DATABASE FILLS UP
@@ -103,7 +95,7 @@ class create_pipeline_component:
             time.sleep(5)
 
             # QUERY AGAIN
-            current_num_rows = self.cassandra.count_rows(self.cassandra_table)
+            current_num_rows = self.cassandra.count_rows(constants.cassandra.STOCKS_TABLE)
 
         # MIN ROW COUNT EXCEEDED, FETCH THE DATASET
         misc.log(f'FETCHING DATASET (n={minimum_num_rows})')

@@ -1,6 +1,7 @@
 from funcs.kafka_utils import create_kafka_producer, start_kafka_consumer
 from funcs.cassandra_utils import create_cassandra_instance
 import funcs.misc as misc
+import funcs.constants as constants
 
 ########################################################################################
 ########################################################################################
@@ -13,13 +14,7 @@ class create_pipeline_component:
         self.cassandra = create_cassandra_instance()
 
         # RELEVANT KAFKA TOPICS
-        self.input_topics: str|list[str] = 'decision_synthesis'
-
-        # WHAT FORMAT SHOULD KAFKA INPUT FOLLOW?
-        self.expected_input_format: dict = {
-            'input_row': str,
-            'predictions': dict
-        }
+        self.input_topics: str|list[str] = constants.kafka.DECISION_SYNTHESIS
 
     ########################################################################################
     ########################################################################################
@@ -29,10 +24,10 @@ class create_pipeline_component:
     def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
 
         # MAKE SURE THE KAFKA INPUT IS VALID
-        valid_input = misc.validate_dict(kafka_input, self.expected_input_format)
+        prediction_batch = misc.validate_dict(kafka_input, constants.types.PREDICTION_BATCH)
 
         # MAKE DECISION
-        print(valid_input)
+        misc.log('NEW BATCH OF PREDICTION RECEIVED')
 
 ########################################################################################
 ########################################################################################

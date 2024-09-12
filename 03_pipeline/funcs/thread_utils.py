@@ -1,7 +1,34 @@
 from threading import Thread, Semaphore
-from funcs.misc import log
 from typing import Callable
+import funcs.misc as misc
 import time
+
+########################################################################################################
+########################################################################################################
+
+def background_process(event_loop: Callable, cooldown: int, process_beacon):
+
+    # WRAP THE THREAD IN A BEACON-BOUND LOOP
+    def thread_wrapper():
+        try:
+            while process_beacon.is_active():
+                event_loop()
+                time.sleep(cooldown)
+
+        # IF THE BACKGROUND THREAD CRASHES, KILL THE MAIN THREAD TOO
+        except Exception as error:
+            misc.log(f'BACKGROUND THREAD CRASHED: {error}')
+            process_beacon.kill()
+
+    # CREATE & START THE THREAD
+    thread = Thread(target=thread_wrapper, args=())
+    thread.start()
+
+########################################################################################################
+########################################################################################################
+
+def create_mutex():
+    return Semaphore(1)
 
 ########################################################################################################
 ########################################################################################################
@@ -12,7 +39,7 @@ class create_thread_pool:
 
         # THREAD-SAFETY RESOURCES
         self.beacon = create_process_beacon()
-        self.mutex = Semaphore(1)
+        self.mutex = create_mutex()
         self.counter = create_counter()
 
         # CREATE THE THREAD-POOL
@@ -28,7 +55,7 @@ class create_thread_pool:
 
     # ASYNCHRONOUSLY START THE THREAD-POOL
     def start(self):
-        log(f'STARTING THREAD-POOL (num_threads={len(self.threads)})')
+        misc.log(f'STARTING THREAD-POOL (num_threads={len(self.threads)})')
         [thread.start() for thread in self.threads]
 
         # TRACK WHEN THE PROCESSING STARTED
@@ -43,7 +70,7 @@ class create_thread_pool:
         delta_time = round(work_ended - self.work_started, 3)
 
         with self.mutex:
-            log(f'THREAD-POOL FINISHED WORKING (count={self.counter.current()}, time={delta_time})')
+            misc.log(f'THREAD-POOL FINISHED WORKING (count={self.counter.current()}, time={delta_time})')
 
     # KILL BEACON, WHICH KILLS THE HELPER THREADS
     def kill(self):
@@ -56,6 +83,9 @@ class create_thread_pool:
 class create_process_beacon:
     def __init__(self):
         self.lock = True
+
+    def __del__(self):
+        self.kill()
     
     def is_active(self):
         return self.lock
@@ -70,7 +100,7 @@ class create_process_beacon:
 class create_counter:
     def __init__(self):
         self.value = 0
-        self.mutex = Semaphore(1)
+        self.mutex = create_mutex()
     
     def current(self):
         with self.mutex:
@@ -81,4 +111,7 @@ class create_counter:
             self.value += 1
 
             if (announce_every > 0) and (self.value % announce_every) == 0:
-                log(f'THREAD-POOL COUNTER HAS REACHED {self.value}')
+                misc.log(f'THREAD-POOL COUNTER HAS REACHED {self.value}')
+
+########################################################################################################
+########################################################################################################

@@ -40,8 +40,7 @@ class create_kafka_producer:
     # DATA SERIALIZER: JSON/DICT => BYTES
     def json_serializer(self, json_data: dict) -> list[bool, bytes|str]:
         try:
-            json_bytes = json.dumps(json_data).encode('UTF-8')
-            return json_bytes
+            return json.dumps(json_data).encode('UTF-8')
         except:
             raise Exception('[KAFKA] SERIALIZATION ERROR')
 
@@ -135,8 +134,7 @@ class create_kafka_consumer:
     # DATA DESERIALIZER: BYTES => JSON DICT
     def json_deserializer(self, raw_bytes: bytes) -> list[bool, dict|str]:
         try:
-            json_dict = json.loads(raw_bytes.decode('UTF-8'))
-            return json_dict
+            return json.loads(raw_bytes.decode('UTF-8'))
         except:
             raise Exception('[KAFKA] DESERIALIZATION ERROR')
 
@@ -204,15 +202,15 @@ def start_kafka_consumer(create_pipeline_state):
     state = create_pipeline_state(beacon)
 
     # MAKE SURE INPUT_TOPICS IS DEFINED
-    if not hasattr(state, 'input_topics'):
-        raise Exception("STATE ERROR: YOU MUST DEFINE THE STATE VARIABLE 'input_topics'")
+    if not hasattr(state, 'kafka_input_topics'):
+        raise Exception("STATE ERROR: YOU MUST DEFINE THE STATE VARIABLE 'kafka_input_topics'")
     
     # MAKE SURE THE HANDLE_EVENTS METHOD IS DEFINED
     if not hasattr(state, 'on_kafka_event'):
         raise Exception("STATE ERROR: YOU MUST DEFINE THE STATE METHOD 'on_kafka_event'")
 
     # CREATE THE KAKFA CONSUMER & CONTROL LOCK
-    kafka_client = create_kafka_consumer(state.input_topics)
+    kafka_client = create_kafka_consumer(state.kafka_input_topics)
 
     # FINALLY, START CONSUMING EVENTS
     try:

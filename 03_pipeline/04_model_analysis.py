@@ -1,9 +1,7 @@
 from funcs.kafka_utils import create_kafka_producer, start_kafka_consumer
 from funcs.cassandra_utils import create_cassandra_instance
 import funcs.misc as misc
-
-# import funcs.ml_utils as ml_utils
-import funcs.machine_learning.utils as ml_utils
+import funcs.constants as constants
 
 ########################################################################################
 ########################################################################################
@@ -16,20 +14,11 @@ class create_pipeline_component:
         self.cassandra = create_cassandra_instance()
 
         # RELEVANT KAFKA TOPICS
-        self.input_topics: str|list[str] = 'model_analysis'
-        self.model_training_topic: str = 'model_training'
-
-        ################################# TODO: FIX THIS
-        ################################# TODO: FIX THIS
-        ################################# TODO: FIX THIS
-        self.model_params_type: dict = {
-            'model_type': str,
-            'model_filename': str,
-        }
+        self.kafka_input_topics: str|list[str] = constants.kafka.MODEL_ANALYSIS
 
         # WHAT MODELS DO WE CURRENTLY ACCEPT
         # HOW DO WE LOAD THE MODELS, AND HOW DO WE USE THEM?
-        self.model_options: dict = ml_utils.IMPLEMENTED_MODELS()
+        self.model_options: dict = constants.IMPLEMENTED_MODELS()
 
     ########################################################################################
     ########################################################################################
@@ -39,9 +28,9 @@ class create_pipeline_component:
     def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
 
         # VALIDATE THE REQUEST INPUTS
-        request = misc.validate_dict(kafka_input, self.model_params_type)
-        model_type = request['model_type']
-        model_filename = request['model_filename']
+        model_info = misc.validate_dict(kafka_input, constants.types.MODEL_INFO)
+        model_type = model_info['model_type']
+        model_filename = model_info['model_filename']
 
         # MAKE SURE WE KNOW HOW TO DEAL WITH THE REQUESTED MODEL TYPE
         if model_type not in self.model_options:
@@ -52,17 +41,25 @@ class create_pipeline_component:
         model_suite = self.model_options[model_type]()
         re_train_decision = model_suite.analysis(model_filename)
 
-        # WHEN ANALYSIS RETURNS TRUE, TRIGGER MODEL RE-TRAIN
-        if re_train_decision:
-            self.kafka_producer.push_msg(self.model_training_topic, {
+        # THE MODEL DOES NOT YET NEED TO BE RE-TRAINED
+        if not re_train_decision:
+            misc.log('ANALYSIS: MODEL DOES NOT NEED TO BE RE-TRAINED')
+            pass
 
-                ################################# TODO: FIX THIS
-                ################################# TODO: FIX THIS
-                ################################# TODO: FIX THIS
-                'model_name': str,
-                'model_type': 'MISSING_RETRAIN_TYPE',
-                'dataset_rows': 696969
-            })
+        # OTHERWISE, WRITE & VALIDATE A MODEL TRAINING REQUEST
+        valid_training_request: dict = misc.validate_dict({
+
+            ################################# TODO: FIX THIS
+            ################################# TODO: FIX THIS
+            ################################# TODO: FIX THIS
+            'model_name': str,
+            'model_type': 'MISSING_RETRAIN_TYPE',
+            'dataset_rows': 696969,
+
+        }, constants.types.MODEL_TRAINING_REQUEST)
+
+        # PUSH RE-TRAINING REQUEST TO KAFKA
+        self.kafka_producer.push_msg(constants.kafka.MODEL_TRAINING, valid_training_request)
 
 ########################################################################################
 ########################################################################################

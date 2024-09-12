@@ -30,18 +30,6 @@ def log(msg, with_break=False):
         print(f'\n[{timestamp}]\t {msg}', flush=True)
     else:
         print(f'[{timestamp}]\t {msg}', flush=True)
-
-########################################################################################################
-########################################################################################################
-
-# LOAD SYSCONFIG FROM ROOT YAML FILE
-# STATIC FILEREF SHOULD WORK..?
-def load_global_config():
-    with open('../00_configs/global_config.yaml', 'r') as file:
-        data_dict = yaml.safe_load(file)
-
-        # RETURN AS A NAMESPACE RATHER THAN A DICT
-        return TO_NAMESPACE(data_dict)
     
 ########################################################################################################
 ########################################################################################################
@@ -66,6 +54,18 @@ def validate_dict(input_data: dict, reference: dict):
             raise Exception(f'CASTING ERROR (prop: {prop_name}): {error}')
         
     return container
+
+########################################################################################################
+########################################################################################################
+
+# LOAD SYSCONFIG FROM ROOT YAML FILE
+# STATIC FILEREF SHOULD WORK..?
+def load_global_config():
+    with open('../00_configs/global_config.yaml', 'r') as file:
+        data_dict = yaml.safe_load(file)
+
+        # RETURN AS A NAMESPACE RATHER THAN A DICT
+        return TO_NAMESPACE(data_dict)
 
 ########################################################################################################
 ########################################################################################################

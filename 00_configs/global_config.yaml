@@ -43,8 +43,10 @@ backend:
         # CASSANDRA KEYSPACES/TABLES
         # PROVIDE A KEYSPACE, TABLE NAME, ITS COLUMNS AND WHAT COLS SHOULD BE USED AS COMPOSITE KEYS
         cassandra_tables:
-            -   keyspace: refined
-                table_name: stock_data
+
+            # REFINED STOCK DATA TABLE
+            -   keyspace: dev
+                table_name: refined_stock_data
                 columns: 
                     timestamp: int
                     open: float
@@ -54,6 +56,19 @@ backend:
                     volume: int
                 primary_keys:
                     - timestamp
+
+            # ML MODEL HISTORY TABLE
+            -   keyspace: dev
+                table_name: model_history
+                columns: 
+                    timestamp: int
+                    model_name: text
+                    model_type: text
+                    model_version: int
+                    active_status: boolean
+                primary_keys:
+                    - timestamp
+                    - model_name
 
 ###############################################################################################################
 ###############################################################################################################
@@ -81,24 +96,18 @@ pipeline:
     # MACHINE LEARNING STUFF
     machine_learning:
 
-        # DO YOU WANT TO USE PRE-CREATED MODELS FROM FILES?
-        # LIST OF FILES, OR FALSE
-        load_premade_models: false
+        # # DO YOU WANT TO USE PRE-CREATED MODELS FROM FILES?
+        # # LIST OF FILES, OR FALSE
+        # load_premade_models: false
 
-        # WHAT NEW MODELS SHOULD BE CREATED
-        create_models:
-            -   type: cnn
-                name: my_first_model
-                version: 1
-            -   type: linreg
-                name: my_second_model
-                version: 1
-            -   type: lstm
-                name: my_third_model
-                version: 1
-
-
-
-    MODEL_NAME::MODEL_TYPE::VERSION_NUM
-
-    my_third_model::lstm::v1
+        # # WHAT NEW MODELS SHOULD BE CREATED
+        # create_models:
+        #     -   type: cnn
+        #         name: my_first_model
+        #         version: 1
+        #     -   type: linreg
+        #         name: my_second_model
+        #         version: 1
+        #     -   type: lstm
+        #         name: my_third_model
+        #         version: 1
