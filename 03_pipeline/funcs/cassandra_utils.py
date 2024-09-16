@@ -20,7 +20,13 @@ class create_cassandra_instance:
 
     # FREELY EXECUTE ANY CQL QUERY
     def query(self, query):
-        return self.instance.execute(query)
+        try:
+            return self.instance.execute(query)
+        
+        # SAFELY CATCH ERRORS
+        except Exception as raw_error:
+            parsed_error = self.parse_error(raw_error)
+            raise Exception(f'[CASSANDRA] QUERY ERROR => {parsed_error}')
 
     ########################################################################################################
     ########################################################################################################
@@ -67,9 +73,9 @@ class create_cassandra_instance:
     ########################################################################################################
     ########################################################################################################
 
-    # COUNT TABLE ROWS
-    def count_rows(self, keyspace_table: str) -> int:
-        return int(self.read(f'SELECT COUNT(*) from {keyspace_table}')[0]['count'])
+    # COUNT TABLE ROWS -- SELECT COUNT(*) FROM ...
+    def count(self, count_query: str) -> int:
+        return int(self.read(count_query)[0]['count'])
 
     ########################################################################################################
     ########################################################################################################

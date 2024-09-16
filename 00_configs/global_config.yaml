@@ -60,15 +60,16 @@ backend:
             # ML MODEL HISTORY TABLE
             -   keyspace: dev
                 table_name: model_history
-                columns: 
+                columns:
+                    uuid: uuid
                     timestamp: int
-                    model_name: text
                     model_type: text
-                    model_version: int
+                    model_name: text
+                    model_version: text
+                    model_file: text
                     active_status: boolean
                 primary_keys:
-                    - timestamp
-                    - model_name
+                    - uuid
 
 ###############################################################################################################
 ###############################################################################################################
@@ -93,21 +94,198 @@ pipeline:
         # HOW SHOULD PRODUCERS ACKNOWLEDGE?
         async_producer_ack: true
 
+    ###############################################################################################################
+    ###############################################################################################################
+
+    # STRUCTURE OF INPUT DATA
+    pipeline_input:
+        structure:
+            timestamp: int
+            open: float
+            close: float
+            high: float
+            low: float
+            volume: int
+        inference_window: 4
+
     # MACHINE LEARNING STUFF
-    machine_learning:
+    create_models:
+        -   model_name: my_cool_model
+            model_type: lstm
+            model_version: 1
 
-        # # DO YOU WANT TO USE PRE-CREATED MODELS FROM FILES?
-        # # LIST OF FILES, OR FALSE
-        # load_premade_models: false
+        ###############################################################################################################
+        ###############################################################################################################
 
-        # # WHAT NEW MODELS SHOULD BE CREATED
-        # create_models:
-        #     -   type: cnn
-        #         name: my_first_model
-        #         version: 1
-        #     -   type: linreg
-        #         name: my_second_model
-        #         version: 1
-        #     -   type: lstm
-        #         name: my_third_model
-        #         version: 1
+            # WHAT FEATURES DO WE WANT TO CREATE?
+            feature_engineering:
+
+                # EXAMPLES FROM COURSE PROJECT:
+                # https://github.com/wickstjo/ensemble-ml-pipeline/blob/master/features.ipynb
+                # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4873195/
+
+                # EXCLUSIVE TO MODEL TRAINING (COL REPLACEMENT)
+                -   shifting_columns:
+                        target_column: close
+                        shift_by: 12
+                        replace_column: true
+                
+                # REQUIRED FOR TRAINING & INFERENCE (COL ADDITION)
+                -   column_relation:
+                        first_column: open
+                        second_column: close
+                        new_column_name: open_close_relation
+
+        ###############################################################################################################
+        ###############################################################################################################
+
+            # WHAT TRAINING PARAMS TO USE?
+            model_training:
+                dataset:
+                    db_table: dev.refined_stock_data
+                    sort_by: timestamp
+
+                    # SELECT THE FRESHEST N ROWS FROM THE DATABASE
+                    # SAME LOGIC APPLIES WHEN RETRAINING
+                    num_rows: 5000
+
+                    # WHAT TRAIN/TEST RATIO TO USE?
+                    train_test_split:
+                        train: 80
+                        test: 20
+
+                # LSTM SPECIFIC PARAMS
+                layers:
+                    - lstm:
+                        units: 120
+                    - dropout:
+                        rate: 0.15
+                    - dense:
+                        units: 50
+                        activation_func: relu
+                    - dense:
+                        units: 1
+                epochs: 25
+                loss_func: mse
+                optimizer: rmsprop
+
+        ###############################################################################################################
+        ###############################################################################################################
+
+            # HOW TO DEAL WITH DECISION SYNTHESIS?
+            # HOW MUCH CONFIDENCE DO WE HAVE IN THE MODELS' PREDICTIONS RELATIVE TO OTHER MODELS?
+            inference_weighting: 0.7
+
+        ###############################################################################################################
+        ###############################################################################################################
+
+            # HOW DO WE WANT TO PROBE MODEL VALIDITY?
+            model_analysis:
+
+                # APPLY A QUICK PROBE AFTER INFERENCE
+                # TO CHECK IF A DEEPER ANALYSIS IS REQUIRED
+                light_probing:
+                    probes:
+
+                        # FUNCTION => THRESHOLD
+                        rmse: 0.7
+                        light_data_quality: 21
+
+                    # HOW MANY PROBES MUST AGREE TO TRIGGER A DEEPER ANALYSIS?
+                    trigger_threshold: 1
+
+                # PERFORM DEEPER ANALYSIS
+                # TO TRIGGER MODEL RETRAINING
+                deep_probing:
+                    probes:
+                        heavy_data_quality:
+                            threshold: 54
+                            weighting: 60
+                        mae:
+                            threshold: 1.2
+                            weighting: 20
+                        huber_loss:
+                            threshold: 30
+                            weighting: 30
+
+                    # WHAT CUMULATIVE THRESHOLD IS NECESSARY TO TRIGGER MODEL RETRAINING?
+                    trigger_threshold: 49
+
+
+
+
+
+######################################
+
+    # -   shifting_columns:
+    #         target_column: close
+    #         shift_by: 12
+    #         replace_column: close
+
+    raw_input:
+        timestamp: int
+        open: float
+        close: float
+        high: float
+        low: float
+        volume: int
+
+    training_input:
+        timestamp: int
+        open: float
+
+        # CHANGED COL
+        close: old value shifted by x
+        
+        high: float
+        low: float
+        volume: int
+
+    inference_input:
+        timestamp: int
+        open: float
+        close: float
+        high: float
+        low: float
+        volume: int
+
+######################################
+
+    # -   column_relation:
+    #         first_column: open
+    #         second_column: close
+    #         new_column_name: open_close_relation
+
+    raw_input:
+        timestamp: int
+        open: float
+        close: float
+        high: float
+        low: float
+        volume: int
+
+    training_input:
+        timestamp: int
+        open: float
+        close: float
+        high: float
+        low: float
+        volume: int
+
+        # NEW COLS
+        high_low_relation: float
+        open_close_relation: float
+
+    inference_input:
+        timestamp: int
+        open: float
+        close: float
+        high: float
+        low: float
+        volume: int
+
+        # NEW COLS
+        high_low_relation: float
+        open_close_relation: float
+
+######################################

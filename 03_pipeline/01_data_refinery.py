@@ -2,6 +2,7 @@ from funcs.kafka_utils import create_kafka_producer, start_kafka_consumer
 from funcs.cassandra_utils import create_cassandra_instance
 import funcs.misc as misc
 import funcs.constants as constants
+import funcs.types as types
 
 ########################################################################################
 ########################################################################################
@@ -24,7 +25,7 @@ class create_pipeline_component:
     def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
 
         # ATTEMPT TO VALIDATE DICT AGAINST REFERENCE OBJECT
-        refined_stock_data: dict = misc.validate_dict(kafka_input, constants.types.REFINED_STOCK_DATA)
+        refined_stock_data: dict = misc.validate_dict(kafka_input, types.REFINED_STOCK_DATA)
         misc.log('ROW PASSED VALIDATION')
 
         # VALIDATION SUCCEEDED, WRITE THE ROW TO DB

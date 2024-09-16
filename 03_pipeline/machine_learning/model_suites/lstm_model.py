@@ -8,13 +8,9 @@ import funcs.misc as misc
 class create_model_suite:
     def __init__(self):
         self.model = None
+        self.required_dataset_size = 0
 
-    ########################################################################################################
-    ########################################################################################################
-
-    # PERFORM THE SAME FEATURE ENGINEERING DURING TRAINING & INFERENCE
-    def create_features(self, input_data: dict) -> Any:
-        pass
+        # INPUTS NEED TO HAVE XYZ PROPERTIES DEFINED
 
     ########################################################################################################
     ########################################################################################################
@@ -38,12 +34,4 @@ class create_model_suite:
     # HOW DO WE GENERATE A MODEL PREDICTION?
     def predict_outcome(self, input_data: dict) -> Any:
         if self.model is None: raise Exception('PREDICT ERROR: LOAD A MODEL FIRST')
-        pass
-    
-    ########################################################################################################
-    ########################################################################################################
-
-    # PERFORM ANALYSIS AND DECIDE WHETHER TO RE-TRAIN A NEW MODEL
-    # TO TRIGGER RE-TRAIN, RETURN TRUE, ELSE FALSE
-    def analyze_model(self, model_id: str) -> bool:
         pass

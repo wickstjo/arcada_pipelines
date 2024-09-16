@@ -1,4 +1,4 @@
-import csv, yaml
+import csv, yaml, time
 from datetime import datetime
 from types import SimpleNamespace
 
@@ -35,7 +35,7 @@ def log(msg, with_break=False):
 ########################################################################################################
 
 # VALIDATE AN INPUT DICT BASED ON A REFERENCE DICT
-def validate_dict(input_data: dict, reference: dict):
+def validate_dict(input_data: dict, reference: dict, ns=False):
     container = {}
 
     # REFERENCE DICT: KEY_NAME => TYPE_FUNC
@@ -52,7 +52,10 @@ def validate_dict(input_data: dict, reference: dict):
 
         except Exception as error:
             raise Exception(f'CASTING ERROR (prop: {prop_name}): {error}')
-        
+    
+    # CONVERT TO NAMESPACE ON-REQUEST
+    if ns: return TO_NAMESPACE(container)
+
     return container
 
 ########################################################################################################
@@ -87,3 +90,14 @@ def TO_NAMESPACE(d):
     else:
         # If d is neither a dict nor a list, return it as is
         return d
+    
+########################################################################################################
+########################################################################################################
+
+class create_timer:
+    def __init__(self):
+        self.start_time: float = time.time()
+
+    def stop(self):
+        self.end_time: float = time.time()
+        return round(self.end_time - self.start_time, 3)
