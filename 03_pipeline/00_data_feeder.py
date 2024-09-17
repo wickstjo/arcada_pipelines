@@ -3,18 +3,15 @@ from funcs.kafka_utils import create_kafka_producer
 import funcs.misc as misc
 import funcs.constants as constants
 import time
+from dataclasses import dataclass
 
 ########################################################################################
 ########################################################################################
 
-class create_state:
-    def __init__(self):
-
-        # DATASET & INJECTION PARAMS
-        self.dataset: str = 'foo.csv'
-        self.cooldown: float = 0.5
-
-state = create_state()
+@dataclass(frozen=True)
+class state:
+    dataset: str = 'foo.csv'
+    inject_cooldown: float = 0.5
 
 ########################################################################################
 ########################################################################################

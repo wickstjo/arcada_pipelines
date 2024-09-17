@@ -5,7 +5,6 @@ import funcs.types as types
 import machine_learning.options as ml_options
 import funcs.misc as misc
 import time
-from uuid import uuid4
 
 ########################################################################################
 ########################################################################################
@@ -70,7 +69,7 @@ class create_pipeline_component:
 
         # CONSTRUCT & VALIDATE NEW MODEL OBJECT
         new_model: dict = misc.validate_dict({
-            'uuid': uuid4(),
+            'uuid': misc.create_uuid(),
             'timestamp': int(training_timer.end_time),
             'model_name': training_request.model_name,
             'model_type': training_request.model_type,
@@ -91,7 +90,7 @@ class create_pipeline_component:
     def fetch_dataset(self, minimum_num_rows: int):
         
         # QUERY HOW MANY ROWS THE DATABASE HAS RIGHT NOW
-        current_num_rows = self.cassandra.count(f'SELECT COUNT(*) FROM {constants.cassandra.STOCKS_TABLE}')
+        current_num_rows: int = self.cassandra.count(f'SELECT COUNT(*) FROM {constants.cassandra.STOCKS_TABLE}')
 
         # IF THERE ARENT ENOUGH ROWS YET..
         # SLEEP FOR ABIT WHILE THE DATABASE FILLS UP

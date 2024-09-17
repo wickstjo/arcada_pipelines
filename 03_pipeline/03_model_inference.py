@@ -27,12 +27,12 @@ class create_pipeline_component:
         self.loaded_models: dict = {}
 
         # EVERY N SECONDS, CHECK CASSANDRA FOR MODEL CHANGES
-        thread_utils.background_process(self.audit_model_status, 2, process_beacon)
+        thread_utils.background_process(self.audit_models, 2, process_beacon)
 
     ########################################################################################
     ########################################################################################
 
-    def audit_model_status(self):
+    def audit_models(self):
     
         # CHECK DB FOR WHAT MODELS SHOULD CURRENTLY BE ACTIVE
         model_query: str = f"SELECT * FROM {constants.cassandra.MODELS_TABLE} WHERE active_status = True ALLOW FILTERING"

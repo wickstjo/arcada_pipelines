@@ -106,7 +106,9 @@ pipeline:
             high: float
             low: float
             volume: int
-        inference_window: 4
+
+        # FUTURE TODO:DOES YOUR FEATURES REQUIRE N-ROWS TO COMPUTE?
+        # inference_window: 4
 
     # MACHINE LEARNING STUFF
     create_models:
@@ -117,29 +119,40 @@ pipeline:
         ###############################################################################################################
         ###############################################################################################################
 
-            # WHAT FEATURES DO WE WANT TO CREATE?
             feature_engineering:
+                features:
 
-                # EXAMPLES FROM COURSE PROJECT:
-                # https://github.com/wickstjo/ensemble-ml-pipeline/blob/master/features.ipynb
-                # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4873195/
+                    # CREATE NEW COLUMN WITH FEATURE_2
+                    -   feature_2:
+                            first_column: high
+                            second_column: low
+                            new_column_name: high_low_relation
 
-                # EXCLUSIVE TO MODEL TRAINING (COL REPLACEMENT)
-                -   shifting_columns:
-                        target_column: close
-                        shift_by: 12
-                        replace_column: true
-                
-                # REQUIRED FOR TRAINING & INFERENCE (COL ADDITION)
-                -   column_relation:
-                        first_column: open
-                        second_column: close
-                        new_column_name: open_close_relation
+                    # CREATE ANOTHER NEW COLUMN WITH FEATURE_2
+                    -   feature_2:
+                            first_column: open
+                            second_column: close
+                            new_column_name: open_close_relation
+
+                    # FINALLY, UPDATE THE CLOSE COLUMN WITH FEATURE_1
+                    -   feature_1:
+                            target_column: close
+                            multiply_by: 5
+
+                # AFTER APPLYING ALL FEATURES, WHAT IS THE STRUCTURE OF THE OUTPUT?
+                expected_output:
+                    timestamp: int
+                    open: float
+                    close: float
+                    high: float
+                    low: float
+                    volume: int
+                    high_low_relation: float
+                    open_close_relation: float
 
         ###############################################################################################################
         ###############################################################################################################
 
-            # WHAT TRAINING PARAMS TO USE?
             model_training:
                 dataset:
                     db_table: dev.refined_stock_data
@@ -149,143 +162,71 @@ pipeline:
                     # SAME LOGIC APPLIES WHEN RETRAINING
                     num_rows: 5000
 
-                    # WHAT TRAIN/TEST RATIO TO USE?
-                    train_test_split:
-                        train: 80
-                        test: 20
+                # WHAT TRAIN/TEST/VALIDATION SEGMENTATION RATIO?
+                data_segmentation:
+                    -   train: 60
+                    -   test: 20
+                    -   validation: 20
 
                 # LSTM SPECIFIC PARAMS
-                layers:
-                    - lstm:
-                        units: 120
-                    - dropout:
-                        rate: 0.15
-                    - dense:
-                        units: 50
-                        activation_func: relu
-                    - dense:
-                        units: 1
-                epochs: 25
-                loss_func: mse
-                optimizer: rmsprop
+                training_parameters:
+                    layers:
+                        - lstm:
+                            units: 120
+                        - dropout:
+                            rate: 0.15
+                        - dense:
+                            units: 50
+                            activation_func: relu
+                        - dense:
+                            units: 1
+                    epochs: 25
+                    loss_func: mse
+                    optimizer: rmsprop
 
         ###############################################################################################################
         ###############################################################################################################
 
-            # HOW TO DEAL WITH DECISION SYNTHESIS?
-            # HOW MUCH CONFIDENCE DO WE HAVE IN THE MODELS' PREDICTIONS RELATIVE TO OTHER MODELS?
-            inference_weighting: 0.7
+            # # VERY MUCH A WORKER PROGRESS STILL
+            # model_inference:
+
+            #     # HOW TO DEAL WITH DECISION SYNTHESIS?
+            #     # HOW MUCH CONFIDENCE DO WE HAVE IN THE MODELS' PREDICTIONS RELATIVE TO OTHER MODELS?
+            #     prediction_weighting: 0.7
+
+            #     # DO YOU WANT TO FORWARD THE PREDICTIONS TO A CUSTOM KAFKA TOPIC?
+            #     # FOR EXAMPLE, THE OUTPUT OF ONE MODEL COULD BE THE INPUT FOR ANOTHER
+            #     kafka_forward: my_kafka_topic
 
         ###############################################################################################################
         ###############################################################################################################
 
-            # HOW DO WE WANT TO PROBE MODEL VALIDITY?
             model_analysis:
 
                 # APPLY A QUICK PROBE AFTER INFERENCE
                 # TO CHECK IF A DEEPER ANALYSIS IS REQUIRED
                 light_probing:
                     probes:
-
-                        # FUNCTION => THRESHOLD
-                        rmse: 0.7
-                        light_data_quality: 21
+                        -   probe_1:
+                                threshold: 0.4
+                                artificial_delay: 1
 
                     # HOW MANY PROBES MUST AGREE TO TRIGGER A DEEPER ANALYSIS?
-                    trigger_threshold: 1
+                    quorum_trigger: 1
 
                 # PERFORM DEEPER ANALYSIS
                 # TO TRIGGER MODEL RETRAINING
                 deep_probing:
                     probes:
-                        heavy_data_quality:
-                            threshold: 54
-                            weighting: 60
-                        mae:
-                            threshold: 1.2
-                            weighting: 20
-                        huber_loss:
-                            threshold: 30
-                            weighting: 30
+                        -   probe_1:
+                                threshold: 0.1
+                                artificial_delay: 5
+                        -   probe_1:
+                                threshold: 0.5
+                                artificial_delay: 15
 
                     # WHAT CUMULATIVE THRESHOLD IS NECESSARY TO TRIGGER MODEL RETRAINING?
-                    trigger_threshold: 49
+                    quorum_trigger: 2
 
-
-
-
-
-######################################
-
-    # -   shifting_columns:
-    #         target_column: close
-    #         shift_by: 12
-    #         replace_column: close
-
-    raw_input:
-        timestamp: int
-        open: float
-        close: float
-        high: float
-        low: float
-        volume: int
-
-    training_input:
-        timestamp: int
-        open: float
-
-        # CHANGED COL
-        close: old value shifted by x
-        
-        high: float
-        low: float
-        volume: int
-
-    inference_input:
-        timestamp: int
-        open: float
-        close: float
-        high: float
-        low: float
-        volume: int
-
-######################################
-
-    # -   column_relation:
-    #         first_column: open
-    #         second_column: close
-    #         new_column_name: open_close_relation
-
-    raw_input:
-        timestamp: int
-        open: float
-        close: float
-        high: float
-        low: float
-        volume: int
-
-    training_input:
-        timestamp: int
-        open: float
-        close: float
-        high: float
-        low: float
-        volume: int
-
-        # NEW COLS
-        high_low_relation: float
-        open_close_relation: float
-
-    inference_input:
-        timestamp: int
-        open: float
-        close: float
-        high: float
-        low: float
-        volume: int
-
-        # NEW COLS
-        high_low_relation: float
-        open_close_relation: float
-
-######################################
+        ###############################################################################################################
+        ###############################################################################################################

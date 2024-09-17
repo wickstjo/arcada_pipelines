@@ -58,7 +58,6 @@ class create_pipeline_component:
         # OTHERWISE, THE MODEL SEEMS TO WORK FINE
         misc.log('PROBING COMPLETE: MODEL DOES NOT NEED TO BE RE-TRAINED')
 
-
 ########################################################################################
 ########################################################################################
 
