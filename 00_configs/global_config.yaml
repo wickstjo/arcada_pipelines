@@ -1,18 +1,20 @@
 # CLUSTER SYSTEM BROKERS
 cluster:
 
+    # address: 193.166.180.240
+
     # KAFKA MESSAGE QUEUE
     kafka_brokers:
-        - localhost:11001
-        - localhost:11002
+        - 193.166.180.240:11001
+#        - localhost:11002
 
     # CASSANDRA DB
     cassandra_brokers:
-        - localhost:12001
-        - localhost:12002
+        - 193.166.180.240:12001
+#        - localhost:12002
 
     # REDIS CACHE
-    redis_broker: localhost:6379
+    # redis_broker: localhost:6379
 
 ###############################################################################################################
 ###############################################################################################################
@@ -34,7 +36,7 @@ backend:
         # JUST THE TOPIC NAME IS ENOUGH
         kafka_topics:
             - data_refinery
-            - data_dispatch
+            # - data_dispatch
             - model_training
             - model_inference
             - model_analysis

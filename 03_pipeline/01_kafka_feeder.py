@@ -10,8 +10,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class state:
-    dataset: str = 'foo.csv'
-    inject_cooldown: float = 0.5
+    dataset_file: str = 'finance_fresh.csv'
+    injection_cooldown: float = 1.0
 
 ########################################################################################
 ########################################################################################
@@ -19,16 +19,17 @@ class state:
 try:
     
     # CREATE A KAFKA PRODUCER
-    # LOAD THE CSV DATASET INTO AN ARRAY OF DICTS
     kafka_producer = create_kafka_producer()
-    dataset = dataset_utils.load_csv(state.dataset)
+
+    # LOAD THE DATASET OF FRESH DATA
+    fresh_dataset: list[dict] = dataset_utils.load_csv(state.dataset_file)
     
     # PUSH THE ROWS INTO KAFKA
     # NOTE THAT ALL NUMBERS ARE STRINGIFIED,
     # PRE-PROCESSING SHOULD CONVERT THEM INTO NUMBERS
-    for item in dataset:
-        kafka_producer.push_msg(constants.kafka.DATA_REFINERY, item)
-        time.sleep(state.cooldown)
+    for unprocessed_row in fresh_dataset:
+        kafka_producer.push_msg(constants.kafka.DATA_REFINERY, unprocessed_row)
+        time.sleep(state.injection_cooldown)
 
 # TERMINATE MAIN PROCESS AND KILL HELPER THREADS
 except KeyboardInterrupt:

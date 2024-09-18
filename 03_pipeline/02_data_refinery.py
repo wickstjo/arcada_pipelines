@@ -16,7 +16,7 @@ class create_pipeline_component:
 
         # WHAT KAFKA TOPIC DO YOU WANT TO CONSUME DATA FROM?
         self.kafka_input_topics: str|list[str] = constants.kafka.DATA_REFINERY
-        
+
     ########################################################################################
     ########################################################################################
 

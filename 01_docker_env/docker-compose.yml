@@ -4,9 +4,9 @@
 
 x-kafka_shared: &kafka_shared
     image: confluentinc/cp-kafka:7.3.0
-    # volumes:
-    #     - ./configs/kafka_scraper.yml:/usr/app/kafka_scraper.yml
-    #     - ./jars/jmx_prometheus_javaagent-0.17.2.jar:/usr/app/jmx_prometheus_javaagent.jar
+    volumes:
+        - ./configs/kafka_scraper.yml:/usr/app/kafka_scraper.yml
+        - ./jars/jmx_prometheus_javaagent-0.17.2.jar:/usr/app/jmx_prometheus_javaagent.jar
     depends_on:
         - kafka_zookeeper
 
@@ -15,8 +15,8 @@ x-kafka_env: &kafka_env
     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
     KAFKA_ZOOKEEPER_CONNECT: kafka_zookeeper:2181
     KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-    # KAFKA_JMX_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=13000:/usr/app/kafka_scraper.yml"
-    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+    KAFKA_JMX_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=13000:/usr/app/kafka_scraper.yml"
+    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
     KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 
@@ -32,17 +32,17 @@ x-cassandra: &cassandra_shared
         - "7199" 
         - "9142" 
         - "9160"
-    # volumes:
-    #     - ./configs/cassandra_scraper.yml:/usr/app/cassandra_scraper.yml
-    #     - ./jars/jmx_prometheus_javaagent-0.17.2.jar:/usr/app/jmx_prometheus_javaagent.jar
+    volumes:
+        - ./configs/cassandra_scraper.yml:/usr/app/cassandra_scraper.yml
+        - ./jars/jmx_prometheus_javaagent-0.17.2.jar:/usr/app/jmx_prometheus_javaagent.jar
     environment:
         CASSANDRA_CLUSTER_NAME: MAILLEFER_SOLO
         CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
         CASSANDRA_DC: DATACENTER1
-        # JVM_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=13000:/usr/app/cassandra_scraper.yml"
+        JVM_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=13000:/usr/app/cassandra_scraper.yml"
 
         # COMMA SEPARATED LIST OF ALL YOUR CASSANDRA SERVICES
-        CASSANDRA_SEEDS: cassandra_1,cassandra_2
+        CASSANDRA_SEEDS: cassandra_1 #,cassandra_2
 
 services:
 
@@ -71,30 +71,35 @@ services:
         environment:
             <<: *kafka_env
             KAFKA_BROKER_ID: 1
-            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_broker_1:11000,PLAINTEXT_HOST://localhost:11001
+            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_broker_1:11000,PLAINTEXT_HOST://193.166.180.240:11001
 
-    kafka_broker_2:
-        <<: *kafka_shared
-        ports:
-            - '11002:11002'
-        environment:
-            <<: *kafka_env
-            KAFKA_BROKER_ID: 2
-            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_broker_2:11000,PLAINTEXT_HOST://localhost:11002
+    # kafka_broker_2:
+    #     <<: *kafka_shared
+    #     ports:
+    #         - '11002:11002'
+    #     environment:
+    #         <<: *kafka_env
+    #         KAFKA_BROKER_ID: 2
+    #         KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_broker_2:11000,PLAINTEXT_HOST://localhost:11002
 
 ######################################################################################################
 ### CASSANDRA BROKERS
 ######################################################################################################
 
+    # WHEN MOUNTING DIR, REMEMBER TO CHMOD 777
     cassandra_1:
         <<: *cassandra_shared
         ports: 
             - "12001:9042"
+        volumes:
+            - ./configs/cassandra_scraper.yml:/usr/app/cassandra_scraper.yml
+            - ./jars/jmx_prometheus_javaagent-0.17.2.jar:/usr/app/jmx_prometheus_javaagent.jar
+            - /home/wickstjo/cassandra_db1:/var/lib/cassandra:rw
 
-    cassandra_2:
-        <<: *cassandra_shared
-        ports: 
-            - "12002:9042"
+    # cassandra_2:
+    #     <<: *cassandra_shared
+    #     ports: 
+    #         - "12002:9042"
 
 # ######################################################################################################
 # ### FLINK COMPONENTS
@@ -112,46 +117,48 @@ services:
 #     taskmanager_1:
 #         <<: *flink_taskmasters
 
+######################################################################################################
+### METRICS SCRAPING AND VISUALIZATION FRAMEWORKS
+######################################################################################################
+
+    SCRAPING FRAMEWORK -- DEFAULT PORT 9090
+    WHEN MOUNTING DATA DIRS, REMEMBER TO: chgrp -R nogroup /prometheus_data
+    prometheus:
+        image: prom/prometheus:v2.43.0
+        volumes:
+            - ./configs/prometheus_config.yml:/etc/prometheus/config.yml
+            - /home/wickstjo/prometheus_db:/prometheus:rw
+        ports:
+            - '9090:9090'
+        command:
+            - '--config.file=/etc/prometheus/config.yml'
+
+    # DATA PLOTTING -- DEFAULT PORT 3000
+    grafana:
+        image: grafana/grafana-oss:9.4.1
+        volumes:
+            - ./grafana/datasources:/etc/grafana/provisioning/datasources/
+            - ./grafana/dashboard_config.yml:/etc/grafana/provisioning/dashboards/main.yaml
+            - ./grafana/dashboards/:/var/lib/grafana/dashboards
+            - ./grafana/server.ini:/etc/grafana/grafana.ini
+        ports:
+            - '9091:3000'
+
 # ######################################################################################################
-# ### METRICS SCRAPING AND VISUALIZATION FRAMEWORKS
+# ### HARDWARE PERFORMANCE MONITORS (PROMETHEUS) FOR THE HOST MACHINE
 # ######################################################################################################
 
-    # SCRAPING FRAMEWORK -- DEFAULT PORT 9090
-#     prometheus:
-#         image: prom/prometheus:v2.43.0
-#         volumes:
-#             - ./configs/prometheus_config.yml:/etc/prometheus/config.yml
-#         ports:
-#             - '9090:9090'
-#         command:
-#             - '--config.file=/etc/prometheus/config.yml'
+    # GOOD HARDWARE INFORMATION
+    node-exporter:
+        image: prom/node-exporter:v1.6.0
 
-#     # DATA PLOTTING -- DEFAULT PORT 3000
-#     grafana:
-#         image: grafana/grafana-oss:9.4.1
-#         volumes:
-#             - ./grafana/datasources:/etc/grafana/provisioning/datasources/
-#             - ./grafana/dashboard_config.yml:/etc/grafana/provisioning/dashboards/main.yaml
-#             - ./grafana/dashboards/:/var/lib/grafana/dashboards
-#             - ./grafana/server.ini:/etc/grafana/grafana.ini
-#         ports:
-#             - '9091:3000'
-
-# # ######################################################################################################
-# # ### HARDWARE PERFORMANCE MONITORS (PROMETHEUS) FOR THE HOST MACHINE
-# # ######################################################################################################
-
-#     # GOOD HARDWARE INFORMATION
-#     node-exporter:
-#         image: prom/node-exporter:v1.6.0
-
-#     # MORE SPECIFIC DOCKER INFO
-#     # PARTICULARLY NETWORK TRACKING
-#     cadvisor:
-#         image: gcr.io/cadvisor/cadvisor
-#         volumes:
-#             - /:/rootfs:ro
-#             - /var/run:/var/run:ro
-#             - /sys:/sys:ro
-#             - /var/lib/docker/:/var/lib/docker:ro
-#             - /dev/disk:/dev/disk/:ro
+    # MORE SPECIFIC DOCKER INFO
+    # PARTICULARLY NETWORK TRACKING
+    cadvisor:
+        image: gcr.io/cadvisor/cadvisor
+        volumes:
+            - /:/rootfs:ro
+            - /var/run:/var/run:ro
+            - /sys:/sys:ro
+            - /var/lib/docker/:/var/lib/docker:ro
+            - /dev/disk:/dev/disk/:ro

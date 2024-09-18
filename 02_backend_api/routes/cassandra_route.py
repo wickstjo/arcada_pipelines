@@ -26,20 +26,38 @@ async def overview(response: Response):
 ########################################################################################################
 ########################################################################################################
 
-class Table(BaseModel):
-    domain: str
+class CREATE_TABLE(BaseModel):
+    keyspace_name: str
+    table_name: str
     columns: dict
     indexing: list
 
 @router.post('/cassandra/create')
-async def create_table(table: Table, response: Response):
+async def create_table(table: CREATE_TABLE, response: Response):
     try:
         response.status_code = status.HTTP_201_CREATED
-        cassandra.create_table(table.domain, table.columns, table.indexing)
+        cassandra.create_table(table.keyspace_name, table.table_name, table.columns, table.indexing)
     
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return f'CASSANDRA CREATE ERROR: {str(error)}'
+
+########################################################################################################
+########################################################################################################
+
+class DROP_TABLE(BaseModel):
+    keyspace_name: str
+    table_name: str
+
+@router.post('/cassandra/drop')
+async def create_table(table: DROP_TABLE, response: Response):
+    try:
+        response.status_code = status.HTTP_200_OK
+        cassandra.drop_table(table.keyspace_name, table.table_name)
+    
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return f'CASSANDRA DROP ERROR: {str(error)}'
 
 ########################################################################################################
 ########################################################################################################

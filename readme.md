@@ -3,9 +3,7 @@
 | Description | Endpoint |
 | - | -: |
 | Kafka broker #1 | `localhost:11001`|
-| Kafka` broker #2 | `localhost:11002`|
 | Cassandra` broker #1 | `localhost:12001`|
-| Cassandra` broker #2 | `localhost:12002`|
 | `TODO` Flink Job Manager | TODO |
 | Prometheus GUI. | `localhost:9090` [(OPEN LINK)](http://localhost:9090)|
 | Grafana GUI. | `localhost:9091`  [(OPEN LINK)](http://localhost:9091)|

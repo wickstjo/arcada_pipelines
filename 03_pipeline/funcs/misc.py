@@ -62,14 +62,18 @@ def validate_dict(input_data: dict, reference: dict, ns=False):
 ########################################################################################################
 ########################################################################################################
 
+def load_yaml(file_path):
+    with open(file_path, 'r') as file:
+        return yaml.safe_load(file)
+
+########################################################################################################
+########################################################################################################
+
 # LOAD SYSCONFIG FROM ROOT YAML FILE
 # STATIC FILEREF SHOULD WORK..?
 def load_global_config():
-    with open('../00_configs/global_config.yaml', 'r') as file:
-        data_dict = yaml.safe_load(file)
-
-        # RETURN AS A NAMESPACE RATHER THAN A DICT
-        return TO_NAMESPACE(data_dict)
+    data_dict: dict = load_yaml('../00_configs/global_config.yaml')
+    return TO_NAMESPACE(data_dict)
 
 ########################################################################################################
 ########################################################################################################

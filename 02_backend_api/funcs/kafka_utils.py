@@ -30,6 +30,9 @@ class create_admin_client:
         except:
             raise Exception(f'COULD NOT CONNECT WITH KAFKA SERVER ({kafka_brokers})') 
 
+    ########################################################################################################
+    ########################################################################################################
+
     # FETCH ALL EXISTING TOPICS
     def topics_overview(self):
         container = {}

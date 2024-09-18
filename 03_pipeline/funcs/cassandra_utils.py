@@ -11,9 +11,16 @@ VERBOSE = global_config.pipeline.verbose_logging
 ########################################################################################################
 
 class create_cassandra_instance:
-    def __init__(self):
+    def __init__(self, HIDE_LOGS=False):
         cluster = Cluster(CASSANDRA_BROKERS)
         self.instance = cluster.connect()
+
+        if HIDE_LOGS:
+            global VERBOSE
+            VERBOSE = False
+
+    def __del__(self):
+        self.instance.shutdown()
 
     ########################################################################################################
     ########################################################################################################
@@ -50,7 +57,7 @@ class create_cassandra_instance:
     ########################################################################################################
 
     # READ DATA FROM THE DATABASE
-    def read(self, query: str) -> list[dict]:
+    def read(self, query: str, sort_by=False) -> list[dict]:
         try:
             container = []
 
@@ -61,8 +68,13 @@ class create_cassandra_instance:
             for item in query_result:
                 container.append(item._asdict())
 
-            if VERBOSE: misc.log('[CASSANDRA] READ FROM DATABASE')
+            if VERBOSE: misc.log(f'[CASSANDRA] READ {len(container)} FROM DATABASE')
             
+            # SORT BY KEY WHEN REQUESTED
+            if sort_by:
+                return sorted(container, key=lambda x: x[sort_by])
+
+            # OTHERWISE, RETURN UNSORTED
             return container
         
         # SAFELY CATCH ERRORS

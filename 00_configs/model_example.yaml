@@ -1,118 +1,118 @@
--   model_name: my_cool_model
-    model_type: lstm
-    model_version: 1
+model_name: my_cool_model
+model_type: lstm
+model_version: 1
 
 ###############################################################################################################
 ###############################################################################################################
 
-    feature_engineering:
-        features:
+feature_engineering:
+    features:
 
-            # CREATE NEW COLUMN WITH FEATURE_2
-            -   feature_2:
-                    first_column: high
-                    second_column: low
-                    new_column_name: high_low_relation
+        # CREATE NEW COLUMN WITH FEATURE_2
+        -   feature_1:
+                first_column: high
+                second_column: low
+                new_column_name: high_low_relation
 
-            # CREATE ANOTHER NEW COLUMN WITH FEATURE_2
-            -   feature_2:
-                    first_column: open
-                    second_column: close
-                    new_column_name: open_close_relation
+        # CREATE ANOTHER NEW COLUMN WITH FEATURE_2
+        -   feature_1:
+                first_column: open
+                second_column: close
+                new_column_name: open_close_relation
 
-            # FINALLY, UPDATE THE CLOSE COLUMN WITH FEATURE_1
-            -   feature_1:
-                    target_column: close
-                    multiply_by: 5
+        # FINALLY, UPDATE THE CLOSE COLUMN WITH FEATURE_1
+        -   feature_2:
+                target_column: close
+                multiply_by: 5
 
-        # AFTER APPLYING ALL FEATURES, WHAT IS THE STRUCTURE OF THE OUTPUT?
-        expected_output:
-            timestamp: int
-            open: float
-            close: float
-            high: float
-            low: float
-            volume: int
-            high_low_relation: float
-            open_close_relation: float
-
-###############################################################################################################
-###############################################################################################################
-
-    model_training:
-        dataset:
-            db_table: dev.refined_stock_data
-            sort_by: timestamp
-
-            # SELECT THE FRESHEST N ROWS FROM THE DATABASE
-            # SAME LOGIC APPLIES WHEN RETRAINING
-            num_rows: 5000
-
-        # WHAT TRAIN/TEST/VALIDATION SEGMENTATION RATIO?
-        data_segmentation:
-            -   train: 60
-            -   test: 20
-            -   validation: 20
-
-        # LSTM SPECIFIC PARAMS
-        training_parameters:
-            layers:
-                - lstm:
-                    units: 120
-                - dropout:
-                    rate: 0.15
-                - dense:
-                    units: 50
-                    activation_func: relu
-                - dense:
-                    units: 1
-            epochs: 25
-            loss_func: mse
-            optimizer: rmsprop
+    # AFTER APPLYING ALL FEATURES, WHAT IS THE STRUCTURE OF THE OUTPUT?
+    expected_output:
+        timestamp: int
+        open: float
+        close: float
+        high: float
+        low: float
+        volume: int
+        high_low_relation: float
+        open_close_relation: float
 
 ###############################################################################################################
 ###############################################################################################################
 
-    # # VERY MUCH A WORKER PROGRESS STILL
-    # model_inference:
+model_training:
+    dataset:
+        db_table: dev.refined_stock_data
+        sort_by: timestamp
 
-    #     # HOW TO DEAL WITH DECISION SYNTHESIS?
-    #     # HOW MUCH CONFIDENCE DO WE HAVE IN THE MODELS' PREDICTIONS RELATIVE TO OTHER MODELS?
-    #     prediction_weighting: 0.7
+        # SELECT THE FRESHEST N ROWS FROM THE DATABASE
+        # SAME LOGIC APPLIES WHEN RETRAINING
+        num_rows: 2000
 
-    #     # DO YOU WANT TO FORWARD THE PREDICTIONS TO A CUSTOM KAFKA TOPIC?
-    #     # FOR EXAMPLE, THE OUTPUT OF ONE MODEL COULD BE THE INPUT FOR ANOTHER
-    #     kafka_forward: my_kafka_topic
+    # WHAT TRAIN/TEST/VALIDATION SEGMENTATION RATIO?
+    data_segmentation:
+        -   train: 60
+        -   test: 20
+        -   validation: 20
+
+    # LSTM SPECIFIC PARAMS
+    training_parameters:
+        layers:
+            - lstm:
+                units: 120
+            - dropout:
+                rate: 0.15
+            - dense:
+                units: 50
+                activation_func: relu
+            - dense:
+                units: 1
+        epochs: 25
+        loss_func: mse
+        optimizer: rmsprop
 
 ###############################################################################################################
 ###############################################################################################################
 
-    model_analysis:
+# # VERY MUCH A WORKER PROGRESS STILL
+# model_inference:
 
-        # APPLY A QUICK PROBE AFTER INFERENCE
-        # TO CHECK IF A DEEPER ANALYSIS IS REQUIRED
-        light_probing:
-            probes:
-                -   probe_1:
-                        threshold: 0.4
-                        artificial_delay: 1
+#     # HOW TO DEAL WITH DECISION SYNTHESIS?
+#     # HOW MUCH CONFIDENCE DO WE HAVE IN THE MODELS' PREDICTIONS RELATIVE TO OTHER MODELS?
+#     prediction_weighting: 0.7
 
-            # HOW MANY PROBES MUST AGREE TO TRIGGER A DEEPER ANALYSIS?
-            quorum_trigger: 1
+#     # DO YOU WANT TO FORWARD THE PREDICTIONS TO A CUSTOM KAFKA TOPIC?
+#     # FOR EXAMPLE, THE OUTPUT OF ONE MODEL COULD BE THE INPUT FOR ANOTHER
+#     kafka_forward: my_kafka_topic
 
-        # PERFORM DEEPER ANALYSIS
-        # TO TRIGGER MODEL RETRAINING
-        deep_probing:
-            probes:
-                -   probe_1:
-                        threshold: 0.1
-                        artificial_delay: 5
-                -   probe_1:
-                        threshold: 0.5
-                        artificial_delay: 15
+###############################################################################################################
+###############################################################################################################
 
-            # WHAT CUMULATIVE THRESHOLD IS NECESSARY TO TRIGGER MODEL RETRAINING?
-            quorum_trigger: 2
+model_analysis:
+
+    # APPLY A QUICK PROBE AFTER INFERENCE
+    # TO CHECK IF A DEEPER ANALYSIS IS REQUIRED
+    light_probing:
+        probes:
+            -   probe_1:
+                    threshold: 0.4
+                    artificial_delay: 1
+
+        # HOW MANY PROBES MUST AGREE TO TRIGGER A DEEPER ANALYSIS?
+        quorum_trigger: 1
+
+    # PERFORM DEEPER ANALYSIS
+    # TO TRIGGER MODEL RETRAINING
+    deep_probing:
+        probes:
+            -   probe_1:
+                    threshold: 0.1
+                    artificial_delay: 5
+            -   probe_1:
+                    threshold: 0.5
+                    artificial_delay: 15
+
+        # WHAT CUMULATIVE THRESHOLD IS NECESSARY TO TRIGGER MODEL RETRAINING?
+        quorum_trigger: 2
 
 ###############################################################################################################
 ###############################################################################################################

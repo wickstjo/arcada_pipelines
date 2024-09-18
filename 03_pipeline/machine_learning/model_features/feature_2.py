@@ -9,9 +9,8 @@ class create_feature_suite:
 
         # REQUIRED YAML PARAMS
         self.REQUIRED_YAML_PARAMS = {
-            'first_column': str,
-            'second_column': str,
-            'new_column_name': str,
+            'target_column': str,
+            'multiply_by': int
         }
 
     ########################################################################################################
@@ -26,7 +25,7 @@ class create_feature_suite:
         ### TODO: IMPLEMENT TRY-CATCH ON PIPELINE SIDE
         ### TODO: IMPLEMENT TRY-CATCH ON PIPELINE SIDE
 
-        # CREATE NEW FEATURE
-        input_row[props.new_column_name] = input_row[props.first_column] * input_row[props.second_column]
+        # REPLACE OLD COLUMN VALUE WITH FEATURE
+        input_row[props.target_column] = input_row[props.target_column] * props.multiply_by
 
         return input_row

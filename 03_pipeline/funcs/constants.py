@@ -18,8 +18,8 @@ class kafka:
 # CASSANDRA DB TABLES
 @dataclass(frozen=True)
 class cassandra:
-    STOCKS_TABLE: str = 'dev.refined_stock_data'
-    MODELS_TABLE: str = 'dev.model_history'
+    STOCKS_TABLE: str = 'john.refined_stock_data'
+    MODELS_TABLE: str = 'john.model_history'
 
 ###################################################################################################
 ###################################################################################################
