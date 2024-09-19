@@ -1,6 +1,6 @@
 from machine_learning.model_suites import linear_regression, lstm, cnn
 from machine_learning.model_features import feature_1, feature_2
-from machine_learning.model_analysis import probe_1
+from machine_learning.model_analysis import metric_1
 
 ###################################################################################################
 ###################################################################################################
@@ -18,7 +18,7 @@ def IMPLEMENTED_FEATURES() -> dict:
         'feature_2': feature_2.create_feature_suite,
     }
 
-def IMPLEMENTED_PROBES() -> dict:
+def IMPLEMENTED_METRICS() -> dict:
     return {
-        'probe_1': probe_1.create_probe_suite
+        'metric_1': metric_1.create_metric_suite
     }

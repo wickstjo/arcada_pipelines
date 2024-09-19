@@ -5,7 +5,7 @@ import time, random
 # REMEMBER TO TRACK WHAT PIP LIBRARIES YOU NEED TO HAVE INSTALLED THIS CODE TO WORK !!!
 # REMEMBER TO TRACK WHAT PIP LIBRARIES YOU NEED TO HAVE INSTALLED THIS CODE TO WORK !!!
 
-class create_probe_suite:
+class create_metric_suite:
     def __init__(self):
 
         # REQUIRED YAML PARAMS

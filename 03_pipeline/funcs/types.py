@@ -15,6 +15,7 @@ def string_to_unix(date_text: str) -> int:
 
 # WHAT SHOULD CLEAN STOCK DATA LOOK LIKE?
 REFINED_STOCK_DATA: dict = {
+    'symbol': str,
     'timestamp': string_to_unix,
     'high': float,
     'low': float,

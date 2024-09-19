@@ -62,9 +62,12 @@ def validate_dict(input_data: dict, reference: dict, ns=False):
 ########################################################################################################
 ########################################################################################################
 
-def load_yaml(file_path):
+def load_yaml(file_path, ns=False):
     with open(file_path, 'r') as file:
-        return yaml.safe_load(file)
+        data_dict: dict = yaml.safe_load(file)
+        if ns: return TO_NAMESPACE(data_dict)
+        return data_dict
+            
 
 ########################################################################################################
 ########################################################################################################

@@ -5,6 +5,29 @@ model_version: 1
 ###############################################################################################################
 ###############################################################################################################
 
+dataset:
+    db_table: john.refined_stock_data
+    stock_symbol: AAPL
+    order_by:
+        column: timestamp
+        direction: DESC
+
+    # HOW MANY ROWS DO WE NEED?
+    num_rows: 300
+
+    # WHAT IS THE EXPECTED STRUCTURE OF DB ROWS?
+    expected_structure:
+        symbol: str
+        timestamp: int
+        open: float
+        close: float
+        high: float
+        low: float
+        volume: int
+
+###############################################################################################################
+###############################################################################################################
+
 feature_engineering:
     features:
 
@@ -40,15 +63,9 @@ feature_engineering:
 ###############################################################################################################
 
 model_training:
-    dataset:
-        db_table: dev.refined_stock_data
-        sort_by: timestamp
-
-        # SELECT THE FRESHEST N ROWS FROM THE DATABASE
-        # SAME LOGIC APPLIES WHEN RETRAINING
-        num_rows: 2000
 
     # WHAT TRAIN/TEST/VALIDATION SEGMENTATION RATIO?
+    # THE COMBINED PERCENTAGES MUST ADD UP TO 100
     data_segmentation:
         -   train: 60
         -   test: 20
@@ -92,8 +109,8 @@ model_analysis:
     # APPLY A QUICK PROBE AFTER INFERENCE
     # TO CHECK IF A DEEPER ANALYSIS IS REQUIRED
     light_probing:
-        probes:
-            -   probe_1:
+        metrics:
+            -   metric_1:
                     threshold: 0.4
                     artificial_delay: 1
 
@@ -103,11 +120,11 @@ model_analysis:
     # PERFORM DEEPER ANALYSIS
     # TO TRIGGER MODEL RETRAINING
     deep_probing:
-        probes:
-            -   probe_1:
+        metrics:
+            -   metric_1:
                     threshold: 0.1
                     artificial_delay: 5
-            -   probe_1:
+            -   metric_1:
                     threshold: 0.5
                     artificial_delay: 15
 
