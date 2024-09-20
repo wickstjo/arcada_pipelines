@@ -1,5 +1,6 @@
 from typing import Any
 import funcs.misc as misc
+import funcs.constants as constants
 import random
 
 # REMEMBER TO TRACK WHAT PIP LIBRARIES YOU NEED TO HAVE INSTALLED THIS CODE TO WORK !!!
@@ -13,24 +14,22 @@ class create_model_suite:
     ########################################################################################################
     ########################################################################################################
 
-    # HOW DO WE TRAIN A NEW MODEL?
-    # AT THE END, SAVE THE FILE TO THE FILESYSTEM
-    def train_model(self, model_name: str, model_params: dict) -> None:
+    def train_model(self, model_name: str, segmented_dataset: dict, training_config: dict) -> None:
         misc.log('[MOCK]: TRAINED LSTM MODEL')
+        misc.save_yaml(f'{constants.dirs.MODEL_REPO}/{model_name}.yml', {})
         pass
 
     ########################################################################################################
     ########################################################################################################
 
-    # HOW DO WE LOAD A TRAINED MODEL FROM A FILE?
     def load_model(self, model_name: str) -> None:
         misc.log('[MOCK]: LOADED LSTM MODEL')
+        self.model = misc.load_yaml(f'{constants.dirs.MODEL_REPO}/{model_name}.yml', {})
         pass
 
     ########################################################################################################
     ########################################################################################################
 
-    # HOW DO WE GENERATE A MODEL PREDICTION?
     def predict_outcome(self, input_data: dict) -> Any:
-        misc.log('[MOCK]: PREDICTED OUTCOME')
+        misc.log('[MOCK]: PREDICTED LSTM OUTCOME')
         return random.uniform(0, 100)

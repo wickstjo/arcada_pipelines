@@ -27,12 +27,12 @@ class create_pipeline_component:
         self.loaded_models: dict = {}
 
         # EVERY N SECONDS, CHECK CASSANDRA FOR MODEL CHANGES
-        thread_utils.background_process(self.audit_models, 2, process_beacon)
+        thread_utils.background_process(self.on_cassandra_event, 2, process_beacon)
 
     ########################################################################################
     ########################################################################################
 
-    def audit_models(self):
+    def on_cassandra_event(self):
     
         # CHECK DB FOR WHAT MODELS SHOULD CURRENTLY BE ACTIVE
         model_query: str = f"SELECT * FROM {constants.cassandra.MODELS_TABLE} WHERE active_status = True ALLOW FILTERING"
@@ -40,6 +40,8 @@ class create_pipeline_component:
 
         print(len(query_result))
         return
+    
+        ### TODO: IF RESULT ARRAY IS EMPTY, DELETE ALL STATE MODELS
 
         # LOOP THROUGH MODELS
         for item in query_result:
@@ -60,6 +62,12 @@ class create_pipeline_component:
                     del self.loaded_models['model_name']
                     self.deploy_model(item)
                     misc.log('RETRIED OLD MODEL AND DEPLOYED NEW MODEL')
+    
+        ### TODO: FIX EDGECASE WHERE RESULT LENGTH IS ZERO, BUT PROCESS STATE IS >0
+        ### TODO: FIX EDGECASE WHERE RESULT LENGTH IS ZERO, BUT PROCESS STATE IS >0
+        ### TODO: FIX EDGECASE WHERE RESULT LENGTH IS ZERO, BUT PROCESS STATE IS >0
+
+        ### LOOP THROUGH MODEL STATE AND COMPARE WITH DB?
         
     ########################################################################################
     ########################################################################################

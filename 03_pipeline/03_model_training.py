@@ -4,7 +4,7 @@ import funcs.constants as constants
 import funcs.types as types
 import machine_learning.options as ml_options
 import funcs.misc as misc
-import math
+import math, json, time
 
 ########################################################################################
 ########################################################################################
@@ -23,6 +23,16 @@ class create_pipeline_component:
         self.model_options: dict = ml_options.IMPLEMENTED_MODELS()
         self.feature_options: dict = ml_options.IMPLEMENTED_FEATURES()
 
+        # # ALL VALIDATION PASSES, FETCH MODEL CONFIG FROM YAML
+        model_config: dict = misc.load_yaml('../00_configs/model_example.yaml')
+
+        # CREATE MOCK EVENT
+        self.on_kafka_event('MOCK_TOPIC', {
+            'model_predecessor': False,
+            'model_name': f'{int(time.time())}_testing',
+            'model_config': json.dumps(model_config)
+        })
+
     ########################################################################################
     ########################################################################################
 
@@ -31,14 +41,35 @@ class create_pipeline_component:
     def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
 
         # MAKE SURE THE REQUEST CONTAINS THE NECESSARY PARAMS
-        training_request = misc.validate_dict(kafka_input, types.TRAINING_REQUEST, ns=True)
+        training_request = misc.validate_dict(kafka_input, types.TRAINING_REQUEST)
+
+        # PARSE THE MODEL CONFIG
+        try:
+            model_config: dict = json.loads(training_request['model_config'])
+
+            # EXTRACT PROPS FOR READABILITY
+            model_name: str = training_request['model_name']
+            model_type: str = model_config['model_type']
+            model_version: int = model_config['model_version']
+            model_predecessor: int = training_request['model_predecessor']
+
+            dataset_config: dict = model_config['dataset']
+            features_config: dict = model_config['feature_engineering']
+            segmentation_config: dict = model_config['model_training']['data_segmentation']
+            training_config: dict = model_config['model_training']
+            
+        except Exception as error:
+            raise Exception(f'[PARSING ERROR] {error}')
+
+        ########################################################################################
+        ########################################################################################
 
         # THROW ERROR IF THE REQUESTED MODEL TYPE IS NOT AVAILABLE
-        if training_request.model_type not in self.model_options.keys():
-            raise Exception(f'[REQUEST ERROR] MODEL TYPE NOT AVAILABLE ({training_request.model_type})')
+        if model_type not in self.model_options.keys():
+            raise Exception(f"[REQUEST ERROR] MODEL TYPE NOT AVAILABLE ({model_type})")
         
         # STITCH TOGETHER A UNIQUE FILENAME FOR THE MODEL
-        model_filename: str = f'{training_request.model_type}::{training_request.model_name}::v{training_request.model_version}'
+        model_filename: str = f"{model_type}::{model_name}::v{model_version}"
         
         # CHECK DB IF A MODEL WITH THESE PARAMS ALREADY EXISTS
         count_query: str = f"SELECT COUNT(*) FROM {constants.cassandra.MODELS_TABLE} WHERE model_filename = '{model_filename}' ALLOW FILTERING"
@@ -48,68 +79,60 @@ class create_pipeline_component:
         if db_matches > 0:
             raise Exception('[REQUEST ERROR] A MODEL WITH THESE PARAMS ALREADY EXISTS')
 
-    ##########################################################################################################
-    ##########################################################################################################
+        ########################################################################################
+        ########################################################################################
 
-        # ALL VALIDATION PASSES, FETCH MODEL CONFIG FROM YAML
-        model_config: dict = misc.load_yaml('../00_configs/model_example.yaml')
+        try:
+            # FETCH THE RAW DATASET FROM DB
+            # APPLY FEATURES RECURSIVELY ON EACH DATASET ROW
+            # SPLIT DATASET INTO TRAIN/TEST/VALIDATION SEGMENTS
+            raw_dataset: list[dict] = self.fetch_dataset(dataset_config)
+            feature_dataset: list[dict] = self.apply_features(raw_dataset, features_config)
+            segmented_dataset: dict[str, list[dict]] = self.segment_dataset(feature_dataset, segmentation_config)
 
-        # FETCH THE RAW DATASET FROM DB
-        raw_dataset: list[dict] = self.fetch_dataset(
-            model_config['dataset']
-        )
-        
-        # APPLY FEATURES RECURSIVELY ON EACH DATASET ROW
-        feature_dataset: list[dict] = self.apply_features(
-            raw_dataset,
-            model_config['feature_engineering']
-        )
+        except Exception as error:
+            raise Exception(f'[PRE-PROCESSING ERROR] {error}')
 
-        # SPLIT DATASET INTO TRAIN/TEST/VALIDATION SEGMENTS
-        segmented_dataset: dict = self.segment_dataset(
-            feature_dataset,
-            model_config['model_training']['data_segmentation']
-        )
+        ########################################################################################
+        ########################################################################################
 
-        return
-    
-    ##########################################################################################################
-    ##########################################################################################################
+        try:
+            misc.log(f'MODEL TRAINING ({model_type}) STARTED..')
+            training_timer = misc.create_timer()
 
-        # # OTHERWISE, CREATE THE REQUESTED MODEL SUITE
-        # # ATTEMPT TO LOAD ITS DATASET -- BLOCKING UNTIL DATABASE HAS ENOUGH ROWS
-        # model_suite = self.model_options[training_request.model_type]()
-        # dataset = self.fetch_dataset(model_suite.required_dataset_size)
+            # CREATE MODEL SUITE & START TRAINING
+            model_suite = self.model_options[model_type]()
+            model_suite.train_model(model_filename, segmented_dataset, training_config)
 
-        # misc.log(f'[MAIN] MODEL TRAINING STARTED ({training_request.model_type})..')
-        # training_timer = misc.create_timer()
+            delta_time: float = training_timer.stop()
+            misc.log(f'MODEL TRAINING FINISHED IN {delta_time} SECONDS')
 
-        # # INSTANTATE THE A MODEL SUITE & START TRAINING 
-        # model_suite = self.model_options[training_request.model_type]()
-        # model_suite.train_model(dataset, model_filename)
+        except Exception as error:
+            raise Exception(f'[TRAINING ERROR] {error}')
 
-        # delta_time: float = training_timer.stop()
-        # misc.log(f'[MAIN] MODEL TRAINING FINISHED IN {delta_time} SECONDS')
+        ########################################################################################
+        ########################################################################################
 
-        # # IF THE MODEL HAD A PREDECESSOR, RETIRE IT
-        # if training_request.predecessor:
-        #     self.cassandra.query(f"UPDATE {constants.cassandra.MODELS_TABLE} SET active_status = False WHERE uuid = {training_request.predecessor}")
-        #     misc.log('[MAIN] RETIRED MODEL PREDECESSOR')
+        # IF THE MODEL HAD A PREDECESSOR, RETIRE IT
+        if model_predecessor:
+            self.cassandra.query(f"UPDATE {constants.cassandra.MODELS_TABLE} SET active_status = False WHERE timestamp = '{training_request.predecessor}'")
+            misc.log('RETIRED MODEL PREDECESSOR')
 
-        # # CONSTRUCT & VALIDATE NEW MODEL OBJECT
-        # new_model: dict = misc.validate_dict({
-        #     'uuid': misc.create_uuid(),
-        #     'timestamp': int(training_timer.end_time),
-        #     'model_name': training_request.model_name,
-        #     'model_type': training_request.model_type,
-        #     'model_version': training_request.model_version,
-        #     'model_file': model_filename,
-        #     'active_status': True,
-        # }, types.MODEL_INFO)
+        # CONSTRUCT & VALIDATE NEW MODEL OBJECT
+        new_model: dict = misc.validate_dict({
+            'timestamp': int(training_timer.end_time),
+            'model_name': model_name,
+            'model_type': model_type,
+            'model_version': model_version,
+            'model_filename': model_filename,
+            'active_status': True,
+            'block_retraining': True,
+            'model_config': json.dumps(model_config),
+        }, types.MODEL_INFO)
 
-        # # THEN PUSH IT TO KAFKA
-        # self.cassandra.write(constants.cassandra.MODELS_TABLE, new_model)
-        # misc.log('[MAIN] UPLOADED NEW MODEL')
+        # PUSH MODEL DATA TO DB
+        self.cassandra.write(constants.cassandra.MODELS_TABLE, new_model)
+        misc.log('ACTIVATED NEWLY TRAINED MODEL')
 
     ########################################################################################
     ########################################################################################
@@ -150,7 +173,7 @@ class create_pipeline_component:
 
                     # THROW ERROR FOR MISSING FEATURES
                     if feature_name not in self.feature_options:
-                        raise Exception(f'ERROR: FEATURE {feature_name} DOES NOT EXIST')
+                        raise Exception(f"[FEATURE ERROR] '{feature_name}' DOES NOT EXIST")
                     
                     try:
                         feature_suite = self.feature_options[feature_name]()
@@ -178,7 +201,7 @@ class create_pipeline_component:
         start_index = 0
         
         # MAKE SURE THE COMBINED SEGMENTS ADD UP TO 100%
-        total_percentage = sum(item[key] for item in segmentation for key in item)
+        total_percentage: int = sum(item[key] for item in segmentation for key in item)
 
         if total_percentage != 100:
             raise Exception(f'[SPLIT DATASET ERROR] YOUR SEGMENTS DO NOT ADD UP TO 100% ({total_percentage})')

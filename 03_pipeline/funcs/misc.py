@@ -67,7 +67,10 @@ def load_yaml(file_path, ns=False):
         data_dict: dict = yaml.safe_load(file)
         if ns: return TO_NAMESPACE(data_dict)
         return data_dict
-            
+    
+def save_yaml(file_path, data_dict):
+    with open(f'{file_path}', 'w') as file:
+        yaml.dump(data_dict, file, default_flow_style=False)
 
 ########################################################################################################
 ########################################################################################################

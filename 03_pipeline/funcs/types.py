@@ -1,7 +1,6 @@
 import time
 from datetime import datetime
 
-
 # EXPECTED INPUT/OUTPUT FOR KAFKA/CASSANDRA
 # USED BY misc.validate_dict
 
@@ -28,13 +27,14 @@ REFINED_STOCK_DATA: dict = {
 # WHAT MODEL INFO SHOULD PIPELINE COMPONENTS PASS TO EACH OTHER?
 # IN ORDER TO BOOT IT UP ON THE RECEIVING END?
 MODEL_INFO: dict = {
-    'uuid': lambda x: x,
     'timestamp': int,
-    'model_type': str,
     'model_name': str,
-    'model_version': str,
+    'model_type': str,
+    'model_version': int,
     'model_filename': str,
     'active_status': bool,
+    'block_retraining': bool,
+    'model_config': str,
 }
 
 # WHAT SHOULD A MODEL TRAINING REQUEST CONTAIN?
@@ -49,10 +49,9 @@ ANALYSIS_REQUEST: dict = {
 
 # WHAT SHOULD A MODEL TRAINING REQUEST CONTAIN?
 TRAINING_REQUEST: dict = {
-    'predecessor': lambda x: x, # UUID OR FALSE
-    'model_type': str,
+    'model_predecessor': lambda x: x, # FALSE OR DB REFERENCE
     'model_name': str,
-    'model_version': str,
+    'model_config': str,
 }
 
 # WERE GOING TO MAKE A FINAL DECISION BASED ON MULTIPLE MODELS' PREDICTION OUTPUT.
@@ -61,3 +60,21 @@ PREDICTION_BATCH: dict = {
     'input_row': dict,
     'predictions': dict
 }
+
+# {
+#     'input_row': {
+#         'symbol': str,
+#         'timestamp': int,
+#         'high': float,
+#         'low': float,
+#         'open': float,
+#         'close': float,
+#         'adjusted_close': float,
+#         'volume': int,
+#     },
+#     'predictions': {
+#         'model_1_name': 'prediction_1',
+#         'model_2_name': 'prediction_3',
+#         'model_n_name': 'prediction_n',
+#     }
+# }

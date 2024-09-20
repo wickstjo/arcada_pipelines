@@ -16,7 +16,7 @@ dataset:
     num_rows: 300
 
     # WHAT IS THE EXPECTED STRUCTURE OF DB ROWS?
-    expected_structure:
+    expected_output:
         symbol: str
         timestamp: int
         open: float
@@ -50,6 +50,7 @@ feature_engineering:
 
     # AFTER APPLYING ALL FEATURES, WHAT IS THE STRUCTURE OF THE OUTPUT?
     expected_output:
+        symbol: str
         timestamp: int
         open: float
         close: float

@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-import funcs.dataset_utils as dataset_utils
 from funcs.cassandra_utils import create_cassandra_instance
 from funcs.thread_utils import create_thread_pool
 import funcs.misc as misc
 import funcs.types as types
+import funcs.constants as constants
+import os
 
 ########################################################################################
 ########################################################################################
@@ -13,7 +14,9 @@ class state:
     n_threads: int = 8
     report_breakpoint: int = 100
     source_dataset: str = 'finance_historical.csv'
-    cassandra_table: str = 'john.refined_stock_data'
+
+    # EMPTY PIPELINE DATABASES & MODEL REPO?
+    reset_pipeline: bool = False
 
 ########################################################################################
 ########################################################################################
@@ -34,7 +37,7 @@ def thread_routine(pool_resources: list):
 
             # PARSE THE NEXT DATASET ROW & WRITE IT TO THE DB
             sanitized_row: dict = misc.validate_dict(dataset[next_index], types.REFINED_STOCK_DATA)
-            cassandra.write(state.cassandra_table, sanitized_row)
+            cassandra.write(constants.cassandra.STOCKS_TABLE, sanitized_row)
 
             # JUMP TO NEXT INDEX & INCREMENT THREADPOOL COUNTER
             next_index += state.n_threads
@@ -48,15 +51,30 @@ def thread_routine(pool_resources: list):
 ########################################################################################
 ########################################################################################
 
+# REMOVE ALL FILES FROM MODEL_REPO DIRECTORY
+def empty_model_repo():
+    all_files: list[str] = os.listdir(constants.dirs.MODEL_REPO)
+
+    for model_file in all_files:
+        os.remove(f'{constants.dirs.MODEL_REPO}/{model_file}')
+
+########################################################################################
+########################################################################################
+
 try:
 
     # CREATE A CASSANDRA CLIENT FOR EACH THREAD
     # THEN, LOAD THE CSV DATASET
     cassandra_clients = [create_cassandra_instance(HIDE_LOGS=True) for _ in range(state.n_threads)]
-    dataset = dataset_utils.load_csv(state.source_dataset)
+    dataset = misc.load_csv(state.source_dataset)
 
-    # RESET THE OLD TABLE CONTENT
-    cassandra_clients[0].query(f'TRUNCATE {state.cassandra_table}')
+    # WHEN TOGGLED, RESET THE OLD TABLE CONTENT
+    if state.reset_pipeline:
+        cassandra_clients[0].query(f'TRUNCATE {constants.cassandra.STOCKS_TABLE}')
+        cassandra_clients[0].query(f'TRUNCATE {constants.cassandra.MODELS_TABLE}')
+        empty_model_repo()
+
+        misc.log('NUKED DATABASES & MODEL REPO')
 
     # CREATE & START A THREAD POOL
     # THEN, WAIT FOR THE THREADS TO FINISH

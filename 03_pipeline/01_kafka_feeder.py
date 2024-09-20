@@ -1,4 +1,3 @@
-import funcs.dataset_utils as dataset_utils
 from funcs.kafka_utils import create_kafka_producer
 import funcs.misc as misc
 import funcs.constants as constants
@@ -22,7 +21,7 @@ try:
     kafka_producer = create_kafka_producer()
 
     # LOAD THE DATASET OF FRESH DATA
-    fresh_dataset: list[dict] = dataset_utils.load_csv(state.dataset_file)
+    fresh_dataset: list[dict] = misc.load_csv(state.dataset_file)
     
     # PUSH THE ROWS INTO KAFKA
     # NOTE THAT ALL NUMBERS ARE STRINGIFIED,
