@@ -29,7 +29,8 @@ class create_pipeline_component:
         # CREATE MOCK EVENT
         self.on_kafka_event('MOCK_TOPIC', {
             'model_predecessor': False,
-            'model_name': f'{int(time.time())}_testing',
+            'model_name': f'{int(time.time())}_my_cool_model',
+            # 'model_name': 'my_cool_model',
             'model_config': json.dumps(model_config)
         })
 
@@ -43,72 +44,57 @@ class create_pipeline_component:
         # MAKE SURE THE REQUEST CONTAINS THE NECESSARY PARAMS
         training_request = misc.validate_dict(kafka_input, types.TRAINING_REQUEST)
 
-        # PARSE THE MODEL CONFIG
-        try:
-            model_config: dict = json.loads(training_request['model_config'])
+        # PARSE JSON STRING TO DICT
+        model_config: dict = json.loads(training_request['model_config'])
 
-            # EXTRACT PROPS FOR READABILITY
-            model_name: str = training_request['model_name']
-            model_type: str = model_config['model_type']
-            model_version: int = model_config['model_version']
-            model_predecessor: int = training_request['model_predecessor']
+        # EXTRACT PROPS FOR READABILITY
+        model_name: str = training_request['model_name']
+        model_type: str = model_config['model_type']
+        model_version: int = model_config['model_version']
+        model_predecessor: int = training_request['model_predecessor']
 
-            dataset_config: dict = model_config['dataset']
-            features_config: dict = model_config['feature_engineering']
-            segmentation_config: dict = model_config['model_training']['data_segmentation']
-            training_config: dict = model_config['model_training']
-            
-        except Exception as error:
-            raise Exception(f'[PARSING ERROR] {error}')
+        # EXTRACT PRE-PROCESSING CONFIGS
+        dataset_config: dict = model_config['dataset']
+        features_config: dict = model_config['feature_engineering']
+        segmentation_config: dict = model_config['model_training']['data_segmentation']
+        training_config: dict = model_config['model_training']
 
         ########################################################################################
         ########################################################################################
 
-        # THROW ERROR IF THE REQUESTED MODEL TYPE IS NOT AVAILABLE
-        if model_type not in self.model_options.keys():
-            raise Exception(f"[REQUEST ERROR] MODEL TYPE NOT AVAILABLE ({model_type})")
+        # THROW ERROR IF THE REQUESTED MODEL TYPE HAS NOT BEEN IMPLEMENTED
+        assert model_type in self.model_options, f"MODEL TYPE NOT AVAILABLE ({model_type})"
         
+        # MAKE SURE THE MODEL NAME & VERSION IS UNIQUE
+        count_query: str = f"SELECT COUNT(*) FROM {constants.cassandra.MODELS_TABLE} WHERE model_name = '{model_name}' AND model_version = {model_version} ALLOW FILTERING"
+        db_matches: int = self.cassandra.count(count_query)
+        assert db_matches == 0, 'A MODEL WITH THIS NAME & VERSION ALREADY EXISTS'
+
+        ########################################################################################
+        ########################################################################################
+
+        # FETCH THE RAW DATASET FROM DB
+        # APPLY FEATURES RECURSIVELY ON EACH DATASET ROW
+        # SPLIT DATASET INTO TRAIN/TEST/VALIDATION SEGMENTS
+        raw_dataset: list[dict] = self.fetch_dataset(dataset_config)
+        feature_dataset: list[dict] = self.apply_features(raw_dataset, features_config)
+        segmented_dataset: dict[str, list[dict]] = self.segment_dataset(feature_dataset, segmentation_config)
+
+        ########################################################################################
+        ########################################################################################
+
+        misc.log(f'MODEL TRAINING ({model_type}) STARTED..')
+        training_timer = misc.create_timer()
+    
         # STITCH TOGETHER A UNIQUE FILENAME FOR THE MODEL
         model_filename: str = f"{model_type}::{model_name}::v{model_version}"
-        
-        # CHECK DB IF A MODEL WITH THESE PARAMS ALREADY EXISTS
-        count_query: str = f"SELECT COUNT(*) FROM {constants.cassandra.MODELS_TABLE} WHERE model_filename = '{model_filename}' ALLOW FILTERING"
-        db_matches: int = self.cassandra.count(count_query)
 
-        # IF IT DOES, TERMINATE..
-        if db_matches > 0:
-            raise Exception('[REQUEST ERROR] A MODEL WITH THESE PARAMS ALREADY EXISTS')
+        # CREATE MODEL SUITE & START TRAINING
+        model_suite = self.model_options[model_type]()
+        model_suite.train_model(model_filename, segmented_dataset, training_config)
 
-        ########################################################################################
-        ########################################################################################
-
-        try:
-            # FETCH THE RAW DATASET FROM DB
-            # APPLY FEATURES RECURSIVELY ON EACH DATASET ROW
-            # SPLIT DATASET INTO TRAIN/TEST/VALIDATION SEGMENTS
-            raw_dataset: list[dict] = self.fetch_dataset(dataset_config)
-            feature_dataset: list[dict] = self.apply_features(raw_dataset, features_config)
-            segmented_dataset: dict[str, list[dict]] = self.segment_dataset(feature_dataset, segmentation_config)
-
-        except Exception as error:
-            raise Exception(f'[PRE-PROCESSING ERROR] {error}')
-
-        ########################################################################################
-        ########################################################################################
-
-        try:
-            misc.log(f'MODEL TRAINING ({model_type}) STARTED..')
-            training_timer = misc.create_timer()
-
-            # CREATE MODEL SUITE & START TRAINING
-            model_suite = self.model_options[model_type]()
-            model_suite.train_model(model_filename, segmented_dataset, training_config)
-
-            delta_time: float = training_timer.stop()
-            misc.log(f'MODEL TRAINING FINISHED IN {delta_time} SECONDS')
-
-        except Exception as error:
-            raise Exception(f'[TRAINING ERROR] {error}')
+        delta_time: float = training_timer.stop()
+        misc.log(f'MODEL TRAINING FINISHED IN {delta_time} SECONDS')
 
         ########################################################################################
         ########################################################################################
@@ -146,8 +132,7 @@ class create_pipeline_component:
         dataset: list[dict] = self.cassandra.read(db_query, sort_by=dataset_yaml['order_by']['column'])
 
         # TERMINATE IF THERE ISNT ENOUGH DATA AVAILABLE
-        if len(dataset) < dataset_yaml['num_rows']:
-            raise Exception(f"[DATASET ERROR] TABLE CONTAINS TOO FEW ROWS ({len(dataset)} < {dataset_yaml['num_rows']})")
+        assert len(dataset) == dataset_yaml['num_rows'], f"TABLE CONTAINS TOO FEW ROWS ({len(dataset)} < {dataset_yaml['num_rows']})"
         
         ### TODO: MAKE SURE ROWS MEET EXPECTED STRUCTURE
         ### TODO: MAKE SURE ROWS MEET EXPECTED STRUCTURE
@@ -171,16 +156,12 @@ class create_pipeline_component:
             for item in feature_yaml['features']:
                 for feature_name, feature_props in item.items():
 
-                    # THROW ERROR FOR MISSING FEATURES
-                    if feature_name not in self.feature_options:
-                        raise Exception(f"[FEATURE ERROR] '{feature_name}' DOES NOT EXIST")
+                    # MAKE SURE THE FEATURE EXISTS
+                    assert feature_name in self.feature_options, f"FEATURE '{feature_name}' DOES NOT EXIST"
                     
-                    try:
-                        feature_suite = self.feature_options[feature_name]()
-                        temp_row = feature_suite.apply(temp_row, feature_props)
-
-                    except Exception as error:
-                        misc.log(f'[FEATURE ERROR] ({feature_name}) {error}')
+                    # APPLY IT
+                    feature_suite = self.feature_options[feature_name]()
+                    temp_row = feature_suite.apply(temp_row, feature_props)
                 
             ### TODO: ADD EXPECTED OUTPUT VALIDATION
             ### TODO: ADD EXPECTED OUTPUT VALIDATION
@@ -202,9 +183,7 @@ class create_pipeline_component:
         
         # MAKE SURE THE COMBINED SEGMENTS ADD UP TO 100%
         total_percentage: int = sum(item[key] for item in segmentation for key in item)
-
-        if total_percentage != 100:
-            raise Exception(f'[SPLIT DATASET ERROR] YOUR SEGMENTS DO NOT ADD UP TO 100% ({total_percentage})')
+        assert total_percentage == 100, f'YOUR SEGMENTS DO NOT ADD UP TO 100% ({total_percentage})'
         
         # LOOP THROUGH SEGMENTS -- IN ORDER
         for item in segmentation:

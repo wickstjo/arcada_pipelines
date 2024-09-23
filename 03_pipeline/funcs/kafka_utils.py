@@ -202,12 +202,9 @@ def start_kafka_consumer(create_pipeline_state):
     state = create_pipeline_state(beacon)
 
     # MAKE SURE INPUT_TOPICS IS DEFINED
-    if not hasattr(state, 'kafka_input_topics'):
-        raise Exception("STATE ERROR: YOU MUST DEFINE THE STATE VARIABLE 'kafka_input_topics'")
-    
     # MAKE SURE THE HANDLE_EVENTS METHOD IS DEFINED
-    if not hasattr(state, 'on_kafka_event'):
-        raise Exception("STATE ERROR: YOU MUST DEFINE THE STATE METHOD 'on_kafka_event'")
+    assert hasattr(state, 'kafka_input_topics'), "STATE ERROR: YOU MUST DEFINE THE STATE VARIABLE 'kafka_input_topics'"
+    assert hasattr(state, 'on_kafka_event'), "STATE ERROR: YOU MUST DEFINE THE STATE METHOD 'on_kafka_event'"
 
     # CREATE THE KAKFA CONSUMER & CONTROL LOCK
     kafka_client = create_kafka_consumer(state.kafka_input_topics)
@@ -216,6 +213,12 @@ def start_kafka_consumer(create_pipeline_state):
     try:
         kafka_client.poll_next(beacon, state.on_kafka_event)
 
+    except AssertionError as error:
+        misc.log(f'[ASSERT FAIL] {error}')
+
+    except Exception as error:
+        misc.log(f'[CRASH]: {error}')
+    
     # TERMINATE MAIN PROCESS AND KILL HELPER THREADS
     except KeyboardInterrupt:
         beacon.kill()

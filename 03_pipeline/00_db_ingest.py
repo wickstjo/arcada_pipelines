@@ -16,7 +16,7 @@ class state:
     source_dataset: str = 'finance_historical.csv'
 
     # EMPTY PIPELINE DATABASES & MODEL REPO?
-    reset_pipeline: bool = False
+    reset_pipeline: bool = True
 
 ########################################################################################
 ########################################################################################

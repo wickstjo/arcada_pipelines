@@ -109,18 +109,18 @@ model_analysis:
 
     # APPLY A QUICK PROBE AFTER INFERENCE
     # TO CHECK IF A DEEPER ANALYSIS IS REQUIRED
-    light_probing:
+    light_metrics:
         metrics:
             -   metric_1:
                     threshold: 0.4
                     artificial_delay: 1
 
         # HOW MANY PROBES MUST AGREE TO TRIGGER A DEEPER ANALYSIS?
-        quorum_trigger: 1
+        quorum_threshold: 1
 
     # PERFORM DEEPER ANALYSIS
     # TO TRIGGER MODEL RETRAINING
-    deep_probing:
+    heavy_metrics:
         metrics:
             -   metric_1:
                     threshold: 0.1
@@ -130,7 +130,7 @@ model_analysis:
                     artificial_delay: 15
 
         # WHAT CUMULATIVE THRESHOLD IS NECESSARY TO TRIGGER MODEL RETRAINING?
-        quorum_trigger: 2
+        quorum_threshold: 2
 
 ###############################################################################################################
 ###############################################################################################################

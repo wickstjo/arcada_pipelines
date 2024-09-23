@@ -8,7 +8,11 @@ from datetime import datetime
 ###################################################################################################
 
 # CONVERT STRING TEXT TO UNIX TIMESTAMP
-def string_to_unix(date_text: str) -> int:
+def string_to_unix(date_text: str|int) -> int:
+
+    if type(date_text) == int:
+        return date_text
+
     date_tuple = datetime.strptime(date_text, '%Y-%m-%d')
     return int(time.mktime(date_tuple.timetuple()))
 
@@ -39,11 +43,10 @@ MODEL_INFO: dict = {
 
 # WHAT SHOULD A MODEL TRAINING REQUEST CONTAIN?
 ANALYSIS_REQUEST: dict = {
-    'uuid': lambda x: x,
     'timestamp': int,
     'model_type': str,
     'model_name': str,
-    'model_version': str,
+    'model_version': int,
     'model_filename': str,
 }
 

@@ -5,6 +5,7 @@ import funcs.types as types
 import machine_learning.options as ml_options
 import funcs.misc as misc
 import funcs.thread_utils as thread_utils
+import json
 
 ########################################################################################
 ########################################################################################
@@ -19,8 +20,10 @@ class create_pipeline_component:
         # RELEVANT KAFKA TOPICS
         self.kafka_input_topics: str|list[str] = constants.kafka.MODEL_INFERENCE
 
-        # WHAT ML MODEL SUITES ARE CURRENTLY AVAILABLE?
+        # WHAT HAVE WE IMPLEMENTED?
         self.model_options: dict = ml_options.IMPLEMENTED_MODELS()
+        self.feature_options: dict = ml_options.IMPLEMENTED_FEATURES()
+        self.metrics_options: dict = ml_options.IMPLEMENTED_METRICS()
 
         # CURRENTLY LOADED MODELS
         self.model_mutex = thread_utils.create_mutex()
@@ -38,60 +41,83 @@ class create_pipeline_component:
         model_query: str = f"SELECT * FROM {constants.cassandra.MODELS_TABLE} WHERE active_status = True ALLOW FILTERING"
         query_result: list[dict] = self.cassandra.read(model_query)
 
-        print(len(query_result))
-        return
-    
-        ### TODO: IF RESULT ARRAY IS EMPTY, DELETE ALL STATE MODELS
+        # CONVERT LIST OF DICTS TO DICT FORMAT
+        db_models = {d['model_name']: d for d in query_result}
 
-        # LOOP THROUGH MODELS
-        for item in query_result:
+        # IF THERE ARE NO ACTIVE MODELS, MAKE SURE THERE ARE NO MODELS IN STATE
+        if (len(db_models) == 0) and (len(self.loaded_models) > 0):
+            for model_name in self.loaded_models:
+                self.retire_model(model_name)
+            return
 
-            # MODEL CANT BE FOUND IN STATE, THEREFORE ADD IT
-            if item['model_name'] not in self.loaded_models:
+        # COMPARE DB RESULTS TO MODEL STATE
+        for model_name, model_info in db_models.items():
+
+            # MODEL CANT BE FOUND IN STATE, ADD IT
+            if model_name not in self.loaded_models:
                 with self.model_mutex:
-                    self.deploy_model(item)
-                    misc.log('DEPLOYED NEW MODEL')
+                    self.deploy_model(model_info)
                 continue
 
             # OTHERWISE, THE MODEL IS LOADED
-            # IF THERE IS A NEWER VERSION OF THIS MODEL AVAILABLE
-            if item['version'] > self.loaded_models['model_name'].version:
+            # CHECK IF ITS A NEWER MODEL VERSION
+            if model_info['model_version'] > self.loaded_models[model_name]['model_config']['model_version']:
                 with self.model_mutex:
 
                     # RETIRE THE OLD MODEL & DEPLOY THE NEW ONE
-                    del self.loaded_models['model_name']
-                    self.deploy_model(item)
-                    misc.log('RETRIED OLD MODEL AND DEPLOYED NEW MODEL')
+                    self.retire_model(model_name)
+                    self.deploy_model(model_info)
     
-        ### TODO: FIX EDGECASE WHERE RESULT LENGTH IS ZERO, BUT PROCESS STATE IS >0
-        ### TODO: FIX EDGECASE WHERE RESULT LENGTH IS ZERO, BUT PROCESS STATE IS >0
-        ### TODO: FIX EDGECASE WHERE RESULT LENGTH IS ZERO, BUT PROCESS STATE IS >0
+        # COMPARE MODEL STATE TO DB RESULTS
+        for model_name in self.loaded_models:
 
-        ### LOOP THROUGH MODEL STATE AND COMPARE WITH DB?
+            # MODEL FOUND IN STATE, BUT NO IN DB
+            # THEREFORE, REMOVE MODEL
+            if model_name not in db_models:
+                with self.model_mutex:
+                    self.retire_model(model_name)
         
     ########################################################################################
     ########################################################################################
 
     def deploy_model(self, model_info: dict):
 
-        # VALIDATE THE REQUEST INPUTS
+        model_name = model_info['model_name']
         model_type = model_info['model_type']
+        model_version = model_info['model_version']
         model_filename = model_info['model_filename']
+        model_config = json.loads(model_info['model_config'])
 
         # MAKE SURE WE KNOW HOW TO DEAL WITH THE REQUESTED MODEL TYPE
-        if model_type not in self.model_options:
-            raise Exception(f'ERROR: CANNOT PROCESS MODELS OF TYPE ({model_type})')
+        assert model_type in self.model_options, f'CANNOT PROCESS MODELS OF TYPE ({model_type})'
 
         # MAKE SURE WE DONT DOUBLE-LOAD THE SAME MODEL
-        if model_filename in self.loaded_models:
-            raise Exception(f'ERROR: MODEL ALREADY LOADED ({model_filename})')
+        assert model_filename not in self.loaded_models, f'MODEL ALREADY LOADED ({model_filename})'
 
         # INSTANTIATE THE CORRECT MODEL SUITE & LOAD A MODEL FROM FILE
         model_suite = self.model_options[model_type]()
         model_suite.load_model(model_filename)
 
         # SAVE THE MODEL SUITE IN STATE FOR REPEATED USE
-        self.loaded_models[model_filename] = model_suite
+        self.loaded_models[model_name] = {
+            'model_suite': model_suite,
+            'model_config': model_config,
+            'db_row': model_info,
+        }
+
+        misc.log(f"DEPLOYED MODEL '{model_name}' VERSION {model_version}")
+
+    ########################################################################################
+    ########################################################################################
+
+    def retire_model(self, model_name: str):
+        
+        # MAKE SURE MODEL IS LOADED
+        assert model_name in self.loaded_models, "MODEL '{model_name}' IS NOT CURRENTLY LOADED"
+        model_version: int = self.loaded_models[model_name]['db_row']['model_version']
+
+        misc.log(f"RETIRED MODEL '{model_name}' VERSION {model_version}")
+        del self.loaded_models[model_name]
 
     ########################################################################################
     ########################################################################################
@@ -109,8 +135,9 @@ class create_pipeline_component:
             return
 
         # GENERATE A PREDICTION FOR EACH LOADED MODEL
-        model_predictions: dict = self.query_all_models(refined_stock_data)
-        misc.log(f'GENERATED {len(model_predictions)} PREDICTIONS')
+        with self.model_mutex:
+            model_predictions: dict = self.query_all_models(refined_stock_data)
+            misc.log(f'GENERATED {len(model_predictions)} PREDICTIONS')
 
         # CREATE & VALIDATE PREDICTION BATCH
         prediction_batch: dict = misc.validate_dict({
@@ -120,19 +147,79 @@ class create_pipeline_component:
 
         # PUSH IT TO THE NEXT PIPELINE MODULE
         self.kafka_producer.push_msg(constants.kafka.DECISION_SYNTHESIS, prediction_batch)
+        
+        # FINALLY, RUN LIGHT PROBING METRICS FOR EACH MODEL
+        with self.model_mutex:
+            self.probe_all_models()
 
     ########################################################################################
     ########################################################################################
 
-    def query_all_models(self, model_input: dict) -> dict:
+    def query_all_models(self, refined_input: dict) -> dict:
         predictions = {}
         
-        # FEED THE INPUT TO EACH MODELS RESPECTIVE USE FUNC
-        with self.model_mutex:
-            for model_name, model_suite in self.loaded_models.items():
-                predictions[model_name] = model_suite.predict_outcome(model_input)
+        # LOOP THROUGH MODELS
+        for model_name, model_parts in self.loaded_models.items():
+
+            # APPLY SAME FEATURES FROM MODEL TRAINING
+            features_config = model_parts['model_config']['feature_engineering']
+            input_with_features: dict = self.apply_features(refined_input, features_config)
+
+            # PREDICT AN OUTCOME
+            model_suite = model_parts['model_suite']
+            predictions[model_name] = model_suite.predict_outcome(input_with_features)
 
         return predictions
+    
+    ########################################################################################
+    ########################################################################################
+
+    def apply_features(self, refined_input: dict, feature_yaml: dict) -> dict:
+        temp_row = refined_input
+
+        # RECURSIVELY APPLY EACH FEATURE, UPDATING TEMP ROW
+        for item in feature_yaml['features']:
+            for feature_name, feature_props in item.items():
+
+                # MAKE SURE THE FEATURE EXISTS
+                assert feature_name in self.feature_options, f"FEATURE '{feature_name}' DOES NOT EXIST"
+                
+                # APPLY IT
+                feature_suite = self.feature_options[feature_name]()
+                temp_row = feature_suite.apply(temp_row, feature_props)
+
+        return temp_row
+    
+    ########################################################################################
+    ########################################################################################
+
+    def probe_all_models(self) -> dict:
+        
+        # LOOP THROUGH MODELS
+        for model_name, model_parts in self.loaded_models.items():
+
+            anomalies_detected = 0
+            metrics_config = model_parts['model_config']['model_analysis']['light_metrics']
+
+            # LOOP THROUGH METRICS
+            for item in metrics_config['metrics']:
+                for metric_name, metric_props in item.items():
+
+                    # LOAD METRIC SUITE & MEASURE
+                    metric_suite = self.metrics_options[metric_name]()
+                    positive_result: bool = metric_suite.measure(metric_props)
+
+                    # ANOMALOUS METRIC FOUND
+                    if positive_result:
+                        anomalies_detected += 1
+
+                    # CHECK IF MINIMUM THRESHOLD HAS BEEN MET
+                    if anomalies_detected >= metrics_config['quorum_threshold']:
+                        self.kafka_producer.push_msg(constants.kafka.MODEL_ANALYSIS, model_parts['db_reference'])
+                        misc.log(f'LIGHT PROBE QUORUM THRESHOLD MET ({model_name})')
+                        return
+                
+            misc.log(f"RAN LIGHT PROBES FOR MODEL '{model_name}'")
 
 ########################################################################################
 ########################################################################################
