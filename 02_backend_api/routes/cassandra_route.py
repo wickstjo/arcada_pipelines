@@ -1,27 +1,51 @@
 from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
 import funcs.cassandra_utils as cassandra_utils
-import funcs.misc as misc
+import funcs.constants as constants
 
 ########################################################################################################
 ########################################################################################################
 
 router = APIRouter()
 cassandra = cassandra_utils.create_cassandra_instance()
-global_config = misc.load_global_config()
+global_config = constants.global_config()
+
+# WHAT CASSANDRA TABLES ARE ONLY EXIST FOR MAINTENANCE
+CASSANDRA_AUXILLARY_TABLES = ['system_auth', 'system_schema', 'system_distributed', 'system', 'system_traces']
 
 ########################################################################################################
 ########################################################################################################
 
 @router.get('/cassandra/')
-async def overview(response: Response):
+async def foo(response: Response):
     try:
         response.status_code = status.HTTP_200_OK
-        return cassandra.db_overview()
+        container = {}
+        
+        # QUERY ALL EXISTING TABLES
+        all_tables: list[dict] = cassandra.read(f"SELECT keyspace_name, table_name FROM system_schema.tables")
+
+        # LOOP THROUGH THEM
+        for item in all_tables:
+            keyspace = item['keyspace_name']
+            table= item['table_name']
+
+            # HIDE AUXILLARY TABLES
+            if (global_config.backend.hide_auxillary) and (keyspace in CASSANDRA_AUXILLARY_TABLES):
+                continue
+
+            # ADD KEYSPACE TO RESPONSE
+            if keyspace not in container:
+                container[keyspace] = []
+
+            # ADD TABLE TO RESPONSE
+            container[keyspace].append(table)
+
+        return container
 
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return f'CASSANDRA ROOT ERROR: {str(error)}'
+        return error
 
 ########################################################################################################
 ########################################################################################################
@@ -33,14 +57,14 @@ class CREATE_TABLE(BaseModel):
     indexing: list
 
 @router.post('/cassandra/create')
-async def create_table(table: CREATE_TABLE, response: Response):
+async def foo(table: CREATE_TABLE, response: Response):
     try:
         response.status_code = status.HTTP_201_CREATED
         cassandra.create_table(table.keyspace_name, table.table_name, table.columns, table.indexing)
     
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return f'CASSANDRA CREATE ERROR: {str(error)}'
+        return error
 
 ########################################################################################################
 ########################################################################################################
@@ -50,33 +74,31 @@ class DROP_TABLE(BaseModel):
     table_name: str
 
 @router.post('/cassandra/drop')
-async def create_table(table: DROP_TABLE, response: Response):
+async def foo(table: DROP_TABLE, response: Response):
     try:
         response.status_code = status.HTTP_200_OK
         cassandra.drop_table(table.keyspace_name, table.table_name)
     
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return f'CASSANDRA DROP ERROR: {str(error)}'
+        return error
 
 ########################################################################################################
 ########################################################################################################
 
 # CREATE DEFAULT TABLES AFTER A FRESH DOCKER LAUNCH
 @router.get('/cassandra/init')
-async def initialize_default_content(response: Response):
+async def foo(response: Response):
     try:
         response.status_code = status.HTTP_201_CREATED
         container = []
 
-        # FETCH WHAT TABLES TO CREATE FROM THE GLOBAL CONFIG
-        cassandra_tables = global_config.backend.create_on_init.cassandra_tables
-
         # CREATE EACH LISTED TABLE
-        for item in cassandra_tables:
+        for item in global_config.backend.create_on_init.cassandra_tables:
             try:
                 cassandra.create_table(item.keyspace, item.table_name, item.columns.__dict__, item.primary_keys)
                 container.append(f"TABLE '{item.keyspace}.{item.table_name}' CREATED")
+
             except Exception as error:
                 container.append(f"'{item.keyspace}.{item.table_name}': {str(error)}")
 
@@ -84,31 +106,52 @@ async def initialize_default_content(response: Response):
 
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return F'CASSANDRA INIT ERROR: {str(error)}'
+        return error
 
 ########################################################################################################
 ########################################################################################################
 
+# OVERVIEW OF KEYSPACE TABLES
 @router.get('/cassandra/{keyspace_name}')
-async def keyspace_overview(keyspace_name: str, response: Response):
+async def foo(keyspace_name: str, response: Response):
     try:
         response.status_code = status.HTTP_200_OK
-        return cassandra.keyspace_overview(keyspace_name)
+        container = {}
+        
+        # CHECK CONTENTS OF KEYSPACE
+        keyspace_content = cassandra.read(f"SELECT * FROM system_schema.columns WHERE keyspace_name= '{keyspace_name}'")
+
+        # STOP IF THE KEYSPACE IS EMPTY
+        if len(keyspace_content) == 0:
+            return 'KEYSPACE IS EMPTY OR DOES NOT EXIST'
+        
+        # LOOP IN TABLE STRUCTURES
+        for row in keyspace_content:
+
+            # CREATE TABLE KEY IF IT DOESNT EXIST
+            if row['table_name'] not in container:
+                container[row['table_name']] = {
+                    'n_rows': None,
+                    'columns': {},
+                    'indexing': {},
+                }
+
+            # PUSH IN COL_NAME => TYPE KEYS UNDER TABLE
+            container[row['table_name']]['columns'][row['column_name']] = row['type']
+
+            # APPEND PRIMARY KEYS WHEN APPRIPRIATE
+            if row['kind'] != 'regular':
+                container[row['table_name']]['indexing'][row['kind']] = row['column_name']
+
+        # FINALLY, ADD TABLE ROW COUNT
+        for table_name in container.keys():
+            container[table_name]['n_rows'] = cassandra.count(f"SELECT COUNT(*) FROM {keyspace_name}.{table_name}")
+
+        return container
 
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return f'CASSANDRA KEYSPACE ERROR: {str(error)}'
+        return error
     
 ########################################################################################################
 ########################################################################################################
-
-@router.get('/cassandra/{keyspace_name}/{table_name}')
-async def table_overview(keyspace_name: str, table_name: str, response: Response):
-    try:
-        response.status_code = status.HTTP_200_OK
-        return 'TODO'
-        #return cassandra.table_overview(keyspace_name, table_name)
-
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return f'CASSANDRA FETCH ERROR: {str(error)}'

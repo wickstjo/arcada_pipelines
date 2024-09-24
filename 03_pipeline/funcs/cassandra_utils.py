@@ -1,5 +1,6 @@
 from cassandra.cluster import Cluster
 import funcs.misc as misc
+import funcs.constants as constants
 import re
 
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE CASSANDRA CONNECTION STRING

@@ -1,169 +1,189 @@
 from cassandra.cluster import Cluster
+import funcs.constants as constants
 import funcs.misc as misc
+import re
 
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE CASSANDRA CONNECTION STRING
-global_config = misc.load_global_config()
-cassandra_brokers = [(host, int(port)) for host, port in (item.split(':') for item in global_config.cluster.cassandra_brokers)]
+global_config: dict = constants.global_config()
+cassandra_brokers: list[(str, int)] = [(host, int(port)) for host, port in (item.split(':') for item in global_config.cluster.cassandra_brokers)]
+VERBOSE = global_config.backend.verbose_logging
 
-# HIDE MANAGEMENT KEYSPACES AND TABLES
-HIDE_SYSTEM_TABLES = global_config.backend.hide_auxillary
-SYSTEM_TABLES = ['system_auth', 'system_schema', 'system_distributed', 'system', 'system_traces']
+# # HIDE MANAGEMENT KEYSPACES AND TABLES
+# HIDE_SYSTEM_TABLES = global_config.backend.hide_auxillary
+# SYSTEM_TABLES = ['system_auth', 'system_schema', 'system_distributed', 'system', 'system_traces']
 
 ########################################################################################################
 ########################################################################################################
 
 class create_cassandra_instance:
-    def __init__(self):
+    def __init__(self, HIDE_LOGS=False):
         cluster = Cluster(cassandra_brokers)
         self.instance = cluster.connect()
+
+        if HIDE_LOGS:
+            global VERBOSE
+            VERBOSE = False
+
+    def __del__(self):
+        self.instance.shutdown()
+
+    ########################################################################################################
+    ########################################################################################################
+
+    # FREELY EXECUTE ANY CQL QUERY
+    def query(self, query):
+        try:
+            return self.instance.execute(query)
+        
+        # SAFELY CATCH ERRORS
+        except Exception as raw_error:
+            parsed_error = self.parse_error(raw_error)
+            raise Exception(f'[CASSANDRA FREE-QUERY ERROR] => {parsed_error}')
+
+    ########################################################################################################
+    ########################################################################################################
+    
+    # CASSANDRA DRIVER ERRORS ARE VERY MESSY
+    # THIS ATTEMPT TO PARSE THEM TO MAKE EVERYTHING MORE HUMAN-READABLE
+    def parse_error(self, error):
+        stringified_error = str(error)
+        
+        # TRY TO REGEX MATCH THE ERROR PATTERN
+        match = re.search(r'message="(.+)"', stringified_error)
+
+        # MATCH FOUND, RETURN ISOLATED ERROR MSG
+        if match:
+            return match.group(1)
+        
+        # OTHERWISE, RETURN THE WHOLE THING
+        return stringified_error
+    
+    ########################################################################################################
+    ########################################################################################################
+
+    # READ DATA FROM THE DATABASE
+    def read(self, query: str, sort_by=False) -> list[dict]:
+        try:
+            container = []
+
+            # PERFORM THE TABLE QUERY
+            query_result = self.instance.execute(query)
+
+            # PARSE EACH ROW AS A DICT
+            for item in query_result:
+                container.append(item._asdict())
+
+            if VERBOSE: misc.log(f'[CASSANDRA] READ {len(container)} FROM DATABASE')
+            
+            # SORT BY KEY WHEN REQUESTED
+            if sort_by:
+                return sorted(container, key=lambda x: x[sort_by])
+
+            # OTHERWISE, RETURN UNSORTED
+            return container
+        
+        # SAFELY CATCH ERRORS
+        except Exception as raw_error:
+            parsed_error = self.parse_error(raw_error)
+            raise Exception(f'[CASSANDRA READ ERROR] => {parsed_error}')
+    
+    ########################################################################################################
+    ########################################################################################################
+
+    # COUNT TABLE ROWS -- SELECT COUNT(*) FROM ...
+    def count(self, count_query: str) -> int:
+        return int(self.read(count_query)[0]['count'])
 
     ########################################################################################################
     ########################################################################################################
 
     # FULL DATABASE OVERVIEW (KEYSPACES)
-    def db_overview(self):
-        container = {}
+    def write(self, keyspace_table: str, row: dict):
+        try:
 
-        # PERFORM THE TABLE QUERY
-        table_query = self.instance.execute(
-            f"SELECT keyspace_name, table_name FROM system_schema.tables"
-        )
+            # SPLIT THE KEYS & VALUES
+            columns = list(row.keys())
+            values = list(row.values())
 
-        for row in table_query:
+            # STITCH TOGETHER THE QUERY STRING
+            query_string = f'INSERT INTO {keyspace_table} ('
+            query_string += ', '.join(columns)
+            query_string += ') values ('
+            query_string += ', '.join(['?'] * len(columns))
+            query_string += ');'
+            
+            # CONSTRUCT A PREPARED STATEMENT & EXECUTE THE DB WRITE
+            prepared_statement = self.instance.prepare(query_string)
+            self.instance.execute(prepared_statement, values)
 
-            # WHEN TOGGLED, FILTER OUT SYSTEM TABLES
-            if HIDE_SYSTEM_TABLES and row.keyspace_name in SYSTEM_TABLES:
-                continue
-
-            if row.keyspace_name not in container:
-                container[row.keyspace_name] = []
-
-            container[row.keyspace_name].append(row.table_name)
-
-        return container
-    
-    ########################################################################################################
-    ########################################################################################################
-
-    # KEYSPACE OVERVIEW (TABLES)
-    def keyspace_overview(self, keyspace_name):
-        container = {}
-
-        # STOP & THROW ERROR IF KEYSPACE DOESNT EXIST
-        if keyspace_name not in self.db_overview().keys():
-            raise Exception(f"KEYSPACE '{keyspace_name}' DOES NOT EXIST")
-
-        # PERFORM THE TABLE QUERY
-        table_query = self.instance.execute(
-            f"SELECT * FROM system_schema.columns WHERE keyspace_name= '{keyspace_name}'"
-        )
-
-        # LOOP IN TABLE STRUCTURES
-        for row in table_query:
-
-            # CREATE TABLE KEY IF IT DOESNT EXIST
-            if row.table_name not in container:
-                container[row.table_name] = {
-                    'n_rows': None,
-                    'columns': {},
-                    'indexing': {},
-                }
-
-            # PUSH IN COL_NAME => TYPE KEYS UNDER TABLE
-            container[row.table_name]['columns'][row.column_name] = row.type
-
-            # APPEND PRIMARY KEYS WHEN APPRIPRIATE
-            if row.kind != 'regular':
-                # container[row.table_name]['indexing'].append(row.column_name)
-                container[row.table_name]['indexing'][row.kind] = row.column_name
-
-        # ADD TABLE ROW COUNT
-        for table_name in container.keys():
-            count_query = self.instance.execute(f"SELECT COUNT(*) FROM {keyspace_name}.{table_name}")
-            container[table_name]['n_rows'] = count_query.one()[0]
-
-        return container
-
-    ########################################################################################################
-    ########################################################################################################
-
-    # TABLE OVERVIEW
-    def table_overview(self, keyspace_name, table_name):
-        container = []
-
-        # FETCH KEYSPACE/TABLE INFO FOR VERIFICATION
-        db_content = self.db_overview()
-
-        # IF KEYSPACE DOES NOT EXIST, THROW ERROR
-        if keyspace_name not in db_content.keys():
-            raise Exception(f"KEYSPACE '{keyspace_name}' DOES NOT EXIST")
+            if VERBOSE: misc.log('[CASSANDRA] WROTE TO DATABASE')
         
-        # IF TABLE DOES NOT EXIST, THROW ERROR
-        if table_name not in db_content[keyspace_name]:
-            raise Exception(f"TABLE '{keyspace_name}.{table_name}' DOES NOT EXIST")
-
-        # ADD ROWS FROM HEAD
-        # head_query = self.instance.execute(f"SELECT * FROM {keyspace_name}.{table_name} LIMIT {row_limit}")
-
-        return container
-    
+        # SAFELY CATCH ERRORS
+        except Exception as raw_error:
+            parsed_error = self.parse_error(raw_error)
+            raise Exception(f'[CASSANDRA WRITE ERROR] => {parsed_error}')
+        
     ########################################################################################################
     ########################################################################################################
 
     # CREATE A NEW KEYSPACE
     def create_keyspace(self, keyspace_name):
-        self.instance.execute("""
-            CREATE KEYSPACE IF NOT EXISTS %s WITH replication = {
-                'class': 'SimpleStrategy', 
-                'replication_factor': '1'
-            };
-        """ % keyspace_name).all()
+        try:
+            self.instance.execute("""
+                CREATE KEYSPACE IF NOT EXISTS %s WITH replication = {
+                    'class': 'SimpleStrategy', 
+                    'replication_factor': '1'
+                };
+            """ % keyspace_name).all()
+
+        except Exception as raw_error:
+            parsed_error = self.parse_error(raw_error)
+            raise Exception(f'[CASSANDRA KEYSPACE ERROR] {parsed_error}')
 
     ########################################################################################################
     ########################################################################################################
 
-    # CREATE TABLE QUERY
     def create_table(self, keyspace_name, table_name, columns, indexing):
+        try:
 
-        # FETCH KEYSPACE/TABLE INFO FOR VERIFICATION
-        db_content = self.db_overview()
-
-        # IF KEYSPACE DOES NOT EXIST, CREATE IT
-        if keyspace_name not in db_content.keys():
+            # MAKE SURE PRIMARY KEYS ARE OK
+            for key in indexing:
+                col_list = list(columns.keys())
+                
+                if key not in col_list:
+                    raise Exception(f"PRIMARY KEY '{key}' IS NOT A VALID COLUMN")
+            
+            # CREATE KEYSPACE IF NECESSARY
             self.create_keyspace(keyspace_name)
-            db_content[keyspace_name] = {}
 
-        # MAKE SURE PRIMARY KEYS ARE OK
-        for key in indexing:
-            col_list = list(columns.keys())
+            # BASE QUERY
+            query = f'CREATE TABLE {keyspace_name}.{table_name} ('
             
-            if key not in col_list:
-                raise Exception(f"PRIMARY KEY '{key}' IS NOT A VALID COLUMN")
-        
-        # MAKE SURE A PROPER CASSANDRA DOMAIN WAS PROVIDED
-        if table_name in db_content[keyspace_name]:
-            raise Exception('TABLE ALREADY EXISTS')
+            # LOOP IN COLUMNS
+            for column_name, column_type in columns.items():
+                query += f'{column_name} {column_type}, '
+                
+            # ADD PRIMARY KEYS
+            key_string = ', '.join(indexing)
+            query += f'PRIMARY KEY({key_string}));'
 
-        # BASE QUERY
-        query = f'CREATE TABLE {keyspace_name}.{table_name} ('
-        
-        # LOOP IN COLUMNS
-        for column_name, column_type in columns.items():
-            query += f'{column_name} {column_type}, '
-            
-        # ADD PRIMARY KEYS
-        key_string = ', '.join(indexing)
-        query += f'PRIMARY KEY({key_string}));'
+            # CREATE THE TABLE
+            self.instance.execute(query)
 
-        # CREATE THE TABLE
-        self.instance.execute(query)
+        except Exception as raw_error:
+            parsed_error = self.parse_error(raw_error)
+            raise Exception(f'[CASSANDRA CREATE ERROR] {parsed_error}')
 
     ########################################################################################################
     ########################################################################################################
  
     def drop_table(self, keyspace_name: str, table_name: str):
-        self.instance.execute(f'DROP TABLE IF EXISTS {keyspace_name}.{table_name}')
+        try:
+            self.instance.execute(f'DROP TABLE IF EXISTS {keyspace_name}.{table_name}')
 
-########################################################################################################
-########################################################################################################
+        except Exception as raw_error:
+            parsed_error = self.parse_error(raw_error)
+            raise Exception(f'[CASSANDRA DROP ERROR] {parsed_error}')
 
+    ########################################################################################################
+    ########################################################################################################

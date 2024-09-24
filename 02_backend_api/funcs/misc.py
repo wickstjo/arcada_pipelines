@@ -1,5 +1,9 @@
 from types import SimpleNamespace as sn
 import yaml
+from datetime import datetime
+
+########################################################################################################
+########################################################################################################
 
 # CONVERT DICT TO CLASS NAMESPACE
 def DICT_NAMESPACE(d):
@@ -19,11 +23,28 @@ def DICT_NAMESPACE(d):
         # If d is neither a dict nor a list, return it as is
         return d
 
-# LOAD SYSCONFIG FROM ROOT YAML FILE
-# A STATIC PATH SHOULD WORK..?
-def load_global_config():
-    with open('../00_configs/global_config.yaml', 'r') as file:
-        data_dict = yaml.safe_load(file)
+########################################################################################################
+########################################################################################################
 
-        # RETURN AS A NAMESPACE RATHER THAN A DICT
-        return DICT_NAMESPACE(data_dict)
+def load_yaml(file_path, ns=False):
+    with open(file_path, 'r') as file:
+        data_dict: dict = yaml.safe_load(file)
+        if ns: return DICT_NAMESPACE(data_dict)
+        return data_dict
+
+def save_yaml(file_path, data_dict):
+    with open(f'{file_path}', 'w') as file:
+        yaml.dump(data_dict, file, default_flow_style=False)
+    
+########################################################################################################
+########################################################################################################
+
+# TIMESTAMPED PRINT STATEMENT
+def log(msg, with_break=False):
+    now = datetime.now()
+    timestamp = now.strftime("%H:%M:%S.%f")[:-3]
+
+    if with_break:
+        print(f'\n[{timestamp}]\t {msg}', flush=True)
+    else:
+        print(f'[{timestamp}]\t {msg}', flush=True)
