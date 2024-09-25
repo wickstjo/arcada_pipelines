@@ -1,10 +1,12 @@
 from confluent_kafka import Consumer, Producer
 import funcs.misc as misc
+import funcs.constants as constants
 import funcs.thread_utils as thread_utils
 import json
 
+
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE KAFKA CONNECTION STRING
-global_config = misc.load_global_config()
+global_config = constants.global_config()
 KAFKA_BROKERS = ','.join(global_config.cluster.kafka_brokers)
 VERBOSE = global_config.pipeline.verbose_logging
 

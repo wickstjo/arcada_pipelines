@@ -2,7 +2,6 @@ from funcs.kafka_utils import create_kafka_producer, start_kafka_consumer
 from funcs.cassandra_utils import create_cassandra_instance
 import funcs.constants as constants
 import funcs.types as types
-import machine_learning.options as ml_options
 import funcs.misc as misc
 import funcs.thread_utils as thread_utils
 import json
@@ -19,11 +18,6 @@ class create_pipeline_component:
 
         # RELEVANT KAFKA TOPICS
         self.kafka_input_topics: str|list[str] = constants.kafka.MODEL_INFERENCE
-
-        # WHAT HAVE WE IMPLEMENTED?
-        self.model_options: dict = ml_options.IMPLEMENTED_MODELS()
-        self.feature_options: dict = ml_options.IMPLEMENTED_FEATURES()
-        self.metrics_options: dict = ml_options.IMPLEMENTED_METRICS()
 
         # CURRENTLY LOADED MODELS
         self.model_mutex = thread_utils.create_mutex()

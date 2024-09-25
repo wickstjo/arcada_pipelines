@@ -7,9 +7,8 @@ from uuid import uuid4
 ########################################################################################################
 
 # LOAD CSV INTO DICT ARRAY
-def load_csv(file_name):
+def load_csv(file_path: str):
     container = []
-    file_path = f'datasets/{file_name}'
 
     with open(file_path, mode='r', newline='') as file:
         csv_reader = csv.DictReader(file)
@@ -71,15 +70,6 @@ def load_yaml(file_path, ns=False):
 def save_yaml(file_path, data_dict):
     with open(f'{file_path}', 'w') as file:
         yaml.dump(data_dict, file, default_flow_style=False)
-
-########################################################################################################
-########################################################################################################
-
-# LOAD SYSCONFIG FROM ROOT YAML FILE
-# STATIC FILEREF SHOULD WORK..?
-def load_global_config():
-    data_dict: dict = load_yaml('../00_configs/global_config.yaml')
-    return TO_NAMESPACE(data_dict)
 
 ########################################################################################################
 ########################################################################################################

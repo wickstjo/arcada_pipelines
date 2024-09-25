@@ -4,7 +4,7 @@ import funcs.constants as constants
 import re
 
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE CASSANDRA CONNECTION STRING
-global_config = misc.load_global_config()
+global_config = constants.global_config()
 CASSANDRA_BROKERS = [(host, int(port)) for host, port in (item.split(':') for item in global_config.cluster.cassandra_brokers)]
 VERBOSE = global_config.pipeline.verbose_logging
 

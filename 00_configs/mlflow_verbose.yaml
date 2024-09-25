@@ -1,0 +1,28 @@
+# AMAZON STOCK
+AMZN:
+    -   pipe_name: pipe_1
+        model_sequence:
+            - model_1
+
+# META STOCK
+META:
+    -   pipe_name: pipe_2
+        model_sequence:
+            - model_2
+            - model_3
+            - model_4
+
+    -   pipe_name: pipe_3
+        model_sequence:
+            - model_5
+
+# APPLE STOCK
+AAPL:
+    -   pipe_name: pipe_4
+        model_sequence:
+            - model_6
+
+    -   pipe_name: pipe_5
+        model_sequence:
+            - model_7
+            - model_8

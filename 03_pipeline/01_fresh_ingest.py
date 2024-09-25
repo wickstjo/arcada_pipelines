@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class state:
-    dataset_file: str = 'finance_fresh.csv'
+    dataset_file: str = 'datasets/finance_fresh.csv'
     injection_cooldown: float = 1.0
 
 ########################################################################################
@@ -32,4 +32,4 @@ try:
 
 # TERMINATE MAIN PROCESS AND KILL HELPER THREADS
 except KeyboardInterrupt:
-    misc.log('FEEDING MANUALLY KILLED..', True)
+    misc.log('PROCESS MANUALLY KILLED..', True)

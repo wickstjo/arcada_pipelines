@@ -4,7 +4,6 @@ from funcs.thread_utils import create_thread_pool
 import funcs.misc as misc
 import funcs.types as types
 import funcs.constants as constants
-import os
 
 ########################################################################################
 ########################################################################################
@@ -13,7 +12,7 @@ import os
 class state:
     n_threads: int = 8
     report_breakpoint: int = 100
-    source_dataset: str = 'finance_historical.csv'
+    source_dataset: str = 'datasets/finance_historical.csv'
 
     # EMPTY PIPELINE DATABASES & MODEL REPO?
     reset_pipeline: bool = True
@@ -51,16 +50,6 @@ def thread_routine(pool_resources: list):
 ########################################################################################
 ########################################################################################
 
-# REMOVE ALL FILES FROM MODEL_REPO DIRECTORY
-def empty_model_repo():
-    all_files: list[str] = os.listdir(constants.dirs.MODEL_REPO)
-
-    for model_file in all_files:
-        os.remove(f'{constants.dirs.MODEL_REPO}/{model_file}')
-
-########################################################################################
-########################################################################################
-
 try:
 
     # CREATE A CASSANDRA CLIENT FOR EACH THREAD
@@ -72,7 +61,6 @@ try:
     if state.reset_pipeline:
         cassandra_clients[0].query(f'TRUNCATE {constants.cassandra.STOCKS_TABLE}')
         cassandra_clients[0].query(f'TRUNCATE {constants.cassandra.MODELS_TABLE}')
-        empty_model_repo()
 
         misc.log('NUKED DATABASES & MODEL REPO')
 

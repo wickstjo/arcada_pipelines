@@ -59,21 +59,13 @@ services:
             BACKEND_STORE_URI: sqlite:///mlflow/mlflow.db
         volumes:
 
-            # WHEN YOU WANT TO RESET THIS:
-            # CHANGE 'another_mlflow' TO SOMETHING ELSE AND LET DOCKER AUTO-CREATE
-            # OTHERWISE, YOU WILL RUN INTO PERMISSION HELL
+            # LET DOCKER AUTO-CREATE THESE DIRECTORIES
             - /home/wickstjo/mlflow/db:/mlflow:rw
             - /home/wickstjo/mlflow/artifacts:/mlartifacts:rw
-
-            # - /home/wickstjo/mlflow/db:/mlflow/db                   # SQLite database storage
-            # - /home/wickstjo/mlflow/artifacts:/mlflow/artifacts  # Artifact storage
         command: [
             "mlflow",
             "server",
             "--backend-store-uri", "sqlite:///mlflow/mlflow.db",
-        #    "--default-artifact-root", "/mlflow/artifacts",
-        #    "--serve-artifacts",
-        #    "--artifacts-destination", "/mlflow/artifacts",
             "--host", "0.0.0.0",
             "--port", "5000"
         ]
