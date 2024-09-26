@@ -30,7 +30,7 @@ class create_pipeline_component:
     ########################################################################################
 
     def on_cassandra_event(self):
-    
+
         # CHECK DB FOR WHAT MODELS SHOULD CURRENTLY BE ACTIVE
         model_query: str = f"SELECT * FROM {constants.cassandra.MODELS_TABLE} WHERE active_status = True ALLOW FILTERING"
         query_result: list[dict] = self.cassandra.read(model_query)

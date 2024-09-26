@@ -15,7 +15,7 @@ class create_pipeline_component:
         self.cassandra = create_cassandra_instance()
 
         # RELEVANT KAFKA TOPICS
-        self.input_topics: str|list[str] = constants.kafka.DECISION_SYNTHESIS
+        self.kafka_input_topics: str|list[str] = constants.kafka.DECISION_SYNTHESIS
 
     ########################################################################################
     ########################################################################################

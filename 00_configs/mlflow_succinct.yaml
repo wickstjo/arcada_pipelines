@@ -1,21 +1,29 @@
 # AMAZON STOCK
 AMZN:
     pipe_1:
-        - model_1
+        -   model_name: model_1
+            model_version: champion
 
 # META STOCK
 META:
     pipe_2:
-        - model_2
-        - model_3
-        - model_4
+        -   model_name: model_2
+            model_version: champion
+        -   model_name: model_3
+            model_version: champion
+        -   model_name: model_4
+            model_version: champion
     pipe_3:
-        - model_5
+        -   model_name: model_5
+            model_version: champion
 
 # APPLE STOCK
 AAPL:
     pipe_4:
-        - model_6
+        -   model_name: model_6
+            model_version: champion
     pipe_5:
-        - model_7
-        - model_8
+        -   model_name: model_7
+            model_version: champion
+        -   model_name: model_8
+            model_version: champion

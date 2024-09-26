@@ -11,7 +11,7 @@ VERBOSE = global_config.pipeline.verbose_logging
 ########################################################################################################
 ########################################################################################################
 
-class create_cassandra_instance:
+class create_instance:
     def __init__(self, HIDE_LOGS=False):
         cluster = Cluster(CASSANDRA_BROKERS)
         self.instance = cluster.connect()

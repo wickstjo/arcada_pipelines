@@ -1,28 +1,9 @@
 from threading import Thread, Semaphore
 from typing import Callable
-import funcs.misc as misc
+from funcs import misc, constants
 import time
 
-########################################################################################################
-########################################################################################################
-
-def background_process(event_loop: Callable, cooldown: int, process_beacon):
-
-    # WRAP THE THREAD IN A BEACON-BOUND LOOP
-    def thread_wrapper():
-        try:
-            while process_beacon.is_active():
-                event_loop()
-                time.sleep(cooldown)
-
-        # IF THE BACKGROUND THREAD CRASHES, KILL THE MAIN THREAD TOO
-        except Exception as error:
-            misc.log(f'BACKGROUND THREAD CRASHED: {error}')
-            process_beacon.kill()
-
-    # CREATE & START THE THREAD
-    thread = Thread(target=thread_wrapper, args=())
-    thread.start()
+global_config = constants.global_config()
 
 ########################################################################################################
 ########################################################################################################
@@ -115,3 +96,34 @@ class create_counter:
 
 ########################################################################################################
 ########################################################################################################
+
+def start_coordinator(create_pipeline_state):
+
+    # CREATE A PROCESS BEACON TO BIND THREAD ROUTINES
+    process_beacon = create_process_beacon()
+
+    try:
+        # INSTANTIATE THE PIPELINE STATE
+        state = create_pipeline_state(process_beacon)
+
+        while process_beacon.is_active():
+            time.sleep(global_config.pipeline.polling_cooldown)
+
+    except AssertionError as error:
+        misc.log(f'{error}')
+    
+    # KILL ALL HELPER-THREADS WHEN MAIN THREAD DIES
+    except KeyboardInterrupt:
+        misc.log('[COORDINATOR] MANUALLY INTERRUPTED..', True)
+        process_beacon.kill()
+
+    except Exception as error:
+        misc.log(f'{error}')
+
+########################################################################################################
+########################################################################################################
+
+def start_thread(func, _args=(), _daemon=False):
+    thread = Thread(target=func, args=_args)
+    thread.daemon = _daemon
+    thread.start()

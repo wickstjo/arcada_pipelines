@@ -1,227 +1,172 @@
 from confluent_kafka import Consumer, Producer
-import funcs.misc as misc
-import funcs.constants as constants
-import funcs.thread_utils as thread_utils
-import json
+from funcs import misc, constants, thread_utils
+# import funcs.thread_utils as thread_utils
+import json, re
 
-
-# LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE KAFKA CONNECTION STRING
 global_config = constants.global_config()
 KAFKA_BROKERS = ','.join(global_config.cluster.kafka_brokers)
-VERBOSE = global_config.pipeline.verbose_logging
+# VERBOSE = global_config.pipeline.verbose_logging
 
-###################################################################################################
-###################################################################################################
-
-class create_kafka_producer:
-
-    # ON LOAD, CREATE KAFKA PRODUCER
+class create_instance:
     def __init__(self):
-        self.kafka_client = Producer({
-            'bootstrap.servers': KAFKA_BROKERS,
-        })
+        
+        # CREATE PRODUCER & CHECK CONNECTION
+        self.producer = Producer({ 'bootstrap.servers': KAFKA_BROKERS})
+        assert self.check_connection(), f'COULD NOT CONNECT TO KAFKA SERVERS'
 
-        self.check_connection()
+    def __del__(self):
 
-    # MAKE SURE KAFKA CONNECTION IS OK
+        # KILL ANY ACTIVE CONSUMER
+        if hasattr(self, 'consumer'):
+            self.consumer.close()
+
+        misc.log('[KAFKA] INSTANCE TERMINATED')
+    
+    ########################################################################################################
+    ########################################################################################################
+
     def check_connection(self):
         try:
-            metadata = self.kafka_client.list_topics(timeout=2)
+            metadata = self.producer.list_topics(timeout=0.5)
             return True
         except:
-            raise Exception(f'COULD NOT CONNECT WITH KAFKA SERVER ({KAFKA_BROKERS})')
+            return False
 
-    # ON CONSUMER CALLBACK, DO..
-    def ack_callback(self, error, message):
-        if error:
-            print('ACK ERROR', error)
-        else:
-            target_topic: str = message.topic()
-            if VERBOSE: misc.log(f'[KAFKA] PUSHED EVENT ({target_topic})')
+    ########################################################################################################
+    ########################################################################################################
 
-    # DATA SERIALIZER: JSON/DICT => BYTES
+    # JSON/DICT => BYTES
     def json_serializer(self, json_data: dict) -> list[bool, bytes|str]:
         try:
             return json.dumps(json_data).encode('UTF-8')
-        except:
-            raise Exception('[KAFKA] SERIALIZATION ERROR')
+        
+        except Exception as error:
+            misc.log(f'[KAFKA] SERIALIZATION ERROR: {error}')
 
-    # PUSH MESSAGE TO A KAFK TOPIC
-    def push_msg(self, topic_name: str, data_dict: dict):
+    # BYTES => JSON DICT
+    def json_deserializer(self, raw_bytes: bytes) -> list[bool, dict|str]:
+        try:
+            return json.loads(raw_bytes.decode('UTF-8'))
+        
+        except Exception as error:
+            misc.log(f'[KAFKA] DESERIALIZATION ERROR: {error}')
+
+    ########################################################################################################
+    ########################################################################################################
+
+    def push(self, topic_name: str, data_dict: dict):
+        assert isinstance(topic_name, str), '[KAFKA] TOPIC NAME MUST BE A STRING'
+        assert isinstance(data_dict, dict), '[KAFKA] VALUE MUST BE A DICT'
 
         # TRY TO CONVERT THE DICT TO BYTES
         bytes_data = self.json_serializer(data_dict)
 
         # THEN PUSH THE MESSAGE TO A KAFKA TOPIC
-        self.kafka_client.produce(
+        self.producer.produce(
             topic_name, 
             value=bytes_data,
-            on_delivery=self.ack_callback,
+            on_delivery=self._push_callback,
         )
 
         # ASYNC ACKNOWLEDGE
         if global_config.pipeline.kafka.async_producer_ack:
-            self.kafka_client.poll(1)
+            self.producer.poll(1)
+            return
         
-        # SYNCHRONOUS ACKNOWLEDGE
-        else:
-            self.kafka_client.flush()
+        # OTHERWISE, ACKNOWLEDGE SYNCHRONOUSLY
+        self.producer.flush()
 
-###################################################################################################
-###################################################################################################
+    def _push_callback(self, error, message):
+        if error:
+            misc.log(f'[KAFKA ERROR] {error}')
+            return
+    
+        misc.log(f'[KAFKA] PUSHED EVENT ({message.topic()})')
 
-class create_kafka_consumer:
+    ########################################################################################################
+    ########################################################################################################
 
-    # ON LOAD, CREATE KAFKA CONSUMER CLIENT
-    def __init__(self, kafka_topic: str|list[str]):
+    def subscribe(self, kafka_topics, callback_func, process_beacon):
+        assert isinstance(kafka_topics, (str, list)), '[KAFKA] TOPICS MUST BE OF TYPE STR OR LIST[STR]'
+
+        # BLOCK MULTI-SUBSCRIPTION ATTEMPTS
+        # IF YOU NEED THIS, PROVIDE MULTIPLE TOPICS IN THE 'kafka_topics' ARG
+        assert not hasattr(self, 'consumer'), '[KAFKA] YOU ARE LIMITED TO ONE CONSUMER'
 
         # ARE WE SUBSCRIBING TO ONE TOPIC OR MORE? FORMAT ACCORDINGLY
-        self.kafka_topic = [kafka_topic] if type(kafka_topic) == str else kafka_topic
-
-        # MAKE SURE THE CONSUMER STRATEGY IS VALID
-        if global_config.pipeline.kafka.consumer_stategy not in ['earliest', 'latest']:
-            raise Exception(f'INCOHERENT CONSUMER STRATEGY ({global_config.pipeline.kafka.consumer_stategy})')
+        kafka_topics = [kafka_topics] if type(kafka_topics) == str else kafka_topics
 
         # CREATE THE CONSUMER CLIENT
-        self.kafka_client = Consumer({
+        self.consumer = Consumer({
             'bootstrap.servers': KAFKA_BROKERS,
-            'group.id': ','.join(self.kafka_topic) + '.consumers',
+            'group.id': ','.join(kafka_topics) + '.consumers',
             'enable.auto.commit': global_config.pipeline.kafka.consumer_auto_commit,
-            'on_commit': self.ack_callback,
+            'on_commit': self._consume_callback,
             'auto.offset.reset': global_config.pipeline.kafka.consumer_stategy,
-            # 'auto.offset.reset': 'latest'
-            # 'auto.offset.reset': 'earliest'
         })
 
-        # MAKE SURE THE KAFKA CONNECTION IS OK
-        self.check_connection()
-
         # FINALLY, SUBSCRIBE TO THE PROVIDED KAFKA TOPIC
-        self.kafka_client.subscribe(self.kafka_topic, self.assigned, self.revoked, self.lost)
+        self.consumer.subscribe(kafka_topics, self._assigned, self._revoked, self._lost)
 
-    # WHEN CLASS DIES, KILL THE KAFKA CLIENT
-    def __del__(self):
-        self.kafka_client.close()
+        def consume_events():
+            misc.log(f'[KAFKA] STARTED POLLING ({kafka_topics})')
 
-    # PARTITION ASSIGNMENT SUCCESS
-    def assigned(self, consumer, partition_data):
-        if VERBOSE:
-            partitions = [p.partition for p in partition_data]
-            misc.log(f'[KAFKA] CONSUMER ASSIGNED PARTITIONS: {partitions}')
+            # KEEP POLLING WHILE THE MAIN THREAD LIVES
+            while process_beacon.is_active():
+                try:
+                    # POLL NEXT MESSAGE
+                    event = self.consumer.poll(global_config.pipeline.polling_cooldown)
 
-    # PARTITION ASSIGNMENT REVOKED
-    def revoked(self, consumer, partition_data):
-        if VERBOSE:
-            partitions = [p.partition for p in partition_data]
-            misc.log(f'[KAFKA] CONSUMER PARTITION ASSIGNMENT REVOKED: {partitions}')
+                    # SKIP EMPTY MESSAGES
+                    if event is None:
+                        continue
 
-    # PARTITION ASSIGNMENT LOST
-    def lost(self, consumer, partition_data):
-        misc.log(f'[KAFKA] CONSUMER ASSIGNMENT LOST: {consumer} {partition_data}')
+                    # CATCH & PARSE KAFKA ERRORS
+                    if event.error():
+                        match = re.search(r'str="([^"]+)"', str(event.error()))
+                        if match:
+                            error_message = match.group(1)
+                            misc.log(f'[KAFKA] EVENT ERROR: {error_message}')
+                            continue
 
-    # MAKE SURE KAFKA CONNECTION IS OK
-    def check_connection(self):
-        try:
-            metadata = self.kafka_client.list_topics(timeout=2)
-            return True
-        except:
-            raise Exception(f'COULD NOT CONNECT WITH KAFKA SERVER ({KAFKA_BROKERS})') 
+                    # IF AUTO-COMMITTING IS DISABLED
+                    # COMMIT THE EVENT TO PREVENT OTHERS FROM TAKING IT
+                    if not global_config.pipeline.kafka.consumer_auto_commit:
+                        self.consumer.commit(event, asynchronous=global_config.pipeline.kafka.async_consumer_commit)
 
-    # AUTO CALLBACK WHEN CONSUMER COMMITS MESSAGE
-    def ack_callback(self, error, partitions):
-        if error:
-            print('ACK ERROR', error)
-            return
-
-    # DATA DESERIALIZER: BYTES => JSON DICT
-    def json_deserializer(self, raw_bytes: bytes) -> list[bool, dict|str]:
-        try:
-            return json.loads(raw_bytes.decode('UTF-8'))
-        except:
-            raise Exception('[KAFKA] DESERIALIZATION ERROR')
-
-    # START VACUUMING DATA FROM KAFKA
-    def poll_next(self, beacon, handle_event):
-        if VERBOSE: misc.log(f'[KAFKA] STARTED POLLING ({self.kafka_topic})')
-
-        # KEEP POLLING WHILE THE THREAD LOCK IS ACTIVE
-        while beacon.is_active():
-            try:
-
-                # POLL NEXT MESSAGE
-                msg = self.kafka_client.poll(1)
-
-                # NULL MESSAGE -- SKIP
-                if msg is None:
-                    continue
-
-                # CATCH ERRORS
-                if msg.error():
-                    misc.log('[KAFKA] FAULTY EVENT RECEIVED', msg.error())
-                    continue
-
-                # IF AUTO-COMMITTING IS DISABLED
-                # COMMIT THE EVENT TO PREVENT OTHERS FROM TAKING IT
-                if not global_config.pipeline.kafka.consumer_auto_commit:
-                    self.kafka_client.commit(msg, asynchronous=global_config.pipeline.kafka.async_consumer_commit)
-
-                # DESERIALIZE THE MESSAGE, AND CHECK WHICH TOPIC IT CAME FROM
-                deserialized_dict: dict = self.json_deserializer(msg.value())
-                topic_name: str = msg.topic()
-
-                if VERBOSE:
+                    # DESERIALIZE THE MESSAGE, AND CHECK WHICH TOPIC IT CAME FROM
+                    deserialized_dict: dict = self.json_deserializer(event.value())
+                    topic_name: str = event.topic()
                     misc.log(f'[KAFKA] EVENT RECEIVED ({topic_name})')
 
-                # RUN THE CALLBACK FUNC
-                try:
-                    handle_event(topic_name, deserialized_dict)
+                    # ATTEMPT TO RUN THE CALLBACK FUNC
+                    try:
+                        callback_func(topic_name, deserialized_dict)
+                    except Exception as error:
+                        misc.log(f'[KAFKA] CALLBACK ERROR: {error}')
 
-                # THROW SPECIFIC ERROR WHEN USER TRIES TO DESTRUCTURE TOO MANY/FEW ARGS FROM THE SUPPORT_STRUCTS LIST
-                except ValueError as error:
-                    misc.log(f'[CALLBACK] SUPPORT_STRUCTS EXTRACTION ERROR: {error}')
+                    misc.log(f'[KAFKA] EVENT HANDLED')
+
                 except Exception as error:
-                    misc.log(f'[CALLBACK] ERROR: {error}')
+                    misc.log(f'[KAFKA] CONSUMER ERROR: {error}')
 
-                if VERBOSE: misc.log(f'[KAFKA] EVENT HANDLED')
+        # START CONSUMING EVENTS IN A BACKGROUND THREAD
+        thread_utils.start_thread(consume_events)
 
-            # SILENTLY DEAL WITH OTHER ERRORS
-            except Exception as error:
-                print('[KAFKA] PRODUCER_CONSUMER ERROR:', error)
-                continue
-            
-        # LOCK WAS KILLED, THEREFORE THREAD LOOP ENDS
-        misc.log('[KAFKA] POLLING HAS CORRECTLY ENDED..')
+    def _consume_callback(self, error, partitions):
+        if error:
+            misc.log(f'[KAFKA] CONSUMER ACK ERROR: {error}')
 
-########################################################################################
-########################################################################################
+    def _assigned(self, consumer, partition_data):
+        partitions = [p.partition for p in partition_data]
+        misc.log(f'[KAFKA] CONSUMER ASSIGNED PARTITIONS: {partitions}')
 
-def start_kafka_consumer(create_pipeline_state):
+    def _revoked(self, consumer, partition_data):
+        partitions = [p.partition for p in partition_data]
+        misc.log(f'[KAFKA] CONSUMER PARTITIONS REVOKED: {partitions}')
 
-    # CREATE A PROCESS BEACON TO KILL OFF HELPER THREADS
-    beacon = thread_utils.create_process_beacon()
+    def _lost(self, consumer, partition_data):
+        misc.log(f'[KAFKA] CONSUMER PARTITIONS LOST: {consumer} {partition_data}')
 
-    # INSTANTIATE THE PIPELINE STATE
-    state = create_pipeline_state(beacon)
-
-    # MAKE SURE INPUT_TOPICS IS DEFINED
-    # MAKE SURE THE HANDLE_EVENTS METHOD IS DEFINED
-    assert hasattr(state, 'kafka_input_topics'), "STATE ERROR: YOU MUST DEFINE THE STATE VARIABLE 'kafka_input_topics'"
-    assert hasattr(state, 'on_kafka_event'), "STATE ERROR: YOU MUST DEFINE THE STATE METHOD 'on_kafka_event'"
-
-    # CREATE THE KAKFA CONSUMER & CONTROL LOCK
-    kafka_client = create_kafka_consumer(state.kafka_input_topics)
-
-    # FINALLY, START CONSUMING EVENTS
-    try:
-        kafka_client.poll_next(beacon, state.on_kafka_event)
-
-    except AssertionError as error:
-        misc.log(f'[ASSERT FAIL] {error}')
-
-    except Exception as error:
-        misc.log(f'[CRASH]: {error}')
-    
-    # TERMINATE MAIN PROCESS AND KILL HELPER THREADS
-    except KeyboardInterrupt:
-        beacon.kill()
-        misc.log('[MAIN] PROCESS WAS MANUALLY ENDED..', True)
+    ########################################################################################################
+    ########################################################################################################

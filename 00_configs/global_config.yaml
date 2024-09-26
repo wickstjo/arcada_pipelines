@@ -1,14 +1,17 @@
 cluster:
 
-    # KAFKA MESSAGE QUEUE
+    # MESSAGE QUEUE
     kafka_brokers:
         - 193.166.180.240:11001
 
-    # CASSANDRA DB
+    # DATABASE
     cassandra_brokers:
         - 193.166.180.240:12001
 
-    # MLFLOW BROKER
+    # REDIS CACHE
+    redis_broker: 193.166.180.240:6379
+
+    # MLFLOW
     mlflow_broker: 193.166.180.240:5000
 
 ###############################################################################################################
@@ -71,6 +74,14 @@ backend:
                 primary_keys:
                     - uuid
 
+        ### TODO: IMPLEMENT THIS 
+        ### TODO: IMPLEMENT THIS 
+        ### TODO: IMPLEMENT THIS 
+
+        # REDIS KEYSPACES
+        redis:
+            model_pipelines: {}
+
 ###############################################################################################################
 ###############################################################################################################
 
@@ -79,6 +90,12 @@ pipeline:
 
     # HIDE/SHOW LOG STATEMENTS
     verbose_logging: true
+
+    ### TODO: IMPLEMENT THIS 
+    ### TODO: IMPLEMENT THIS 
+    polling_cooldown: 0.3
+    ### TODO: IMPLEMENT THIS 
+    ### TODO: IMPLEMENT THIS 
 
     # KAFKA CONSUMER SETTINGS
     kafka:

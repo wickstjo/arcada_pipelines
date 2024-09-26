@@ -26,6 +26,19 @@ async def foo(response: Response):
 ########################################################################################################
 ########################################################################################################
 
+@router.get('/kafka/consumers')
+async def foo(response: Response):
+    try:
+        response.status_code = status.HTTP_200_OK
+        return kafka_admin.summarize_consumer_groups()
+
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return error
+
+########################################################################################################
+########################################################################################################
+
 class Topic(BaseModel):
     name: str
     num_partitions: int

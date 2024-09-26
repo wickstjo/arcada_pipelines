@@ -34,6 +34,49 @@ class create_admin_client:
     ########################################################################################################
     ########################################################################################################
 
+    def summarize_consumer_groups(self):
+        group_names = []
+        container = []
+
+        # KAFKA CONSUMER GROUP STATES
+        # https://docs.confluent.io/platform/current/clients/confluent-kafka-python/html/index.html#confluent_kafka.ConsumerGroupState
+        kafka_states = {
+            0: 'UNKNOWN',
+            1: 'PREPARING_REBALANCE',
+            2: 'COMPLETING_REBALANCE',
+            3: 'STABLE',
+            4: 'DEAD',
+            5: 'EMPTY',
+        }
+
+        # QUERY ALL GROUP NAMES
+        for item in self.instance.list_consumer_groups().result().valid:
+            group_names.append(item.group_id)
+
+        # QUERY GROUP INFORMATION
+        for key, promise in self.instance.describe_consumer_groups(group_names).items():
+            dict_data = promise.result().__dict__
+
+            # UPDATE MEMBERS KEY TO COUNT INSTEAD
+            dict_data['members'] = len(dict_data['members'])
+
+            # PARSE ERROR INTS TO VERBOSE ALTERNATIVE
+            try:
+                state_id = int(dict_data['state'].__dict__['_value_'])
+                dict_data['state'] = kafka_states[state_id]
+            except:
+                dict_data['state'] = 'FALLBACK'
+
+            # GET RID OF USELESS GARBAGE
+            del dict_data['coordinator']
+
+            container.append(dict_data)
+
+        return container
+
+    ########################################################################################################
+    ########################################################################################################
+
     def summarize_topics(self):
         try:
             formatted_topics = {}
