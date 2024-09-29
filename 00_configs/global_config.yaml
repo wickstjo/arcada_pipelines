@@ -37,10 +37,7 @@ backend:
         # JUST THE TOPIC NAME IS ENOUGH
         kafka_topics:
             - data_refinery
-            # - data_dispatch
-            # - model_training
-            - model_inference
-            # - model_analysis
+            - model_dispatch
             - decision_synthesis
 
         # CASSANDRA KEYSPACES/TABLES
@@ -51,32 +48,17 @@ backend:
             -   keyspace: dev
                 table_name: refined_stock_data
                 columns: 
+                    symbol: text
                     timestamp: int
-                    open: float
-                    close: float
                     high: float
                     low: float
+                    open: float
+                    close: float
+                    adjusted_close: float
                     volume: int
                 primary_keys:
+                    - symbol
                     - timestamp
-
-            # ML MODEL HISTORY TABLE
-            -   keyspace: dev
-                table_name: model_history
-                columns:
-                    uuid: uuid
-                    timestamp: int
-                    model_type: text
-                    model_name: text
-                    model_version: text
-                    model_file: text
-                    active_status: boolean
-                primary_keys:
-                    - uuid
-
-        ### TODO: IMPLEMENT THIS 
-        ### TODO: IMPLEMENT THIS 
-        ### TODO: IMPLEMENT THIS 
 
         # REDIS KEYSPACES
         redis:
@@ -91,11 +73,9 @@ pipeline:
     # HIDE/SHOW LOG STATEMENTS
     verbose_logging: true
 
-    ### TODO: IMPLEMENT THIS 
-    ### TODO: IMPLEMENT THIS 
+    # FOR HOW LONG SHOULD POLLING CLIENTS TIMEOUT?
+    # PREVENTS BUSY-WAITING
     polling_cooldown: 0.3
-    ### TODO: IMPLEMENT THIS 
-    ### TODO: IMPLEMENT THIS 
 
     # KAFKA CONSUMER SETTINGS
     kafka:

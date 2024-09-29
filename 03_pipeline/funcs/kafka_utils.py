@@ -15,13 +15,17 @@ class create_instance:
         assert self.check_connection(), f'COULD NOT CONNECT TO KAFKA SERVERS'
 
     def __del__(self):
+        try:
+            # KILL ANY ACTIVE CONSUMER
+            if hasattr(self, 'consumer'):
+                self.consumer.close()
 
-        # KILL ANY ACTIVE CONSUMER
-        if hasattr(self, 'consumer'):
-            self.consumer.close()
+            misc.log('[KAFKA] INSTANCE TERMINATED')
 
-        misc.log('[KAFKA] INSTANCE TERMINATED')
-    
+        # PREVENTS THROWN ERRORS FOR INGESTION SCRIPTS
+        except ImportError:
+            pass
+
     ########################################################################################################
     ########################################################################################################
 
@@ -144,8 +148,6 @@ class create_instance:
                         callback_func(topic_name, deserialized_dict)
                     except Exception as error:
                         misc.log(f'[KAFKA] CALLBACK ERROR: {error}')
-
-                    misc.log(f'[KAFKA] EVENT HANDLED')
 
                 except Exception as error:
                     misc.log(f'[KAFKA] CONSUMER ERROR: {error}')

@@ -1,39 +1,34 @@
-from funcs.kafka_utils import create_kafka_producer, start_kafka_consumer
-from funcs.cassandra_utils import create_cassandra_instance
-import funcs.misc as misc
-import funcs.constants as constants
-import funcs.types as types
+from funcs import kafka_utils, cassandra_utils
+from funcs import thread_utils, misc, constants, types
 
 ########################################################################################
 ########################################################################################
 
-class create_pipeline_component:
-    def __init__(self, process_beacon):
+class pipeline_component:
+    def __init__(self, thread_beacon):
 
         # CREATE INSTANCED CLIENTS
-        self.cassandra = create_cassandra_instance()
-        self.kafka_producer = create_kafka_producer()
+        self.cassandra = cassandra_utils.create_instance()
+        self.kafka = kafka_utils.create_instance()
 
-        # WHAT KAFKA TOPIC DO YOU WANT TO CONSUME DATA FROM?
-        self.kafka_input_topics: str|list[str] = constants.kafka.DATA_REFINERY
+        # IN A BACKGROUND THREAD, DO...
+        self.kafka.subscribe(constants.kafka.DATA_REFINERY, self.on_kafka_event, thread_beacon)
 
     ########################################################################################
     ########################################################################################
 
-    # HANDLE INCOMING KAFKA EVENTS
-    # THIS METHOD IS CALLED FOR EVERY EVENT
     def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
 
         # ATTEMPT TO VALIDATE DICT AGAINST REFERENCE OBJECT
         refined_stock_data: dict = misc.validate_dict(kafka_input, types.REFINED_STOCK_DATA)
-        misc.log('ROW PASSED VALIDATION')
+        misc.log('[KAFKA CALLBACK] ROW PASSED VALIDATION')
 
         # VALIDATION SUCCEEDED, WRITE THE ROW TO DB
         # AND PUSH REFINED DATA BACK TO KAFKA
         self.cassandra.write(constants.cassandra.STOCKS_TABLE, refined_stock_data)
-        self.kafka_producer.push_msg(constants.kafka.MODEL_INFERENCE, refined_stock_data)
+        self.kafka.push(constants.kafka.MODEL_DISPATCH, refined_stock_data)
 
 ########################################################################################
 ########################################################################################
 
-start_kafka_consumer(create_pipeline_component)
+thread_utils.start_coordinator(pipeline_component)

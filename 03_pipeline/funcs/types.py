@@ -28,35 +28,6 @@ REFINED_STOCK_DATA: dict = {
     'volume': lambda x: int(float(x)),
 }
 
-# WHAT MODEL INFO SHOULD PIPELINE COMPONENTS PASS TO EACH OTHER?
-# IN ORDER TO BOOT IT UP ON THE RECEIVING END?
-MODEL_INFO: dict = {
-    'timestamp': int,
-    'model_name': str,
-    'model_type': str,
-    'model_version': int,
-    'model_filename': str,
-    'active_status': bool,
-    'block_retraining': bool,
-    'model_config': str,
-}
-
-# WHAT SHOULD A MODEL TRAINING REQUEST CONTAIN?
-ANALYSIS_REQUEST: dict = {
-    'timestamp': int,
-    'model_type': str,
-    'model_name': str,
-    'model_version': int,
-    'model_filename': str,
-}
-
-# WHAT SHOULD A MODEL TRAINING REQUEST CONTAIN?
-TRAINING_REQUEST: dict = {
-    'model_predecessor': lambda x: x, # FALSE OR DB REFERENCE
-    'model_name': str,
-    'model_config': str,
-}
-
 # WERE GOING TO MAKE A FINAL DECISION BASED ON MULTIPLE MODELS' PREDICTION OUTPUT.
 # WHAT SHOULD THE BATCH DATA LOOK LIKE?
 PREDICTION_BATCH: dict = {

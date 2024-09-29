@@ -1,5 +1,5 @@
 import redis, json, time
-from funcs import thread_utils, constants, misc
+from funcs import constants, misc
 
 # FETCH NECESSARY INFO FROM YAML CONFIG
 global_config = constants.global_config()
@@ -95,28 +95,3 @@ class create_instance:
         
     ########################################################################################################
     ########################################################################################################
-
-    def subscribe(self, key: str, callback_func, process_beacon):
-        assert isinstance(key, str), '[REDIS] THE KEY MUST BE A STRING'
-        assert self.exists(key), f"[REDIS] KEY '{key}' DOES NOT EXIST"
-
-        def consume_events():
-            previous_value = None
-            misc.log(f'[REDIS] STARTED POLLING ({key})')
-
-            while process_beacon.is_active():
-                try:
-                    current_value = self.get(key)
-                    
-                    # IF THE VALUE HAS CHANGED -- RUN CALLBACK FUNC
-                    if current_value != previous_value:
-                        callback_func(current_value)
-                        previous_value = current_value
-                    
-                    time.sleep(global_config.pipeline.polling_cooldown)
-
-                except Exception as error:
-                    misc.log(f'[REDIS] CONSUME ERROR: {error}')
-                    
-        # START CONSUMING EVENTS IN BACKGROUND THREAD
-        thread_utils.start_thread(consume_events)

@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import kafka_route, cassandra_route, config_route, mlflow_route
+from routes import kafka_route, cassandra_route, config_route, mlflow_route, redis_route
 import funcs.constants as constants
 
 # LOAD THE GLOBAL CONFIG FOR SETTINGS & INITIALIZE COMPONENTS
@@ -22,6 +22,7 @@ app.include_router(kafka_route.router)
 app.include_router(cassandra_route.router)
 app.include_router(config_route.router)
 app.include_router(mlflow_route.router)
+app.include_router(redis_route.router)
 
 # LIST OUT ENDPOINTS AT ROOT
 @app.get('/')
@@ -32,6 +33,7 @@ async def read_root():
             '/kafka',
             '/cassandra',
             '/mlflow',
+            '/redis',
             '/global_config',
         ]
     }
