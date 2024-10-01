@@ -21,7 +21,7 @@ class pipeline_component:
 
         # ATTEMPT TO VALIDATE DICT AGAINST REFERENCE OBJECT
         refined_stock_data: dict = misc.validate_dict(kafka_input, types.REFINED_STOCK_DATA)
-        misc.log('[KAFKA CALLBACK] ROW PASSED VALIDATION')
+        misc.log('[COMPONENT] ROW PASSED VALIDATION')
 
         # VALIDATION SUCCEEDED, WRITE THE ROW TO DB
         # AND PUSH REFINED DATA BACK TO KAFKA

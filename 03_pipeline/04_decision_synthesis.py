@@ -22,7 +22,7 @@ class pipeline_component:
     ########################################################################################
 
     def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
-        misc.log('[KAFKA CALLBACK] RECEIVED PREDICTION BATCH')
+        misc.log('[COMPONENT] RECEIVED PREDICTION BATCH')
         print(json.dumps(kafka_input, indent=4))
 
         # {

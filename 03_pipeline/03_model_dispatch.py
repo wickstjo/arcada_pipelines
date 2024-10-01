@@ -15,10 +15,7 @@ class pipeline_component:
         # IN A BACKGROUND THREAD, DO...
         self.kafka.subscribe(constants.kafka.MODEL_DISPATCH, self.on_kafka_event, thread_beacon)
         self.redis.subscribe(constants.redis.MODEL_PIPELINES, self.on_redis_change, thread_beacon)
-
-        ### TODO: SUBSCRIBE TO MLFLOW MODEL CHANGES
-        ### TODO: SUBSCRIBE TO MLFLOW MODEL CHANGES
-        ### TODO: SUBSCRIBE TO MLFLOW MODEL CHANGES
+        self.mlflow.subscribe(self.on_mlflow_change, thread_beacon)
 
         # CURRENTLY DEPLOYED MODEL PIPES
         self.deployed_model_pipes = {}
@@ -38,9 +35,9 @@ class pipeline_component:
         
         # MAKE SURE THE STOCK SYMBOL HAS MODEL PIPES DEPLOYED
         stock_symbol = refined_stock_data['symbol'].lower()
-        assert stock_symbol in self.deployed_model_pipes, f"[KAFKA CALLBACK] NO PIPES EXIST FOR STOCK SYMBOL '{stock_symbol}'"
+        assert stock_symbol in self.deployed_model_pipes, f"[COMPONENT] NO PIPES EXIST FOR STOCK SYMBOL '{stock_symbol}'"
 
-        misc.log(f"[KAFKA CALLBACK] RUNNING STOCK DATA ({stock_symbol}) THROUGH MODEL PIPES")
+        misc.log(f"[COMPONENT] RUNNING STOCK DATA ({stock_symbol}) THROUGH MODEL PIPES")
 
         # RESPONSE OBJECT
         prediction_batch = {
@@ -54,13 +51,13 @@ class pipeline_component:
                 # temp_value = refined_stock_data
                 temp_value = 'input_row'
 
-                misc.log(f"[KAFKA CALLBACK] RUNNING PIPE '{pipe_name}'")
+                misc.log(f"[COMPONENT] RUNNING PIPE '{pipe_name}'")
 
                 # RECURSIVELY PREDICT WITH EACH MODEL
                 # PREDECESSOR MODELS OUTPUT BECOMES SUCCESSOR MODELS INPUT
                 for model in model_sequence:
                     temp_value = model.predict(temp_value)
-                    misc.log(f"[KAFKA CALLBACK] PREDICTED WITH MODEL '{model.model_name}'")
+                    misc.log(f"[COMPONENT] PREDICTED WITH MODEL '{model.model_name}'")
 
                 # SAVE THE FINAL OUTPUT VALUE AS THE PIPES RESULT
                 prediction_batch['predictions'][pipe_name] = temp_value
@@ -74,17 +71,23 @@ class pipeline_component:
     ########################################################################################
 
     def on_mlflow_change(self, latest_models: dict):
-        pass
+        misc.log('[COMPONENT] MLFLOW MODEL VERSIONS HAVE CHANGED')
+
+        # LOOP THROUGH EACH MODEL PIPE
+        for stock_symbol, stock_pipes in self.deployed_model_pipes.items():
+            for pipe_name, model_sequence in stock_pipes.items():
+                for nth_model, model in enumerate(model_sequence):
+                    pass
 
     ########################################################################################
     ########################################################################################
 
     def on_redis_change(self, latest_pipelines: dict):
-        assert isinstance(latest_pipelines, dict), '[REDIS CALLBACK] REDIS VALUE WAS NOT A DICT'
-        misc.log('[REDIS CALLBACK] MODEL PIPES HAVE CHANGED')
+        assert isinstance(latest_pipelines, dict), '[COMPONENT] REDIS VALUE WAS NOT A DICT'
+        misc.log('[COMPONENT] MODEL PIPES HAVE CHANGED')
 
         # LATER: FETCH UPDATED LIST OF MLFLOW MODELS
-        # model_versions = self.mlflow.list_all_models()
+        model_versions = self.mlflow.list_all_models()
 
         # CONSTRUCT MODEL PIPELINES FROM JSON DATA
         with self.model_mutex:
@@ -96,25 +99,34 @@ class pipeline_component:
 
                     # CONSTRUCT REQUESTED MODEL
                     for block in model_sequence:
-                        model_name = block['model']
-                        model_version = block['version']
+                        model_name = block['model_name']
+                        version_alias = block['version_alias']
 
-                        ### TODO: CHECK IF MODEL EXISTS
-                        ### TODO: CHECK IF MODEL EXISTS
-                        ### TODO: CHECK IF MODEL EXISTS
+                        # MAKE SURE MODEL EXISTS
+                        if model_name not in model_versions:
+                            misc.log(f"[COMPONENT] MODEL '{model_name}' DOES NOT EXIST")
+                            continue
 
-                        ### TODO: CHECK IF THE SAME MODEL IS ALREADY DEPLOYED
-                        ### TODO: CHECK IF THE SAME MODEL IS ALREADY DEPLOYED
-                        ### TODO: CHECK IF THE SAME MODEL IS ALREADY DEPLOYED
+                        # MAKE SURE MODEL VERSION ALIAS EXISTS
+                        if version_alias not in model_versions[model_name]:
+                            misc.log(f"[COMPONENT] MODEL ALIAS '{version_alias}' DOES NOT EXIST")
+                            continue
+
+                        # FIND THE VERSION ALIAS' NUMERIC REPRESENTATION
+                        version_num = model_versions[model_name][version_alias]
+
+                        ### TODO: CHECK IF THE SAME MODEL IS ALREADY DEPLOYED?
+                        ### TODO: CHECK IF THE SAME MODEL IS ALREADY DEPLOYED?
+                        ### TODO: CHECK IF THE SAME MODEL IS ALREADY DEPLOYED?
 
                         # LOAD IN FAKE MODELS -- FOR TESTING
-                        model = self.mlflow.load_fake_model(model_name, model_version)
+                        model = self.mlflow.load_fake_model(model_name, version_alias, version_num)
                         models.append(model)
 
                     pipes[pipe_name] = models
                 self.deployed_model_pipes[stock_symbol] = pipes
 
-        misc.log('[REDIS CALLBACK] FINISHED APPLYING MODEL PIPE CHANGES')
+        misc.log('[COMPONENT] FINISHED APPLYING PIPELINE CHANGES')
         
 ########################################################################################
 ########################################################################################

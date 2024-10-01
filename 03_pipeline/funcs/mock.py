@@ -1,7 +1,8 @@
 class ml_model:
-    def __init__(self, model_name, model_version):
+    def __init__(self, model_name, version_alias, version_number):
         self.model_name = model_name
-        self.model_version = model_version
+        self.version_alias = version_alias
+        self.version_number = version_number
 
     def predict(self, input):
-        return f'{input} -> [{self.model_name}, v_{self.model_version}]'
+        return f'{input} -> [{self.model_name}, v_{self.version_number}]'

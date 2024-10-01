@@ -15,7 +15,7 @@ class pipeline_component:
         # THEREFORE, RESET OLD DB & CACHE RESOURCES
         self.cassandra_clients[0].query(f'TRUNCATE {constants.cassandra.STOCKS_TABLE}')
         self.redis.set(constants.redis.MODEL_PIPELINES, {})
-        misc.log('NUKED DATABASES & REDIS CACHE')
+        misc.log('[COMPONENT] NUKED DATABASES & REDIS CACHE')
 
         # LOAD THE DATASET
         source_dataset: str = 'datasets/finance_historical.csv'

@@ -53,19 +53,16 @@ class create_instance:
     ########################################################################################################
     ########################################################################################################
 
-    def load_fake_model(self, model_name: str, model_version: int|str):
-        return mock.ml_model(model_name, model_version)
+    def load_fake_model(self, model_name: str, version_alias: str, version_number: int|str):
+        return mock.ml_model(model_name, version_alias, version_number)
     
     ########################################################################################################
     ########################################################################################################
 
-    def subscribe(self, key: str, callback_func, process_beacon):
-        assert isinstance(key, str), '[MLFLOW] THE KEY MUST BE A STRING'
-        assert self.exists(key), f"[MLFLOW] KEY '{key}' DOES NOT EXIST"
-
+    def subscribe(self, callback_func, process_beacon):
         def consume_events():
             previous_value = None
-            misc.log(f'[MLFLOW] STARTED POLLING ({key})')
+            misc.log(f'[MLFLOW] STARTED POLLING')
 
             while process_beacon.is_active():
                 try:
