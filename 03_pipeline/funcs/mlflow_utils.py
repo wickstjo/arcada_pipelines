@@ -1,7 +1,7 @@
 # !pip install mlflow
-import mlflow
+import mlflow, time
 from mlflow.tracking import MlflowClient
-from funcs import constants, mock
+from funcs import constants, mock, misc, thread_utils
 
 global_config = constants.global_config()
 MLFLOW_BROKER: str = f"http://{global_config.cluster.mlflow_broker}"
@@ -28,11 +28,13 @@ class create_instance:
         for item in self.instance.search_registered_models():
             version_data = item.__dict__['_latest_version']
             assert len(version_data) == 1, '[MLFLOW] THERE IS AN ABNORMAL NUMBER OF MODEL VERSIONS'
-            
-            container[item._name] = {
-                'latest_version': version_data[0].version,
-                'version_aliases': item.aliases
-            }
+
+            container[item._name] = item.aliases
+
+            # container[item._name] = {
+            #     'latest_version': version_data[0].version,
+            #     'version_aliases': item.aliases
+            # }
     
         return container
 
@@ -53,6 +55,34 @@ class create_instance:
 
     def load_fake_model(self, model_name: str, model_version: int|str):
         return mock.ml_model(model_name, model_version)
+    
+    ########################################################################################################
+    ########################################################################################################
+
+    def subscribe(self, key: str, callback_func, process_beacon):
+        assert isinstance(key, str), '[MLFLOW] THE KEY MUST BE A STRING'
+        assert self.exists(key), f"[MLFLOW] KEY '{key}' DOES NOT EXIST"
+
+        def consume_events():
+            previous_value = None
+            misc.log(f'[MLFLOW] STARTED POLLING ({key})')
+
+            while process_beacon.is_active():
+                try:
+                    current_value = self.list_all_models()
+                    
+                    # IF THE VALUE HAS CHANGED -- RUN CALLBACK FUNC
+                    if current_value != previous_value:
+                        callback_func(current_value)
+                        previous_value = current_value
+                    
+                    time.sleep(global_config.pipeline.polling_cooldown)
+
+                except Exception as error:
+                    misc.log(f'[MLFLOW] CONSUME ERROR: {error}')
+                    
+        # START CONSUMING EVENTS IN BACKGROUND THREAD
+        thread_utils.start_thread(consume_events)
     
 ########################################################################################################
 ########################################################################################################

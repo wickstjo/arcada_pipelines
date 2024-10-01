@@ -24,9 +24,9 @@ class pipeline_component:
         self.deployed_model_pipes = {}
         self.model_mutex = thread_utils.create_mutex()
 
-        ### TODO: SPLIT PIPELINES AND MODEL STATES?
-        ### TODO: SPLIT PIPELINES AND MODEL STATES?
-        ### TODO: SPLIT PIPELINES AND MODEL STATES?
+        ### TODO: SPLIT PIPELINES AND MODEL STATES
+        ### TODO: SPLIT PIPELINES AND MODEL STATES
+        ### TODO: SPLIT PIPELINES AND MODEL STATES
 
     ########################################################################################
     ########################################################################################
@@ -73,8 +73,14 @@ class pipeline_component:
     ########################################################################################
     ########################################################################################
 
-    def on_redis_change(self, latest_value: dict):
-        assert isinstance(latest_value, dict), '[REDIS CALLBACK] REDIS VALUE WAS NOT A DICT'
+    def on_mlflow_change(self, latest_models: dict):
+        pass
+
+    ########################################################################################
+    ########################################################################################
+
+    def on_redis_change(self, latest_pipelines: dict):
+        assert isinstance(latest_pipelines, dict), '[REDIS CALLBACK] REDIS VALUE WAS NOT A DICT'
         misc.log('[REDIS CALLBACK] MODEL PIPES HAVE CHANGED')
 
         # LATER: FETCH UPDATED LIST OF MLFLOW MODELS
@@ -82,7 +88,7 @@ class pipeline_component:
 
         # CONSTRUCT MODEL PIPELINES FROM JSON DATA
         with self.model_mutex:
-            for stock_symbol, stock_pipes in latest_value.items():
+            for stock_symbol, stock_pipes in latest_pipelines.items():
                 pipes = {}
 
                 for pipe_name, model_sequence in stock_pipes.items():
