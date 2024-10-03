@@ -1,7 +1,7 @@
 # !pip install mlflow
 import mlflow, time
 from mlflow.tracking import MlflowClient
-from funcs import constants, mock, misc, thread_utils
+from funcs import constants, misc, thread_utils
 
 global_config = constants.global_config()
 MLFLOW_BROKER: str = f"http://{global_config.cluster.mlflow_broker}"
@@ -41,6 +41,20 @@ class create_instance:
     ########################################################################################################
     ########################################################################################################
 
+    def model_exists(self, model_name: str, model_version: int) -> bool:
+        assert isinstance(model_name, str), 'MODEL NAME MUST BE OF TYPE STR'
+        assert isinstance(model_version, int), 'MODEL VERSION MUST BE OF TYPE INT'
+
+        try:
+            result = self.instance.get_model_version(name=model_name, version=model_version)
+            return True
+        
+        except:
+            return False
+
+    ########################################################################################################
+    ########################################################################################################
+
     def load_model(self, model_name: str, model_version: int):
         assert isinstance(model_name, str), 'MODEL NAME MUST BE OF TYPE STR'
         assert isinstance(model_version, int), 'MODEL VERSION MUST BE OF TYPE INT'
@@ -54,7 +68,7 @@ class create_instance:
     ########################################################################################################
 
     def load_fake_model(self, model_name: str, version_alias: str, version_number: int|str):
-        return mock.ml_model(model_name, version_alias, version_number)
+        return mock_ml_model(model_name, version_alias, version_number)
     
     ########################################################################################################
     ########################################################################################################
@@ -83,3 +97,12 @@ class create_instance:
     
 ########################################################################################################
 ########################################################################################################
+
+class mock_ml_model:
+    def __init__(self, model_name, version_alias, version_number):
+        self.model_name = model_name
+        self.version_alias = version_alias
+        self.version_number = version_number
+
+    def predict(self, input):
+        return f'{input} -> [{self.model_name}, v_{self.version_number}]'

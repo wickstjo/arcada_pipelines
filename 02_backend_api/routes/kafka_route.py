@@ -57,29 +57,6 @@ async def foo(topic: Topic, response: Response):
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return error
-
-########################################################################################################
-########################################################################################################
-
-@router.get('/kafka/init')
-async def foo(response: Response):
-    try:
-        response.status_code = status.HTTP_201_CREATED
-        container = []
-
-        # LOOP THROUGH TOPICS LISTED IN THE GLOBAL CONFIG
-        for topic in global_config.backend.create_on_init.kafka_topics:
-            try:
-                kafka_admin.create_topic(topic, 1)
-                container.append(f"TOPIC '{topic}' CREATED")
-            except:
-                container.append(f"TOPIC '{topic}' ALREADY EXIST")
-                
-        return container
-    
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return error
     
 ########################################################################################################
 ########################################################################################################

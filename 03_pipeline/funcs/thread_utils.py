@@ -65,8 +65,14 @@ def start_coordinator(pipeline_component, poll=True):
     try:
         misc.log('[COORDINATOR] LAUNCHED')
 
+        # WRAP SHARED HELPER STRUCTS INTO A NAMESPACE
+        helper_structs = misc.TO_NAMESPACE({
+            'thread_beacon': thread_beacon,
+            'global_config': global_config
+        })
+
         # INSTANTIATE THE PIPELINE STATE
-        state = pipeline_component(thread_beacon)
+        state = pipeline_component(helper_structs)
 
         if poll:
             while thread_beacon.is_active():

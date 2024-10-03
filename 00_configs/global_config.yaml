@@ -21,7 +21,7 @@ cluster:
 backend:
 
     # WHAT PORT SHOULD THE BACKEND API BE RUNNING ON?
-    api_port: 3003
+    endpoint: 193.166.180.240:3003
 
     # HIDE/SHOW LOG STATEMENTS
     verbose_logging: true
@@ -76,6 +76,16 @@ pipeline:
     # FOR HOW LONG SHOULD POLLING CLIENTS TIMEOUT?
     # PREVENTS BUSY-WAITING
     polling_cooldown: 0.3
+
+    # WHAT DATASETS SHOULD WE INGEST?
+    # HISTORICAL IS MASS INGESTED, STREAMING IS SLOWLY INGESTED
+    data_ingestion:
+        datasets:
+            historical: datasets/finance_historical.csv
+            streaming: datasets/finance_fresh.csv
+        
+        # BY HOW MUCH SHOULD WE STAGGER STREAM INGESTION?
+        streaming_delay: 1
 
     # KAFKA CONSUMER SETTINGS
     kafka:

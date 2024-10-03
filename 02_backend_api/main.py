@@ -6,6 +6,7 @@ import funcs.constants as constants
 
 # LOAD THE GLOBAL CONFIG FOR SETTINGS & INITIALIZE COMPONENTS
 global_config: dict = constants.global_config()
+api_port = global_config.backend.endpoint.split(':')[1]
 app = FastAPI()
 
 # ADD CORS MIDDLEWARE
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app", 
         host="0.0.0.0",
-        port=global_config.backend.api_port, 
+        port=api_port, 
         log_level="info", 
         reload=True,
         # workers=NUM

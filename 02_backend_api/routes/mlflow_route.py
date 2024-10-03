@@ -13,6 +13,8 @@ global_config = constants.global_config()
 mlflow.set_tracking_uri(f'http://{global_config.cluster.mlflow_broker}')
 mlflow.set_registry_uri(f'http://{global_config.cluster.mlflow_broker}')
 
+instance = MlflowClient()
+
 ########################################################################################################
 ########################################################################################################
 
@@ -20,9 +22,7 @@ mlflow.set_registry_uri(f'http://{global_config.cluster.mlflow_broker}')
 async def foo(response: Response):
     try:
         response.status_code = status.HTTP_200_OK
-        client = MlflowClient()
-        
-        return client.search_registered_models()
+        return instance.search_registered_models()
 
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR

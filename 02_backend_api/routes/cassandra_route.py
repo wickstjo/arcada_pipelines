@@ -86,31 +86,6 @@ async def foo(table: DROP_TABLE, response: Response):
 ########################################################################################################
 ########################################################################################################
 
-# CREATE DEFAULT TABLES AFTER A FRESH DOCKER LAUNCH
-@router.get('/cassandra/init')
-async def foo(response: Response):
-    try:
-        response.status_code = status.HTTP_201_CREATED
-        container = []
-
-        # CREATE EACH LISTED TABLE
-        for item in global_config.backend.create_on_init.cassandra_tables:
-            try:
-                cassandra.create_table(item.keyspace, item.table_name, item.columns.__dict__, item.primary_keys)
-                container.append(f"TABLE '{item.keyspace}.{item.table_name}' CREATED")
-
-            except Exception as error:
-                container.append(f"'{item.keyspace}.{item.table_name}': {str(error)}")
-
-        return container
-
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return error
-
-########################################################################################################
-########################################################################################################
-
 # OVERVIEW OF KEYSPACE TABLES
 @router.get('/cassandra/{keyspace_name}')
 async def foo(keyspace_name: str, response: Response):

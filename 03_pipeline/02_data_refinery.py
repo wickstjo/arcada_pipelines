@@ -5,14 +5,14 @@ from funcs import thread_utils, misc, constants, types
 ########################################################################################
 
 class pipeline_component:
-    def __init__(self, thread_beacon):
+    def __init__(self, structs):
 
         # CREATE INSTANCED CLIENTS
         self.cassandra = cassandra_utils.create_instance()
         self.kafka = kafka_utils.create_instance()
 
         # IN A BACKGROUND THREAD, DO...
-        self.kafka.subscribe(constants.kafka.DATA_REFINERY, self.on_kafka_event, thread_beacon)
+        self.kafka.subscribe(constants.kafka.DATA_REFINERY, self.on_kafka_event, structs.thread_beacon)
 
     ########################################################################################
     ########################################################################################

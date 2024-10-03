@@ -1,12 +1,11 @@
 from funcs import kafka_utils, redis_utils, cassandra_utils, mlflow_utils
 from funcs import thread_utils, misc, constants
-import json
 
 ########################################################################################
 ########################################################################################
 
 class pipeline_component:
-    def __init__(self, thread_beacon):
+    def __init__(self, structs):
 
         # CREATE INSTANCED CLIENTS
         self.cassandra = cassandra_utils.create_instance()
@@ -15,15 +14,15 @@ class pipeline_component:
         self.mlflow = mlflow_utils.create_instance()
 
         # IN A BACKGROUND THREAD, DO...
-        self.kafka.subscribe(constants.kafka.DECISION_SYNTHESIS, self.on_kafka_event, thread_beacon)
-        self.redis.subscribe(constants.redis.MODEL_PIPELINES, self.on_redis_change, thread_beacon)
+        self.kafka.subscribe(constants.kafka.DECISION_SYNTHESIS, self.on_kafka_event, structs.thread_beacon)
+        self.redis.subscribe(constants.redis.MODEL_PIPELINES, self.on_redis_change, structs.thread_beacon)
 
     ########################################################################################
     ########################################################################################
 
     def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
         misc.log('[COMPONENT] RECEIVED PREDICTION BATCH')
-        print(json.dumps(kafka_input, indent=4))
+        misc.pprint(kafka_input)
 
         # {
         #     'input_row': {

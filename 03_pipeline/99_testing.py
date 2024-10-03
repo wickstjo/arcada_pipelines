@@ -5,7 +5,7 @@ from funcs import thread_utils, misc, constants, types
 ########################################################################################
 
 class pipeline_component:
-    def __init__(self, thread_beacon):
+    def __init__(self, structs):
 
         # CREATE INSTANCED CLIENTS
         self.kafka = kafka_utils.create_instance()

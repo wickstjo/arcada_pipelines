@@ -1,4 +1,4 @@
-import csv, yaml, time
+import csv, yaml, time, json
 from datetime import datetime
 from types import SimpleNamespace
 
@@ -102,5 +102,12 @@ class create_timer:
         self.end_time: float = time.time()
         return round(self.end_time - self.start_time, 3)
     
+########################################################################################################
+########################################################################################################
+
+def pprint(data: dict):
+    assert type(data) == dict, 'YOU CAN ONLY PRETTY PRINT DICTS'
+    print(json.dumps(data, indent=4))
+
 ########################################################################################################
 ########################################################################################################

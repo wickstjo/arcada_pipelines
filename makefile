@@ -7,18 +7,26 @@ docker.start_env:
 #########################################################################
 ### BACKEND API
 
-BACKEND_PREFIX = clear && cd 02_backend_api && python3 
+BACKEND_DIR = 02_backend_api
+BACKEND_PREFIX = clear && cd $(BACKEND_DIR) && python3 
+
+backend.install:
+	pip install -r $(BACKEND_DIR)/requirements.txt
 
 backend.start_api:
 	$(BACKEND_PREFIX) main.py
 
-backend.init:
-	$(BACKEND_PREFIX) init.py
+backend.create:
+	$(BACKEND_PREFIX) create.py
 
 #########################################################################
 ### PIPELINE COMPONENTS
 
-PIPELINE_PREFIX = clear && cd 03_pipeline && python3
+PIPELINE_DIR = 03_pipeline
+PIPELINE_PREFIX = clear && cd $(PIPELINE_DIR) && python3
+
+pipeline.install:
+	pip install -r $(PIPELINE_DIR)/requirements.txt
 
 pipeline.historical_ingest:
 	$(PIPELINE_PREFIX) 00_historical_ingest.py
