@@ -4,7 +4,7 @@ from mlflow.tracking import MlflowClient
 from funcs import constants, misc, thread_utils
 
 global_config = constants.global_config()
-MLFLOW_BROKER: str = f"http://{global_config.cluster.mlflow_broker}"
+MLFLOW_BROKER: str = f"http://{global_config.endpoints.host}:{global_config.endpoints.ports.mlflow}"
 
 ########################################################################################################
 ########################################################################################################

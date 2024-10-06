@@ -5,7 +5,7 @@ import funcs.misc as misc
 
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE KAFKA CONNECTION STRING
 global_config: dict = constants.global_config()
-kafka_brokers = ','.join(global_config.cluster.kafka_brokers)
+KAFKA_BROKERS = f'{global_config.endpoints.host}:{global_config.endpoints.ports.kafka}'
 
 ########################################################################################################
 ########################################################################################################
@@ -15,7 +15,7 @@ class create_admin_client:
 
         # ATTEMPT TO CONNECT TO THE CLUSTER
         self.instance = AdminClient({
-            'bootstrap.servers': kafka_brokers,
+            'bootstrap.servers': KAFKA_BROKERS,
         })
 
         self.check_connection()
@@ -83,7 +83,7 @@ class create_admin_client:
             
             # CREATE A TEMP CONSUMBER TO READ TOPIC OFFSETS
             temp_consumer = Consumer({
-                'bootstrap.servers': kafka_brokers,
+                'bootstrap.servers': KAFKA_BROKERS,
                 'group.id': 'offset_checker_group',
                 'auto.offset.reset': 'earliest'
             })

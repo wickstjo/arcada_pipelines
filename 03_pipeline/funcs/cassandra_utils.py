@@ -5,7 +5,7 @@ import re
 
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE CASSANDRA CONNECTION STRING
 global_config = constants.global_config()
-CASSANDRA_BROKERS = [(host, int(port)) for host, port in (item.split(':') for item in global_config.cluster.cassandra_brokers)]
+CASSANDRA_BROKERS = [(global_config.endpoints.host, global_config.endpoints.ports.cassandra)]
 VERBOSE = global_config.pipeline.verbose_logging
 
 ########################################################################################################

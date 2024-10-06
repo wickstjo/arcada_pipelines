@@ -1,4 +1,4 @@
-import csv, yaml, time, json
+import csv, yaml, time, json, random
 from datetime import datetime
 from types import SimpleNamespace
 
@@ -108,6 +108,13 @@ class create_timer:
 def pprint(data: dict):
     assert type(data) == dict, 'YOU CAN ONLY PRETTY PRINT DICTS'
     print(json.dumps(data, indent=4))
+
+########################################################################################################
+########################################################################################################
+
+def timeout_range(min, max):
+    duration = random.uniform(min, max)
+    time.sleep(duration)
 
 ########################################################################################################
 ########################################################################################################

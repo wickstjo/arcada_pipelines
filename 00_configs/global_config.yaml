@@ -1,27 +1,20 @@
-cluster:
+endpoints:
+    host: 193.166.180.240
+    ports:
+        backend_api: 3003
+        kafka: 11001
+        cassandra: 12001
+        redis: 6379
+        mlflow: 5000
 
-    # MESSAGE QUEUE
-    kafka_brokers:
-        - 193.166.180.240:11001
-
-    # DATABASE
-    cassandra_brokers:
-        - 193.166.180.240:12001
-
-    # REDIS CACHE
-    redis_broker: 193.166.180.240:6379
-
-    # MLFLOW
-    mlflow_broker: 193.166.180.240:5000
+        # NOTE: THIS IS UDP
+        jaeger: 6831
 
 ###############################################################################################################
 ###############################################################################################################
 
 # BACKEND API SETTINGS
 backend:
-
-    # WHAT PORT SHOULD THE BACKEND API BE RUNNING ON?
-    endpoint: 193.166.180.240:3003
 
     # HIDE/SHOW LOG STATEMENTS
     verbose_logging: true

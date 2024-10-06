@@ -40,5 +40,11 @@ pipeline.data_refinery:
 pipeline.model_dispatcher:
 	$(PIPELINE_PREFIX) 03_model_dispatch.py
 
+pipeline.decision_synthesis:
+	$(PIPELINE_PREFIX) 04_decision_synthesis.py
+
+pipeline.post_processing:
+	$(PIPELINE_PREFIX) 05_post_processing.py
+
 #########################################################################
 #########################################################################

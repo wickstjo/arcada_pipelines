@@ -5,7 +5,7 @@ import re
 
 # LOAD THE GLOBAL CONFIG & STITCH TOGETHER THE CASSANDRA CONNECTION STRING
 global_config: dict = constants.global_config()
-cassandra_brokers: list[(str, int)] = [(host, int(port)) for host, port in (item.split(':') for item in global_config.cluster.cassandra_brokers)]
+CASSANDRA_BROKERS = [(global_config.endpoints.host, global_config.endpoints.ports.cassandra)]
 VERBOSE = global_config.backend.verbose_logging
 
 # # HIDE MANAGEMENT KEYSPACES AND TABLES
@@ -17,7 +17,7 @@ VERBOSE = global_config.backend.verbose_logging
 
 class create_cassandra_instance:
     def __init__(self, HIDE_LOGS=False):
-        cluster = Cluster(cassandra_brokers)
+        cluster = Cluster(CASSANDRA_BROKERS)
         self.instance = cluster.connect()
 
         if HIDE_LOGS:

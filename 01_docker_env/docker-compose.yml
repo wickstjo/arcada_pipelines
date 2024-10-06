@@ -45,6 +45,22 @@ x-cassandra: &cassandra_shared
 services:
 
 ######################################################################################################
+### JAEGER MICROSERVICE TRACING
+
+    jaeger:
+        image: jaegertracing/all-in-one:1.61.0
+        ports:
+            - "5775:5775/udp"
+            - "6831:6831/udp"
+            - "6832:6832/udp"
+            - "5778:5778"
+            - "9092:16686"  # Jaeger UI
+            - "14268:14268"
+            - "14250:14250"
+            - "4317:4317"    # OTLP gRPC port (default for OpenTelemetry traces)
+            - "4318:4318"    # OTLP HTTP port (optional)
+
+######################################################################################################
 ### REDIS CACHE
 
     redis:
@@ -99,7 +115,6 @@ services:
         <<: *kafka_shared
         ports:
             - '11001:11001'
-            - '13000:13000'
         environment:
             <<: *kafka_env
             KAFKA_BROKER_ID: 1

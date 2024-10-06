@@ -8,10 +8,11 @@ from mlflow.tracking import MlflowClient
 
 router = APIRouter()
 global_config = constants.global_config()
+MLFLOW_BROKER: str = f"http://{global_config.endpoints.host}:{global_config.endpoints.ports.mlflow}"
 
 # POINT MLFLOW AT THE CLUSTER ENDPOINT
-mlflow.set_tracking_uri(f'http://{global_config.cluster.mlflow_broker}')
-mlflow.set_registry_uri(f'http://{global_config.cluster.mlflow_broker}')
+mlflow.set_tracking_uri(MLFLOW_BROKER)
+mlflow.set_registry_uri(MLFLOW_BROKER)
 
 instance = MlflowClient()
 

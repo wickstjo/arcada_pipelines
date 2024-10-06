@@ -1,17 +1,18 @@
 from confluent_kafka import Consumer, Producer
 from funcs import misc, constants, thread_utils
-# import funcs.thread_utils as thread_utils
 import json, re
 
 global_config = constants.global_config()
-KAFKA_BROKERS = ','.join(global_config.cluster.kafka_brokers)
-# VERBOSE = global_config.pipeline.verbose_logging
+KAFKA_BROKERS = f'{global_config.endpoints.host}:{global_config.endpoints.ports.kafka}'
+
+########################################################################################################
+########################################################################################################
 
 class create_instance:
     def __init__(self):
         
         # CREATE PRODUCER & CHECK CONNECTION
-        self.producer = Producer({ 'bootstrap.servers': KAFKA_BROKERS})
+        self.producer = Producer({ 'bootstrap.servers': KAFKA_BROKERS })
         assert self.check_connection(), f'COULD NOT CONNECT TO KAFKA SERVERS'
 
     def __del__(self):

@@ -10,6 +10,7 @@ class kafka:
     DATA_REFINERY: str = 'data_refinery'
     MODEL_DISPATCH: str = 'model_dispatch'
     DECISION_SYNTHESIS: str = 'decision_synthesis'
+    POST_PROCESSING: str = 'post_processing'
 
 ###################################################################################################
 ###################################################################################################

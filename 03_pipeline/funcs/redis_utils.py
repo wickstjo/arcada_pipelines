@@ -3,12 +3,15 @@ from funcs import thread_utils, constants, misc
 
 # FETCH NECESSARY INFO FROM YAML CONFIG
 global_config = constants.global_config()
-REDIS_HOST, REDIS_PORT = global_config.cluster.redis_broker.split(':')
 # VERBOSE = global_config.backend.verbose_logging
 
 class create_instance:
     def __init__(self):
-        self.instance = redis.Redis(host=REDIS_HOST, port=int(REDIS_PORT), db=0)
+        self.instance = redis.Redis(
+            host=global_config.endpoints.host, 
+            port=global_config.endpoints.ports.redis, 
+            db=0
+        )
     
     def __del__(self):
         try:

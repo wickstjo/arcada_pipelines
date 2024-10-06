@@ -1,11 +1,12 @@
 import requests, json
 import funcs.constants as constants
 
+##############################################################################################
+##############################################################################################
+
 # LOAD THE GLOBAL CONFIG FOR SETTINGS & INITIALIZE COMPONENTS
 global_config: dict = constants.global_config()
-
-##############################################################################################
-##############################################################################################
+BACKEND_API = f'{global_config.endpoints.host}:{global_config.endpoints.ports.backend_api}'
 
 def get_request(endpoint):
     try:
@@ -54,21 +55,33 @@ cassandra_tables = [
 
 for query in cassandra_tables:
     print(f"### CREATING CASSANDRA TABLE ({query['keyspace_name']}.{query['table_name']})")
-    post_request(f'http://{global_config.backend.endpoint}/cassandra/create', query)
+    post_request(f'http://{BACKEND_API}/cassandra/create', query)
 
 ##############################################################################################
 ##############################################################################################
 
 kafka_topics = [
     {
+        "name": "data_refinery",
+        "num_partitions": 1
+    },
+    {
         "name": "model_dispatch",
+        "num_partitions": 1
+    },
+    {
+        "name": "decision_synthesis",
+        "num_partitions": 1
+    },
+    {
+        "name": "post_processing",
         "num_partitions": 1
     }
 ]
 
 for topic in kafka_topics:
     print(f"### CREATING KAFKA TOPIC ({topic['name']})")
-    post_request(f'http://{global_config.backend.endpoint}/kafka/create', topic)
+    post_request(f'http://{BACKEND_API}/kafka/create', topic)
 
 ##############################################################################################
 ##############################################################################################
@@ -123,7 +136,7 @@ redis_keystore = [
 
 for kv_item in redis_keystore:
     print(f"### CREATING REDIS KEY ({kv_item['key']})")
-    post_request(f'http://{global_config.backend.endpoint}/redis/create', kv_item)
+    post_request(f'http://{BACKEND_API}/redis/create', kv_item)
 
 ##############################################################################################
 ##############################################################################################

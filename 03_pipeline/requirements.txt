@@ -4,5 +4,8 @@ pyyaml
 mlflow
 redis
 
+jaeger-client
+opentracing
+
 # AUDITED 30/09 -- OK
 # pip install -r requirements.txt
