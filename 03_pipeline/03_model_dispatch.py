@@ -9,7 +9,7 @@ class pipeline_component:
 
         # CREATE INSTANCED CLIENTS
         self.kafka = kafka_utils.create_instance()
-        self.jaeger = jaeger_utils.create_instance('model_dispatch')
+        self.jaeger = jaeger_utils.create_instance('MODEL_DISPATCH')
 
         # IN A BACKGROUND THREAD, DO...
         self.kafka.subscribe(constants.kafka.MODEL_DISPATCH, self.on_kafka_event, structs.thread_beacon)
@@ -18,44 +18,58 @@ class pipeline_component:
     ########################################################################################
 
     def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
-        with self.jaeger.create_span('PREDICTING WITH MODEL_1', kafka_input) as span:
-            misc.timeout_range(0.04, 0.1)
+        with self.jaeger.create_span('COMPLETE LIFECYCLE', kafka_input) as span:
+                
+            with self.jaeger.create_span('RUNNING ALL MODEL PIPES', span) as model_parent:
+    
+                def pipe_1():
+                    with self.jaeger.create_span('PIPE_1: PREDICTING WITH MODEL_1', model_parent) as span:
+                        misc.timeout_range(0.08, 0.15)
 
-        with self.jaeger.create_span('PREDICTING WITH MODEL_2', span) as span:
-            misc.timeout_range(0.04, 0.1)
+                    with self.jaeger.create_span('PIPE_1: PREDICTING WITH MODEL_2', span) as span:
+                        misc.timeout_range(0.08, 0.15)
 
-            # span.set_tag('error', True)
+                    with self.jaeger.create_span('PIPE_1: PREDICTING WITH MODEL_3', span) as span:
+                        misc.timeout_range(0.08, 0.15)
 
-        with self.jaeger.create_span('PREDICTING WITH MODEL_3', span) as parent:
-            misc.timeout_range(0.04, 0.1)
+                def pipe_2():
+                    with self.jaeger.create_span('PIPE_2: PREDICTING WITH MODEL_4', model_parent) as span:
+                        misc.timeout_range(0.08, 0.15)
 
-            # parent.log_kv({
-            #     'event': 'error', 
-            #     'message': 'An error occurred', 
-            #     'error.code': 500
-            # })
+                def pipe_3():
+                    with self.jaeger.create_span('PIPE_3: PREDICTING WITH MODEL_5', model_parent) as span:
+                        misc.timeout_range(0.08, 0.15)
+
+                thread_1 = thread_utils.start_thread(pipe_1)
+                thread_utils.start_thread(pipe_2)
+                thread_utils.start_thread(pipe_3)
+                thread_1.join()
 
             def first():
-                with self.jaeger.create_span('WRITING PREDICTION BATCH TO KAFKA', parent) as span:
-                    misc.timeout_range(0.1, 0.15)
+                with self.jaeger.create_span('KAFKA: FORWARDING PREDICTION BATCH', model_parent) as span:
+                    misc.timeout_range(0.02, 0.05)
 
                     trace_context = self.jaeger.create_context(span)
                     self.kafka.push(constants.kafka.DECISION_SYNTHESIS, trace_context)
 
             def second():
-                with self.jaeger.create_span('WRITING POST_PROCESSING METADATA TO KAFKA', parent) as span:
-                    misc.timeout_range(0.1, 0.15)
+                with self.jaeger.create_span('KAFKA: FORWARDING MODEL META-DATA', model_parent) as span:
+                    misc.timeout_range(0.02, 0.05)
 
                     trace_context = self.jaeger.create_context(span)
                     self.kafka.push(constants.kafka.POST_PROCESSING, trace_context)
 
             def third():
-                with self.jaeger.create_span('WRITING PREDICTIONS TO DB', parent) as span:
-                    misc.timeout_range(0.20, 0.30)
+                with self.jaeger.create_span('DB: SAVING MODEL PREDICTIONS', model_parent) as span:
+                    misc.timeout_range(0.05, 0.1)
 
-            thread_utils.start_thread(first)
-            thread_utils.start_thread(second)
-            thread_utils.start_thread(third)
+            t1 = thread_utils.start_thread(first)
+            t2 = thread_utils.start_thread(second)
+            t3 = thread_utils.start_thread(third)
+
+            t1.join()
+            t2.join()
+            t3.join()
 
 ########################################################################################
 ########################################################################################

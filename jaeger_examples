@@ -1,0 +1,8 @@
+GOOD SETUP:
+    http://193.166.180.240:9092/trace/b455e1135b62710e
+
+BAD SETUP:
+    START:      http://193.166.180.240:9092/trace/d723720396252d11
+    BAD:        http://193.166.180.240:9092/trace/0e3d504b94a1200b
+    WORSE:      http://193.166.180.240:9092/trace/d1aeae685991f472
+    TERRIBLE:   http://193.166.180.240:9092/trace/4f648e21f93c6285

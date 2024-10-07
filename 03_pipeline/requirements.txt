@@ -3,7 +3,6 @@ cassandra-driver
 pyyaml
 mlflow
 redis
-
 jaeger-client
 opentracing
 
