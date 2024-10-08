@@ -1,5 +1,5 @@
-from funcs import kafka_utils, jaeger_utils
-from funcs import thread_utils, misc, constants
+from funcs import kafka_utils, cassandra_utils, jaeger_utils
+from funcs import thread_utils, misc, constants, types
 
 ########################################################################################
 ########################################################################################
@@ -8,6 +8,7 @@ class pipeline_component:
     def __init__(self, structs):
 
         # CREATE INSTANCED CLIENTS
+        self.cassandra = cassandra_utils.create_instance()
         self.kafka = kafka_utils.create_instance()
         self.jaeger = jaeger_utils.create_instance('DATA_REFINERY')
 
@@ -18,27 +19,27 @@ class pipeline_component:
     ########################################################################################
 
     def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
-        with self.jaeger.create_span('COMPLETE LIFECYCLE') as true_parent:
 
-            with self.jaeger.create_span('REFINING STOCK DATA', true_parent) as parent:
-                misc.timeout_range(0.03, 0.08)
+        # FORMAT & VALIDATE UNPROCESSED STOCK DATA 
+        with self.jaeger.create_span('REFINING RAW STOCK DATA') as parent:
+            refined_stock_data: dict = misc.validate_dict(kafka_input, types.REFINED_STOCK_DATA)
+            stock_symbol: str = refined_stock_data['symbol'].lower()
 
-            def first():
-                with self.jaeger.create_span('KAFKA: FORWARDED STOCK DATA TO DISPATCHER', parent) as span:
-                    misc.timeout_range(0.02, 0.05)
+        # PUSH VALID STOCK DATA TO THE DISPATCHER
+        def kafka_inject():
+            with self.jaeger.create_span(f"KAFKA: FORWARDING '{stock_symbol}' STOCK DATA", parent) as span:
+                self.kafka.push(constants.kafka.MODEL_DISPATCH, {
+                    'trace': self.jaeger.create_context(span),
+                    'refined_stock_data': refined_stock_data
+                })
 
-                    trace_context = self.jaeger.create_context(span)
-                    self.kafka.push(constants.kafka.MODEL_DISPATCH, trace_context)
+        # WRITE THE ROW TO THE DB
+        def cassandra_inject():
+            with self.jaeger.create_span("DB: SAVING VALID STOCK DATA", parent) as span:
+                self.cassandra.write(constants.cassandra.STOCKS_TABLE, refined_stock_data)
 
-            def second():
-                with self.jaeger.create_span('DB: SAVING STOCK DATA', parent) as span:
-                    misc.timeout_range(0.05, 0.1)
-
-            thread_1 = thread_utils.start_thread(first)
-            thread_2 = thread_utils.start_thread(second)
-            
-            thread_1.join()
-            thread_2.join()
+        thread_utils.start_thread(kafka_inject)
+        thread_utils.start_thread(cassandra_inject)
 
 ########################################################################################
 ########################################################################################

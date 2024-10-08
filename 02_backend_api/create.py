@@ -95,18 +95,18 @@ redis_keystore = [
             'aapl': {
                 'pipe_4': [
                     {
-                        'model_name': 'model_6',
-                        'version_alias': 'champion'
+                        'model_name': 'model_1',
+                        'model_version': 'champion'
                     }
                 ],
                 'pipe_5': [
                     {
-                        'model_name': 'model_7',
-                        'version_alias': 'champion'
+                        'model_name': 'model_2',
+                        'model_version': 'champion'
                     },
                     {
-                        'model_name': 'model_8',
-                        'version_alias': 'champion'
+                        'model_name': 'model_3',
+                        'model_version': 'champion'
                     }
                 ]
             }

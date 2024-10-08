@@ -1,4 +1,4 @@
-from funcs import constants
+from funcs import constants, misc
 from jaeger_client import Config
 from opentracing.propagation import Format
 
@@ -40,6 +40,7 @@ class create_instance:
     ########################################################################################################
 
     def create_span(self, span_name: str, predecessor=None):
+        misc.log(span_name)
 
         # A PREDECESSOR WAS PROVIDED
         if predecessor:

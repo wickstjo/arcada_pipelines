@@ -105,4 +105,5 @@ class mock_ml_model:
         self.version_number = version_number
 
     def predict(self, input):
+        misc.timeout_range(0.01, 0.02)
         return f'{input} -> [{self.model_name}, v_{self.version_number}]'

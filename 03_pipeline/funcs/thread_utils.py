@@ -100,3 +100,17 @@ def start_thread(func, _args=(), _daemon=False):
     thread.start()
 
     return thread
+
+########################################################################################################
+########################################################################################################
+
+class kv_list:
+    def __init__(self):
+        self.container = {}
+        self.mutex = create_mutex()
+        self.last_pipe = None
+    
+    def add(self, pipe_name, final_prediction, span):
+        with self.mutex:
+            self.container[pipe_name] = final_prediction
+            self.last_pipe = span

@@ -46,5 +46,8 @@ pipeline.decision_synthesis:
 pipeline.post_processing:
 	$(PIPELINE_PREFIX) 05_post_processing.py
 
+pipeline.full:
+	./tmux.sh
+
 #########################################################################
 #########################################################################
