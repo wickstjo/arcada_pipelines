@@ -37,14 +37,14 @@ pipeline.gradual_ingest:
 pipeline.data_refinery:
 	$(PIPELINE_PREFIX) 02_data_refinery.py
 
-pipeline.model_dispatcher:
+pipeline.model_dispatch:
 	$(PIPELINE_PREFIX) 03_model_dispatch.py
 
 pipeline.decision_synthesis:
 	$(PIPELINE_PREFIX) 04_decision_synthesis.py
 
-pipeline.post_processing:
-	$(PIPELINE_PREFIX) 05_post_processing.py
+pipeline.drift_analysis:
+	$(PIPELINE_PREFIX) 05_drift_analysis.py
 
 pipeline.full:
 	./tmux.sh

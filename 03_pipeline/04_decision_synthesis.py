@@ -10,8 +10,6 @@ class pipeline_component:
         # CREATE INSTANCED CLIENTS
         self.cassandra = cassandra_utils.create_instance()
         self.kafka = kafka_utils.create_instance()
-        self.redis = redis_utils.create_instance()
-        self.mlflow = mlflow_utils.create_instance()
         self.jaeger = jaeger_utils.create_instance('DECISION_SYNTHESIS')
 
         # IN A BACKGROUND THREAD, DO...
@@ -21,12 +19,12 @@ class pipeline_component:
     ########################################################################################
     ########################################################################################
 
-    def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
+    def on_kafka_event(self, kafka_input: dict):
         try:
             assert 'trace' in kafka_input, "[DECISION] EVENT MISSING 'trace' PROPERTY"
             assert 'prediction_batch' in kafka_input, "[DECISION] EVENT MISSING 'prediction_batch' PROPERTY"
 
-            trace_precedessor = kafka_input['trace']
+            trace_predecessor = kafka_input['trace']
             prediction_batch = kafka_input['prediction_batch']
 
             # FORCE STOCK SYMBOL TO LOWERCASE TO AVOID CAPITALIZATION ACCIDENTS
@@ -35,13 +33,13 @@ class pipeline_component:
 
             # MAKE MONETARY DECISION BASED ON PIPE PREDICTIONS
             def decision():
-                with self.jaeger.create_span(f"MAKING '{stock_symbol}' BUY/SELL/HOLD DECISION", trace_precedessor) as span:
+                with self.jaeger.create_span(f"MAKING '{stock_symbol}' BUY/SELL/HOLD DECISION", trace_predecessor) as span:
                     misc.timeout_range(0.01, 0.02)
                     misc.pprint(kafka_input)
 
             # SAVE MODEL PREDICTIONS IN DB
             def save_data():
-                with self.jaeger.create_span("DB: SAVING MODEL PREDICTIONS", trace_precedessor) as span:
+                with self.jaeger.create_span("DB: SAVING MODEL PREDICTIONS", trace_predecessor) as span:
                     misc.timeout_range(0.01, 0.02)
 
             thread_utils.start_thread(decision)

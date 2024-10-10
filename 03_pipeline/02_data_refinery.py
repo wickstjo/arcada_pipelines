@@ -18,7 +18,7 @@ class pipeline_component:
     ########################################################################################
     ########################################################################################
 
-    def on_kafka_event(self, kafka_topic: str, kafka_input: dict):
+    def on_kafka_event(self, kafka_input: dict):
 
         # FORMAT & VALIDATE UNPROCESSED STOCK DATA 
         with self.jaeger.create_span('REFINING RAW STOCK DATA') as parent:

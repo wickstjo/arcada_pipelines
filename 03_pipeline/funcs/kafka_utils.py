@@ -146,7 +146,7 @@ class create_instance:
 
                     # ATTEMPT TO RUN THE CALLBACK FUNC
                     try:
-                        callback_func(topic_name, deserialized_dict)
+                        callback_func(deserialized_dict)
                     except Exception as error:
                         misc.log(f'[KAFKA] CALLBACK ERROR: {error}')
 

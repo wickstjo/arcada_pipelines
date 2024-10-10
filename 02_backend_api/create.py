@@ -74,7 +74,7 @@ kafka_topics = [
         "num_partitions": 1
     },
     {
-        "name": "post_processing",
+        "name": "drift_analysis",
         "num_partitions": 1
     }
 ]

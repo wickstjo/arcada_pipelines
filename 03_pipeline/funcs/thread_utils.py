@@ -1,4 +1,4 @@
-from threading import Thread, Semaphore
+from threading import Thread, Semaphore, Lock
 from funcs import misc, constants
 import time
 
@@ -104,13 +104,26 @@ def start_thread(func, _args=(), _daemon=False):
 ########################################################################################################
 ########################################################################################################
 
-class kv_list:
-    def __init__(self):
-        self.container = {}
-        self.mutex = create_mutex()
-        self.last_pipe = None
-    
-    def add(self, pipe_name, final_prediction, span):
-        with self.mutex:
-            self.container[pipe_name] = final_prediction
-            self.last_pipe = span
+class thread_safe_dict:
+    def __init__(self, default_value={}):
+        self.dict = default_value
+        self.lock = Lock()
+
+    def keys(self):
+        with self.lock:
+            return list(self.dict.keys())
+            
+    def __getitem__(self, key):
+        with self.lock:
+            return self.dict[key]
+
+    def __setitem__(self, key, value):
+        with self.lock:
+            self.dict[key] = value
+
+    def __delitem__(self, key):
+        with self.lock:
+            del self.dict[key]
+
+########################################################################################################
+########################################################################################################

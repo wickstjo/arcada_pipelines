@@ -23,40 +23,6 @@ backend:
     # MAKES IT EASIER TO READ/FIND RELEVANT DATA
     hide_auxillary: true
 
-    # WHAT CONTENT SHOULD BE AUTO-CREATED BY THE INIT ENDPOINTS?
-    create_on_init:
-
-        # KAFKA TOPICS
-        # JUST THE TOPIC NAME IS ENOUGH
-        kafka_topics:
-            - data_refinery
-            - model_dispatch
-            - decision_synthesis
-
-        # CASSANDRA KEYSPACES/TABLES
-        # PROVIDE A KEYSPACE, TABLE NAME, ITS COLUMNS AND WHAT COLS SHOULD BE USED AS COMPOSITE KEYS
-        cassandra_tables:
-
-            # REFINED STOCK DATA TABLE
-            -   keyspace: dev
-                table_name: refined_stock_data
-                columns: 
-                    symbol: text
-                    timestamp: int
-                    high: float
-                    low: float
-                    open: float
-                    close: float
-                    adjusted_close: float
-                    volume: int
-                primary_keys:
-                    - symbol
-                    - timestamp
-
-        # REDIS KEYSPACES
-        redis:
-            model_pipelines: {}
-
 ###############################################################################################################
 ###############################################################################################################
 
