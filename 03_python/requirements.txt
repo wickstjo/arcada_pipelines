@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+
+jaeger-client
+opentracing
+
+confluent-kafka
+cassandra-driver
+mlflow
+redis
+pyyaml
+
+# AUDITED 10/10 -- OK
+# pip install -r requirements.txt
