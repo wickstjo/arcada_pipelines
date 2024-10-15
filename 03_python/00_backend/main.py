@@ -1,6 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from .routes import kafka_route, cassandra_route, mlflow_route, redis_route
 import common.constants as constants
 
@@ -23,18 +24,10 @@ app.include_router(cassandra_route.router)
 app.include_router(mlflow_route.router)
 app.include_router(redis_route.router)
 
-# LIST OUT ENDPOINTS AT ROOT
-@app.get('/')
-async def read_root():
-    return {
-        'endpoints': [
-            '/docs',
-            '/kafka',
-            '/cassandra',
-            '/mlflow',
-            '/redis',
-        ]
-    }
+# MAKE API ROOT REDIRECT TO AUTO-DOCS ENDPOINT
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/docs")
 
 # LAUNCH SERVER
 if __name__ == "__main__":

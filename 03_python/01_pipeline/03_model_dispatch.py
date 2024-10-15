@@ -67,10 +67,11 @@ class pipeline_component:
                 
                 # WAIT FOR ALL THREADS TO FINISH
                 [thread.join() for thread in threads]
+                final_span = prediction_batch['last_span']
 
                 # EVERY PIPE IS DONE -- PUSH PREDICTION BATCH TO DECISION SYNTHESIS
                 def trigger_decision():
-                    with self.jaeger.create_span("KAFKA: FORWARDING PREDICTION BATCH", prediction_batch['last_span']) as decision_span:
+                    with self.jaeger.create_span("KAFKA: FORWARDING PREDICTION BATCH", final_span) as decision_span:
                         self.kafka.push(constants.kafka.DECISION_SYNTHESIS, {
                             'trace': self.jaeger.create_context(decision_span),
                             'prediction_batch': {
@@ -81,7 +82,7 @@ class pipeline_component:
 
                 # PUSH MODEL METADATA TO DRIFT ANALYSIS
                 def trigger_analysis():
-                    with self.jaeger.create_span("KAFKA: FORWARDING MODEL METADATA", prediction_batch['last_span']) as drift_span:
+                    with self.jaeger.create_span("KAFKA: FORWARDING MODEL METADATA", final_span) as drift_span:
                         self.kafka.push(constants.kafka.DRIFT_ANALYSIS, {
                             'trace': self.jaeger.create_context(drift_span),
                             'models_used': prediction_batch['models_used']

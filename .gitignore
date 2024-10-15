@@ -8,6 +8,9 @@
 *.ipynb_checkpoints
 *__pycache__
 
+# HIDE ENVIRONMENT
+*py_env
+
 # HIDE SBT COMPILATION DIRS
 *target
 

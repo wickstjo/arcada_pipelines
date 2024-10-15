@@ -39,12 +39,12 @@ async def foo(response: Response):
 ########################################################################################################
 ########################################################################################################
 
-class Topic(BaseModel):
+class CREATE_TOPIC(BaseModel):
     name: str
     num_partitions: int
 
 @router.post('/kafka/create')
-async def foo(topic: Topic, response: Response):
+async def foo(topic: CREATE_TOPIC, response: Response):
     try:
         response.status_code = status.HTTP_201_CREATED
         kafka_admin.create_topic(topic.name, topic.num_partitions)

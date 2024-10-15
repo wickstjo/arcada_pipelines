@@ -34,6 +34,17 @@ scrape_configs:
                 - cadvisor:8080
 
     -   job_name: node
+        metrics_path: /metrics
         static_configs:
             - targets:
                 - node-exporter:9100
+
+                # ADD GPU MACHINES' METRICS
+                - 193.166.180.240:9100
+
+    # NVIDIA GPU STATS
+    -   job_name: nvidia_dcgm
+        metrics_path: /metrics
+        static_configs:
+            - targets:
+                - 193.166.180.240:9400

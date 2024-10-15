@@ -1,5 +1,6 @@
 endpoints:
-    host: 193.166.180.240
+    # host: 193.166.180.240
+    host: 193.167.37.47
     ports:
         backend_api: 3003
         kafka: 11001
@@ -45,6 +46,11 @@ pipeline:
         gradual:
             dataset: finance_fresh.csv
             delay: 1
+
+        model:
+            database_table: SELECT * FROM refined_stock_data WHERE symbol = 'aapl' ORDER BY 'timestamp' ASC
+            order_by: timestamp
+
 
     # KAFKA CONSUMER SETTINGS
     kafka:

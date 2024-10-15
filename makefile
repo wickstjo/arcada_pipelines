@@ -8,15 +8,24 @@ docker.start:
 ### INSTALL PYTHON DEPENDENCIES
 
 PYTHON_ROOT = 03_python
+# VIRTUAL_ENV_NAME = py_env
 
 install:
-	pip install -r $(PYTHON_ROOT)/requirements.txt
+	cd $(PYTHON_ROOT) && pip install -r requirements.txt
+
+# env.install:
+# 	cd $(PYTHON_ROOT)
+# 	python3 -m venv $(VIRTUAL_ENV_NAME)
+# 	$(VIRTUAL_ENV_NAME)/bin/pip install -r $(PYTHON_ROOT)/requirements.txt
+
+# end.activate:
+# 	source $(PYTHON_ROOT)/$(VIRTUAL_ENV_NAME)/bin/activate
 
 #########################################################################
 ### BACKEND API
 
-BACKEND_DIR = $(PYTHON_ROOT)/00_backend
-BACKEND_PREFIX = clear && python3 -m $(BACKEND_DIR)
+BACKEND_DIR = 00_backend
+BACKEND_PREFIX = clear && cd $(PYTHON_ROOT) && python3 -m $(BACKEND_DIR)
 
 backend.start:
 	$(BACKEND_PREFIX).main

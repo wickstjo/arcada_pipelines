@@ -60,6 +60,8 @@ async def foo(table: CREATE_TABLE, response: Response):
     try:
         response.status_code = status.HTTP_201_CREATED
         cassandra.create_table(table.keyspace_name, table.table_name, table.columns, table.indexing)
+
+        return table
     
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR

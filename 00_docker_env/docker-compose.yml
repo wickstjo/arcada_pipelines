@@ -118,7 +118,7 @@ services:
         environment:
             <<: *kafka_env
             KAFKA_BROKER_ID: 1
-            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_broker_1:11000,PLAINTEXT_HOST://193.166.180.240:11001
+            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_broker_1:11000,PLAINTEXT_HOST://193.167.37.47:11001
 
     # kafka_broker_2:
     #     <<: *kafka_shared
@@ -132,7 +132,6 @@ services:
 ######################################################################################################
 ### CASSANDRA BROKERS
 
-    # WHEN MOUNTING DIR, REMEMBER TO CHMOD 777
     cassandra_1:
         <<: *cassandra_shared
         ports: 
@@ -140,6 +139,8 @@ services:
         volumes:
             - ./configs/cassandra_scraper.yml:/usr/app/cassandra_scraper.yml
             - ./jars/jmx_prometheus_javaagent-0.17.2.jar:/usr/app/jmx_prometheus_javaagent.jar
+
+            # WHEN MOUNTING DIR, REMEMBER TO CHMOD 777
             - /home/wickstjo/cassandra_db1:/var/lib/cassandra:rw
 
     # cassandra_2:
@@ -166,11 +167,12 @@ services:
 ### METRICS SCRAPING AND VISUALIZATION FRAMEWORKS
 
     # SCRAPING FRAMEWORK -- DEFAULT PORT 9090
-    # WHEN MOUNTING DATA DIRS, REMEMBER TO: chgrp -R nogroup /prometheus_data
     prometheus:
         image: prom/prometheus:v2.43.0
         volumes:
             - ./configs/prometheus_config.yml:/etc/prometheus/config.yml
+
+            # WHEN MOUNTING DATA DIRS, REMEMBER TO: chgrp -R nogroup /prometheus_data
             - /home/wickstjo/prometheus_db:/prometheus:rw
         ports:
             - '9090:9090'
