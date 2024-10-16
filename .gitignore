@@ -8,12 +8,14 @@
 *.ipynb_checkpoints
 *__pycache__
 
-# HIDE ENVIRONMENT
+# HIDE PYTHON VIRTUAL ENVIRONMENTS
 *py_env
 
 # HIDE SBT COMPILATION DIRS
 *target
 
+# HIDE DATASETS
+*.csv
 
 ##########################
 ##########################

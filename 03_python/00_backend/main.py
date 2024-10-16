@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from .routes import kafka_route, cassandra_route, mlflow_route, redis_route
-import common.constants as constants
+from common import constants
 
 # LOAD THE GLOBAL CONFIG FOR SETTINGS & INITIALIZE COMPONENTS
 global_config: dict = constants.global_config()

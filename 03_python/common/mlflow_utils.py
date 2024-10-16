@@ -38,6 +38,12 @@ class create_instance:
     
         return container
 
+    def model_info(self, model_name, model_version):
+        return self.instance.get_model_version(name=model_name, version=model_version)
+
+    def run_info(self, run_id: str):
+        return self.instance.get_run(run_id)
+
     ########################################################################################################
     ########################################################################################################
 

@@ -1,8 +1,11 @@
 #########################################################################
-### DOCKER ENVIRONMENT
+### DOCKER ENVIRONMENTS
 
-docker.start:
-	clear && cd 00_docker_env && docker compose up --force-recreate --renew-anon-volumes --remove-orphans
+docker.cpu_env:
+	clear && cd 00_docker_env && docker compose -f cpu_compose.yml up --force-recreate --renew-anon-volumes --remove-orphans
+
+docker.gpu_env:
+	clear && cd 00_docker_env && docker compose -f gpu_compose.yml up --force-recreate --renew-anon-volumes --remove-orphans
 
 #########################################################################
 ### INSTALL PYTHON DEPENDENCIES
