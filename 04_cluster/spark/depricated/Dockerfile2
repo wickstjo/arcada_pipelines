@@ -1,0 +1,40 @@
+# Base image for your Spark worker
+FROM spark:latest
+USER root
+
+# Install required libraries
+RUN apt-get update && apt-get install -y \
+    wget \
+    openjdk-8-jdk \
+    python3-pip \
+    curl
+
+# Install NVIDIA CUDA Toolkit and libraries (match CUDA version to RAPIDS version)
+RUN apt-get install -y nvidia-cuda-toolkit
+
+# Download and set up Spark RAPIDS Accelerator jar
+# Make sure to replace VERSION and CUDA_VERSION based on the RAPIDS version and your setup
+ENV RAPIDS_VERSION=23.04.0
+ENV CUDA_VERSION=11.0
+RUN wget https://repo1.maven.org/maven2/com/nvidia/rapids-4-spark_2.12/${RAPIDS_VERSION}/rapids-4-spark_2.12-${RAPIDS_VERSION}.jar -P /opt/spark/jars/
+
+# Configure Spark to use GPU and the RAPIDS Accelerator
+ENV SPARK_WORKER_CORES=4
+ENV SPARK_WORKER_MEMORY=8g
+
+# Add a GPU discovery script for Spark
+COPY getGpusResources.sh /opt/spark/getGpusResources.sh
+RUN chmod +x /opt/spark/getGpusResources.sh
+
+# Configure GPU support in Spark
+ENV SPARK_CONF_DIR=/opt/spark/conf
+RUN mkdir /opt/spark/conf
+RUN echo "spark.plugins com.nvidia.spark.SQLPlugin" >> ${SPARK_CONF_DIR}/spark-defaults.conf
+RUN echo "spark.rapids.sql.enabled true" >> ${SPARK_CONF_DIR}/spark-defaults.conf
+RUN echo "spark.executor.resource.gpu.amount 1" >> ${SPARK_CONF_DIR}/spark-defaults.conf
+RUN echo "spark.task.resource.gpu.amount 0.125" >> ${SPARK_CONF_DIR}/spark-defaults.conf
+RUN echo "spark.executor.resource.gpu.discoveryScript /opt/spark/getGpusResources.sh" >> ${SPARK_CONF_DIR}/spark-defaults.conf
+RUN echo "spark.executor.extraClassPath /opt/spark/jars/rapids-4-spark_2.12-23.04.0.jar" >> ${SPARK_CONF_DIR}/spark-defaults.conf
+
+# # Set the entrypoint for your Spark worker
+ENTRYPOINT ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]

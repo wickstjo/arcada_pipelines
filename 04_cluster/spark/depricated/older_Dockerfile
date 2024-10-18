@@ -1,0 +1,50 @@
+# Use NVIDIA's official CUDA image as the base
+FROM nvidia/cuda:11.8.0-base-ubuntu20.04
+
+# Set environment variables for Spark
+ENV SPARK_VERSION=3.4.3
+ENV HADOOP_VERSION=3
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$SPARK_HOME/bin:$PATH
+
+# Install required packages
+RUN apt-get update && apt-get install -y \
+    openjdk-11-jdk \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install Apache Spark
+RUN wget -q https://dlcdn.apache.org/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz \
+    && tar xzf spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz -C /opt/ \
+    && mv /opt/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION $SPARK_HOME \
+    && rm spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
+
+# Install Python and pip (optional)
+RUN apt-get update && apt-get install -y python3 python3-pip && pip3 install findspark
+
+ENV RAPIDS_VERSION=23.04.0
+ENV CUDA_VERSION=11.0
+RUN wget https://repo1.maven.org/maven2/com/nvidia/rapids-4-spark_2.12/${RAPIDS_VERSION}/rapids-4-spark_2.12-${RAPIDS_VERSION}.jar -P /opt/spark/jars/
+
+# Add a GPU discovery script for Spark
+COPY getGpusResources.sh /opt/spark/getGpusResources.sh
+RUN chmod +x /opt/spark/getGpusResources.sh
+
+# Configure GPU support in Spark
+ENV SPARK_CONF_DIR=/opt/spark/conf
+# RUN mkdir /opt/spark/conf
+RUN echo "spark.plugins com.nvidia.spark.SQLPlugin" >> ${SPARK_CONF_DIR}/spark-defaults.conf
+RUN echo "spark.rapids.sql.enabled true" >> ${SPARK_CONF_DIR}/spark-defaults.conf
+RUN echo "spark.executor.resource.gpu.amount 1" >> ${SPARK_CONF_DIR}/spark-defaults.conf
+RUN echo "spark.task.resource.gpu.amount 0.125" >> ${SPARK_CONF_DIR}/spark-defaults.conf
+RUN echo "spark.executor.resource.gpu.discoveryScript /opt/spark/getGpusResources.sh" >> ${SPARK_CONF_DIR}/spark-defaults.conf
+RUN echo "spark.executor.extraClassPath /opt/spark/jars/rapids-4-spark_2.12-23.04.0.jar" >> ${SPARK_CONF_DIR}/spark-defaults.conf
+
+# Set working directory
+WORKDIR $SPARK_HOME
+
+# Set the entrypoint for the Spark worker
+ENTRYPOINT ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker"]
+
+
+# docker run --gpus all bitnami-spark-with-gpu spark://193.167.37.47:7077

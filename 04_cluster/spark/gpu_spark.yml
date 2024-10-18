@@ -1,0 +1,39 @@
+services:
+    spark-master:
+        image: bitnami/spark:latest
+        ports:
+            - "8080:8080"  # Spark master UI
+            - "7077:7077"  # Spark master port
+        environment:
+            - SPARK_MODE=master
+
+    # spark-worker:
+    #     image: bitnami-spark-with-gpu
+    #     privileged: true
+        # environment:
+        #     - NVIDIA_VISIBLE_DEVICES=all  # Ensures all GPUs are available to the container
+        #     - SPARK_MODE=worker
+            # - SPARK_MASTER_URL=spark://spark-master:7077
+
+    # spark-worker:
+    #     image: bitnami/spark:latest
+    #     volumes:
+    #         - ./spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+    #     deploy:
+    #         resources:
+    #             reservations:
+    #                 devices:
+    #                     -   driver: nvidia
+    #                         count: all  # You can also specify a number, e.g., 1
+    #                         capabilities: [gpu]
+    #     environment:
+    #         - NVIDIA_VISIBLE_DEVICES=all  # Ensures all GPUs are available to the container
+    #         - SPARK_MODE=worker
+    #         - SPARK_MASTER_URL=spark://spark-master:7077
+    #     runtime: nvidia  # This enables the NVIDIA runtime in the container
+
+
+### docker build -t spark-gpu .
+### docker build -t spark-gpu .
+### docker build -t spark-gpu .
+### docker build -t spark-gpu .
