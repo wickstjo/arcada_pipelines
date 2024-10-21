@@ -6,24 +6,23 @@ services:
         ports:
             - 9100:9100
 
-
+    # NVIDIA GPU METRICS
     dcgm-exporter:
         image: nvidia/dcgm-exporter:latest
-        container_name: dcgm-exporter
-        restart: unless-stopped
         environment:
-            - DCGM_EXPORTER_PORT=9400   # Port for the exporter
+            - DCGM_EXPORTER_PORT=9400
+
+            # PUBLISH NEW METRICS EVERY 1s -- DEFAULT IS 30s
             - DCGM_EXPORTER_INTERVAL=1000
         ports:
-            - "9400:9400"               # Exposing the port for Prometheus scraping
-        runtime: nvidia               # Enable GPU access for the container
+            - "9400:9400"
+
+        # ENABLES GPU RUNTIME
+        # REMEMBER TO INSTALL nvidia-container-toolkit
+        # REMEMBER TO UPDATE /etc/docker/daemon.json WITH NVIDIA
+        runtime: nvidia
         cap_add:
             - SYS_ADMIN
-
-
-
-
-
 
 
 # services:
