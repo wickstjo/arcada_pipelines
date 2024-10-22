@@ -6,8 +6,7 @@ ENV KUBE_VERSION=v1.27.3
 ENV CRICTL_VERSION=v1.26.0
 
 # Install required packages
-RUN apk add --no-cache \
-    curl \
+RUN apk add --no-cache \curl \
     bash \
     iproute2 \
     iptables \
@@ -41,3 +40,5 @@ RUN echo "net.bridge.bridge-nf-call-iptables=1" >> /etc/sysctl.conf && \
 
 # Entry point to keep the container running
 CMD ["dockerd-entrypoint.sh"]
+
+# docker run -it --privileged ubuntu_testing
