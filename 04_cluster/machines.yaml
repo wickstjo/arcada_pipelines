@@ -39,3 +39,6 @@ machines:
     F365-038.ad.arcada.fi: 193.167.34.232
     F365-039.ad.arcada.fi: 193.167.32.189
     F365-040.ad.arcada.fi: 193.167.35.219
+
+ssh_prefix: 222
+node_exporter_prefix: 333

@@ -1,0 +1,7 @@
+services:
+
+    # HARDWARE METRICS
+    node-exporter:
+        image: prom/node-exporter:v1.6.0
+        ports:
+            - 9100:9100

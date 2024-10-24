@@ -72,3 +72,9 @@ push:
 	git add -A; \
 	git commit -m "$$msg"; \
 	git push origin main
+
+#########################################################################
+### SSH TUNNELING
+
+ssh.node:
+	ssh root@193.167.37.47 -p 222$(nth)
