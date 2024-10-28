@@ -32,5 +32,6 @@ REAL_NODE_PORT="9100"
 NODE_PREFIX="333"
 MIRRORED_NODE="$NODE_PREFIX$NTH_CLUSTER_NODE"
 
+# REMEMBER: THIS REQUIRES "GatewayPorts: yes" in /etc/ssh/sshd_config
 screen -dmS node_exporter_tunnel bash -c "sshpass -f /cluster/password.txt ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -g -R $MIRRORED_NODE:localhost:$REAL_NODE_PORT wickstjo@193.167.37.47"
 echo "TUNNELING NODE_EXPORTER ON PORT $MIRRORED_NODE"
