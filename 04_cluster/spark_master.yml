@@ -1,0 +1,8 @@
+services:
+    spark-master:
+        image: bitnami/spark:latest
+        ports:
+            - "8080:8080"  # Spark master UI
+            - "7077:7077"  # Spark master port
+        environment:
+            - SPARK_MODE=master

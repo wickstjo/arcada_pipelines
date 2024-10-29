@@ -1,0 +1,12 @@
+# REMEMBER TO INSTALL nvidia-container-toolkit
+# REMEMBER TO UPDATE /etc/docker/daemon.json WITH NVIDIA
+# sudo servicectl restart docker
+
+{
+    "runtimes": {
+        "nvidia": {
+            "path": "nvidia-container-runtime",
+            "runtimeArgs": []
+        }
+    }
+}
