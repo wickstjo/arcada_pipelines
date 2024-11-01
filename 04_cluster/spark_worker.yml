@@ -1,8 +1,0 @@
-services:
-    spark-worker:
-        image: bitnami/spark:latest
-        ports:
-            - "8081:8081"  # Spark worker UI
-        environment:
-            - SPARK_MODE=worker
-            - SPARK_MASTER_URL=spark://193.167.37.47:7077

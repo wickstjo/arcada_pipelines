@@ -43,6 +43,7 @@ scrape_configs:
                 # ADD GPU MACHINES' METRICS
                 - 193.166.180.240:9100
                 - 192.168.13.204:9100
+                - 193.167.37.127:9100
 
     # NVIDIA GPU STATS
     -   job_name: nvidia_dcgm
@@ -51,3 +52,4 @@ scrape_configs:
             - targets:
                 - 193.166.180.240:9400
                 - 192.168.13.204:9400
+                - 193.167.37.127:9400

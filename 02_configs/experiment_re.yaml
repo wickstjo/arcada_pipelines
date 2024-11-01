@@ -1,0 +1,197 @@
+setup:
+
+    # WHAT IS THE DIFFERENCE BETWEEN NAME AND RUN_NAME?
+    # Answer: name specifies the experiment's overall name, 
+    # while run_name identifies the parent run under which multiple child runs are organized. 
+    # In this setup, run_name acts as the main run grouping the child runs, 
+    # where one child run is for SVR and the other for SVC
+    
+    name: SVR_SVC_chain_experiment
+    run_name: f"SVR_SVC_runs_{num_rows}"
+
+    # I WOULD REMOVE THIS AS ITS PART OF THE CLUSTER ENV
+    # AND NOT RELEVANT FOR THE MODEL RECIPE ITSELF
+    # Answer: I agree with you. This should be removed from the experiment.yaml file.
+
+    tracking_uri: "http://193.167.37.47:5000"
+
+    # WHY LIST THESE HERE?
+    # Answer: I'm not sure why these need to be listed here. From my understanding, these represent the model execution sequence, 
+    # which will be executed in the specified order in the list.
+
+    models:
+        - svr-model
+        - svc-model
+
+    # THE DEPENDENCY IS IMPLIED SINCE THE LIST OF MODELS UNDER THE MODELS PROPERTY
+    # IS A SEQUENCE OF MODELS
+    # Answer: I agree with you. The model execution sequence is already defined in the models property, 
+    # and this property will determine whether it is applied or not.
+    model_order_dependency: True
+
+ingestion:
+
+    # MAYBE COMBINE THESE
+    # Answer: I agree with you. These two properties can be combined into one property.
+    keyspace: shohel
+    table_name: refined_stock_data
+
+    # # EXAMPLE REFACTOR
+    # db_table: shohel.refined_stock_data
+    
+    # WHY USE AN ARRAY?
+    # WOULD YOU REALISTICALLY EVER USE MULTIPLE SYMBOLS WITH ONE QUERY?
+    # Answer: I agree with you. It is unlikely that multiple symbols will be used in one query.
+    symbols: [AAPL]
+
+    # # EXAMPLE REFACTOR
+    # stock_symbol: AAPL
+
+    # I ASSUME THIS IS A VARIABLE VALUE THAT CHANGES
+    # FOR EACH EXPERIMENT?
+    # Answer: Yes, this is a variable value that changes for each parent run, one experiment multiple run.
+    num_rows: num_rows
+
+    # DO WE EVER NEED DATA IN DESCENDING ORDER?
+    # Answer: I don't think we need data in descending order. I kept it if we need in future.
+    ascending: True
+
+models:
+        # TYPE DEFINES WHICH PYTHON FUNCTION TO USE
+        # NAME JUST GIVES AN ARBITRARY NAME TO THE CREATED MODEL
+        # Answer: I agree with you. The type property defines which Python function to use, but the name is provided from Magnus
+    -   type: svr-model
+        name: foo
+
+        target:
+            label_function: n_steps_ahead
+            function_params:
+                label_base_column: close
+                n_steps: 1
+
+                # I ASSUME THIS IS THE NAME OF THE NEW COLUMN
+                # IN THAT CASE, FIND A BETTER KEYWORD THAN 'target_column'
+                # Answer: I agree with you. The target_column keyword can be replaced with a more descriptive keyword.
+                target_column: label
+
+        features:
+            # DICTS WITH ONE KEY ARE USUALLY BETTER
+            # REMOVE THIS DEPTH?
+            feature_types:
+
+                # I COULD NOT DEDICE WHAT EXACTLY THESE INDICATORS ARE
+                # AND WHY THEY NEED TO BE MANUALLY ADDED
+                # Answer: There are different indicators that can be added to the features.
+                indicators_to_add:
+                    sma: 14
+                    ema: 12
+                    rsi: 14
+                    # bilinger_bands: 20
+
+                # THESE ALMOST CERTAINLY NEED TO BE EXPANDED
+                # Answer: These will be deleted in future refactoring. I am not using all of them.
+                include_lagged: True
+                include_volatility: True
+                include_volume: True
+                include_time_features: True
+
+                # SHOULD WE USE FALSE, OR JUST _NOT_ LIST THE FEATURES WE _DONT_ WANT?
+                include_cyclical_features: False
+
+        # # EXAMPLE REFACTOR
+        # features:
+        #     indicators_to_add:
+        #         sma: 14
+        #         ema: 12
+        #         rsi: 14
+        #     lagged:
+        #         good_threshold: foo
+        #         bad_threshold: bar
+        #     volatility:
+        #         good_threshold: foo
+        #         bad_threshold: bar
+        #     volume:
+        #         good_threshold: foo
+        #         bad_threshold: bar
+        #     time_features:
+        #         good_threshold: foo
+        #         bad_threshold: bar
+
+        data_preparation:
+            split_ratios:
+                n_splits: 5
+
+                # MAGNUS REQUESTED THAT THE ORDER OF THESE SPLITS SHOULD BE FLEXIBLE
+                # Answer: I agree with you. The order of the split ratios should be flexible. but for time series data, no need train, validate, test split. and test, n-split is good
+                train: 0.8
+                validate: 0.1
+                test: 0.1
+            
+            # WHAT DOES THIS MEAN/DO?
+            # Answer: I am not using this in my code base, I need to ask Magnus about this.
+            data_formatting: sklearn
+
+        # # EXAMPLE REFACTOR
+        # data_preparation:
+        #     n_splits: 5
+
+        #     # NOTICE HOW WE CAN MODIFY THE SEQUENCE TO, FOR EXAMXPLE,
+        #     # TRAIN ON THE MIDDLE 80% OF THE DATASET
+        #     split_ratios:
+        #         - validate: 0.1
+        #         - train: 0.8
+        #         - test: 0.1
+
+        # DO WE HAVE ANY OTHER HYPERPARAMETERS THAN CV?
+        # IF NO, REMOVE DEPTH 0
+        # Answer: I agree with you. If there are no other hyperparameters besides CV, depth 0 can be removed. 
+        # However, technically, this is commonly referred to as a hyperparameter.
+
+        hyperparameter:
+            cv_params:
+                C_min: 1e-3
+                C_max: 1e2
+                C_log: True
+                epsilon_min: 1e-3
+                epsilon_max: 1.0
+                epsilon_log: True
+                kernel_params:
+                    linear:
+                        gamma_min: 1.0
+                        gamma_max: 1.0
+                        gamma_log: False
+                    rbf:
+                        gamma_min: 1e-4
+                        gamma_max: 1e0
+                        gamma_log: True
+                optuna:
+                    direction: minimize
+                    n_trials: 50
+                    timeout: None
+
+        # # EXAMPLE REFACTOR
+        # cv_params:
+        #     C_min: 1e-3
+        #     C_max: 1e2
+        #     C_log: True
+        #     epsilon_min: 1e-3
+        #     epsilon_max: 1.0
+        #     epsilon_log: True
+        #     kernel_params:
+        #         linear:
+        #             gamma_min: 1.0
+        #             gamma_max: 1.0
+        #             gamma_log: False
+        #         rbf:
+        #             gamma_min: 1e-4
+        #             gamma_max: 1e0
+        #             gamma_log: True
+        #     optuna:
+        #         direction: minimize
+        #         n_trials: 50
+        #         timeout: None
+
+        # ADD THE 'INFINITY' KEYWORD TO YOUR INTERPRETER
+        # AND POINT AT NP.INF
+        # Answer: I agree with you. I will add the 'INFINITY' keyword to the interpreter and point it to np.inf.
+        error_bins: [0, 1, 5, 10, 20, INFINITY]

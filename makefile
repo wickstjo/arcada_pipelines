@@ -76,11 +76,18 @@ push:
 #########################################################################
 ### SSH TUNNELING
 
+ssh.cpu_machine:
+	ssh 193.167.37.47
+
 ssh.gpu_machine:
 	ssh 193.166.180.240
 
-ssh.cpu_machine:
-	ssh 193.167.37.47
+ssh.titans:
+	ssh 193.167.37.127
+
+ssh.ai:
+	ssh 192.168.13.204
+# ssh -R 7077:193.167.37.47:7077 wickstjo@192.168.13.204
 
 ssh.node:
 	ssh root@193.167.37.47 -p 222$(nth)
