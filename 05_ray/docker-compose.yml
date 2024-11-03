@@ -1,0 +1,22 @@
+services:
+  ray-head:
+    build: .
+    container_name: ray-head
+    environment:
+      - RAY_HEAD_SERVICE_HOST=ray-head
+    command: >
+      ray start --head --node-ip-address=ray-head --port=6379
+    ports:
+      - "8265:8265"  # Dashboard
+      - "6379:6379"  # Ray port
+    networks:
+      - ray-network
+
+  ray-worker:
+    build: .
+    depends_on:
+      - ray-head
+    environment:
+      - RAY_HEAD_SERVICE_HOST=ray-head
+    command: >
+      ray start --address='ray-head:6379' --node-ip-address=ray-worker
