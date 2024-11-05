@@ -1,0 +1,375 @@
+{
+    "apiVersion": "v1",
+    "kind": "Node",
+    "metadata": {
+        "annotations": {
+            "kubeadm.alpha.kubernetes.io/cri-socket": "unix:///var/run/cri-dockerd.sock",
+            "node.alpha.kubernetes.io/ttl": "0",
+            "projectcalico.org/IPv4Address": "193.167.37.47/24",
+            "projectcalico.org/IPv4IPIPTunnelAddr": "10.130.233.64",
+            "volumes.kubernetes.io/controller-managed-attach-detach": "true"
+        },
+        "creationTimestamp": "2024-11-04T00:24:16Z",
+        "labels": {
+            "beta.kubernetes.io/arch": "amd64",
+            "beta.kubernetes.io/os": "linux",
+            "kubernetes.io/arch": "amd64",
+            "kubernetes.io/hostname": "3080-ubu",
+            "kubernetes.io/os": "linux"
+        },
+        "name": "3080-ubu",
+        "resourceVersion": "71016",
+        "uid": "95d57d2c-472e-43e5-8ab7-75fc371987da"
+    },
+    "spec": {
+        "podCIDR": "10.0.1.0/24",
+        "podCIDRs": [
+            "10.0.1.0/24"
+        ],
+        "taints": [
+            {
+                "effect": "NoSchedule",
+                "key": "node.kubernetes.io/disk-pressure",
+                "timeAdded": "2024-11-04T00:24:26Z"
+            }
+        ]
+    },
+    "status": {
+        "addresses": [
+            {
+                "address": "193.167.37.47",
+                "type": "InternalIP"
+            },
+            {
+                "address": "3080-ubu",
+                "type": "Hostname"
+            }
+        ],
+        "allocatable": {
+            "cpu": "24",
+            "ephemeral-storage": "624003039019",
+            "hugepages-1Gi": "0",
+            "hugepages-2Mi": "0",
+            "memory": "65659960Ki",
+            "nvidia.com/gpu": "1",
+            "pods": "110"
+        },
+        "capacity": {
+            "cpu": "24",
+            "ephemeral-storage": "677086632Ki",
+            "hugepages-1Gi": "0",
+            "hugepages-2Mi": "0",
+            "memory": "65762360Ki",
+            "nvidia.com/gpu": "1",
+            "pods": "110"
+        },
+        "conditions": [
+            {
+                "lastHeartbeatTime": "2024-11-04T00:41:24Z",
+                "lastTransitionTime": "2024-11-04T00:41:24Z",
+                "message": "Calico is running on this node",
+                "reason": "CalicoIsUp",
+                "status": "False",
+                "type": "NetworkUnavailable"
+            },
+            {
+                "lastHeartbeatTime": "2024-11-04T12:34:03Z",
+                "lastTransitionTime": "2024-11-04T00:24:16Z",
+                "message": "kubelet has sufficient memory available",
+                "reason": "KubeletHasSufficientMemory",
+                "status": "False",
+                "type": "MemoryPressure"
+            },
+            {
+                "lastHeartbeatTime": "2024-11-04T12:34:03Z",
+                "lastTransitionTime": "2024-11-04T00:24:26Z",
+                "message": "kubelet has disk pressure",
+                "reason": "KubeletHasDiskPressure",
+                "status": "True",
+                "type": "DiskPressure"
+            },
+            {
+                "lastHeartbeatTime": "2024-11-04T12:34:03Z",
+                "lastTransitionTime": "2024-11-04T00:24:16Z",
+                "message": "kubelet has sufficient PID available",
+                "reason": "KubeletHasSufficientPID",
+                "status": "False",
+                "type": "PIDPressure"
+            },
+            {
+                "lastHeartbeatTime": "2024-11-04T12:34:03Z",
+                "lastTransitionTime": "2024-11-04T00:24:16Z",
+                "message": "kubelet is posting ready status. AppArmor enabled",
+                "reason": "KubeletReady",
+                "status": "True",
+                "type": "Ready"
+            }
+        ],
+        "daemonEndpoints": {
+            "kubeletEndpoint": {
+                "Port": 10250
+            }
+        },
+        "images": [
+            {
+                "names": [
+                    "ghcr.io/coqui-ai/stt-train@sha256:0fda2804dbf161255c52016593704e73afebaa094e74deb994c6c39ded83de2c",
+                    "ghcr.io/coqui-ai/stt-train:latest"
+                ],
+                "sizeBytes": 16055070247
+            },
+            {
+                "names": null,
+                "sizeBytes": 5449235226
+            },
+            {
+                "names": null,
+                "sizeBytes": 5449235226
+            },
+            {
+                "names": null,
+                "sizeBytes": 5449235226
+            },
+            {
+                "names": null,
+                "sizeBytes": 5449235226
+            },
+            {
+                "names": null,
+                "sizeBytes": 2089758161
+            },
+            {
+                "names": null,
+                "sizeBytes": 2089757929
+            },
+            {
+                "names": null,
+                "sizeBytes": 2089757929
+            },
+            {
+                "names": [
+                    "bitnami/spark@sha256:87a21bd1ae618a418b0b26072544ace91a4de8dc730163ee244f858727e136ab",
+                    "bitnami/spark:latest"
+                ],
+                "sizeBytes": 1668142317
+            },
+            {
+                "names": null,
+                "sizeBytes": 1583300314
+            },
+            {
+                "names": null,
+                "sizeBytes": 1430716908
+            },
+            {
+                "names": null,
+                "sizeBytes": 1194010215
+            },
+            {
+                "names": null,
+                "sizeBytes": 1150288120
+            },
+            {
+                "names": null,
+                "sizeBytes": 1070001294
+            },
+            {
+                "names": null,
+                "sizeBytes": 1070001276
+            },
+            {
+                "names": null,
+                "sizeBytes": 1070001276
+            },
+            {
+                "names": null,
+                "sizeBytes": 1070001276
+            },
+            {
+                "names": null,
+                "sizeBytes": 1069998079
+            },
+            {
+                "names": null,
+                "sizeBytes": 1069998079
+            },
+            {
+                "names": [
+                    "confluentinc/cp-zookeeper@sha256:3ace7c3475a58afa128d0ee05bb9a06474b99b48c9d536c33144133637786f7f",
+                    "confluentinc/cp-zookeeper:7.3.0"
+                ],
+                "sizeBytes": 827922352
+            },
+            {
+                "names": [
+                    "confluentinc/cp-kafka@sha256:06e5d17d6c5163f3084ffb3c0a5f7f87ba87f35cc4739b598500b3db45dce35b",
+                    "confluentinc/cp-kafka:7.3.0"
+                ],
+                "sizeBytes": 827922113
+            },
+            {
+                "names": [
+                    "ghcr.io/mlflow/mlflow@sha256:ae2b2faf8c8ce2bd356e99f268eb2fa652f6bcf9c7c27c84241d519d4c454ce7",
+                    "ghcr.io/mlflow/mlflow:v2.16.2"
+                ],
+                "sizeBytes": 816892762
+            },
+            {
+                "names": null,
+                "sizeBytes": 789572488
+            },
+            {
+                "names": null,
+                "sizeBytes": 789572488
+            },
+            {
+                "names": null,
+                "sizeBytes": 789572488
+            },
+            {
+                "names": null,
+                "sizeBytes": 789572488
+            },
+            {
+                "names": null,
+                "sizeBytes": 772889223
+            },
+            {
+                "names": null,
+                "sizeBytes": 772889223
+            },
+            {
+                "names": null,
+                "sizeBytes": 772889223
+            },
+            {
+                "names": null,
+                "sizeBytes": 772889223
+            },
+            {
+                "names": null,
+                "sizeBytes": 772889223
+            },
+            {
+                "names": null,
+                "sizeBytes": 772889223
+            },
+            {
+                "names": null,
+                "sizeBytes": 772889223
+            },
+            {
+                "names": null,
+                "sizeBytes": 772889223
+            },
+            {
+                "names": [
+                    "master_node:latest"
+                ],
+                "sizeBytes": 772889223
+            },
+            {
+                "names": [
+                    "nvidia/dcgm-exporter@sha256:a1d913783fd185d78ed8b725334f75adc86eb594afe82961a73aa63c5d0ef423",
+                    "nvidia/dcgm-exporter:latest"
+                ],
+                "sizeBytes": 572817930
+            },
+            {
+                "names": [
+                    "nvcr.io/nvidia/k8s-device-plugin@sha256:7089559ce6153018806857f5049085bae15b3bf6f1c8bd19d8b12f707d087dea",
+                    "nvcr.io/nvidia/k8s-device-plugin:v0.17.0"
+                ],
+                "sizeBytes": 539695015
+            },
+            {
+                "names": null,
+                "sizeBytes": 365994599
+            },
+            {
+                "names": null,
+                "sizeBytes": 365994599
+            },
+            {
+                "names": [
+                    "cassandra@sha256:91c8ebb413cb2df929b9e3cd107492b95c10dd0aa8d8a020d1f5ffa27694a88b",
+                    "cassandra:4.1.0"
+                ],
+                "sizeBytes": 356133345
+            },
+            {
+                "names": null,
+                "sizeBytes": 340282202
+            },
+            {
+                "names": null,
+                "sizeBytes": 339868467
+            },
+            {
+                "names": null,
+                "sizeBytes": 339868467
+            },
+            {
+                "names": [
+                    "grafana/grafana-oss@sha256:e4fbf663447ba23f820f44b83b9b2febf9857c12d546497ac25746428c082d2b",
+                    "grafana/grafana-oss:9.4.1"
+                ],
+                "sizeBytes": 328697245
+            },
+            {
+                "names": [
+                    "calico/node@sha256:b46ab5c5409564045ce69e3b823d91afa5447d710175f9463ac856a487a693fb",
+                    "calico/node:v3.26.3"
+                ],
+                "sizeBytes": 247382258
+            },
+            {
+                "names": [
+                    "prom/prometheus@sha256:f5c29683a301d4e5427fb0d985f794b1f743498310a4eadee75e85f5dba73a6d",
+                    "prom/prometheus:v2.43.0"
+                ],
+                "sizeBytes": 233970010
+            },
+            {
+                "names": [
+                    "calico/cni@sha256:a7a5bd0660b241c668cb354827fcb4b24e73bd554f237b03133d6ec098b2c3d7",
+                    "calico/cni:v3.26.3"
+                ],
+                "sizeBytes": 208881677
+            },
+            {
+                "names": [
+                    "nvidia/cuda@sha256:774ca3d612de15213102c2dbbba55df44dc5cf9870ca2be6c6e9c627fa63d67a",
+                    "nvidia/cuda:11.0-base"
+                ],
+                "sizeBytes": 122138526
+            },
+            {
+                "names": [
+                    "redis@sha256:541209804a009ab69e97a06504706cfe83be2693150885fa08ed05a91f243089",
+                    "redis:7.4"
+                ],
+                "sizeBytes": 116976011
+            },
+            {
+                "names": [
+                    "registry.k8s.io/kube-proxy@sha256:8e039a309ca0dc220e6d4350f78d96d1c4c76dd7444354a3ea6142a890ae8ae5",
+                    "registry.k8s.io/kube-proxy:v1.28.15"
+                ],
+                "sizeBytes": 81787127
+            }
+        ],
+        "nodeInfo": {
+            "architecture": "amd64",
+            "bootID": "c25f7ad2-7e45-4794-8d11-37bc56a42c69",
+            "containerRuntimeVersion": "docker://27.3.1",
+            "kernelVersion": "6.8.0-45-generic",
+            "kubeProxyVersion": "v1.28.15",
+            "kubeletVersion": "v1.28.15",
+            "machineID": "d4989dde9e034d469ffe42341069d025",
+            "operatingSystem": "linux",
+            "osImage": "Ubuntu 22.04.5 LTS",
+            "systemUUID": "fbc28570-c12c-0000-0000-000000000000"
+        }
+    }
+}

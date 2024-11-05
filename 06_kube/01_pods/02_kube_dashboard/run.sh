@@ -1,0 +1,1 @@
+kubectl apply -f 01_pods/kube_dashboard

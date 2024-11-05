@@ -135,3 +135,9 @@ kube.nodes:
 kube.relabel:
 	kubectl label nodes 3080-ubu kubernetes.io/role=worker
 	kubectl label nodes 4090-ubu kubernetes.io/role=worker
+
+kube.alloc:
+	kubectl describe nodes | grep -A 5 "Allocatable"
+
+kube.apply:
+	kubectl apply -f $(f) && kubectl get pods -A -w

@@ -1,0 +1,254 @@
+{
+    "apiVersion": "v1",
+    "kind": "Node",
+    "metadata": {
+        "annotations": {
+            "kubeadm.alpha.kubernetes.io/cri-socket": "unix:///var/run/cri-dockerd.sock",
+            "node.alpha.kubernetes.io/ttl": "0",
+            "projectcalico.org/IPv4Address": "193.166.180.240/24",
+            "projectcalico.org/IPv4IPIPTunnelAddr": "10.151.173.64",
+            "volumes.kubernetes.io/controller-managed-attach-detach": "true"
+        },
+        "creationTimestamp": "2024-11-04T00:24:20Z",
+        "labels": {
+            "beta.kubernetes.io/arch": "amd64",
+            "beta.kubernetes.io/os": "linux",
+            "kubernetes.io/arch": "amd64",
+            "kubernetes.io/hostname": "4090-ubu",
+            "kubernetes.io/os": "linux"
+        },
+        "name": "4090-ubu",
+        "resourceVersion": "71086",
+        "uid": "f02308aa-4266-43f1-8717-64475c8e93bc"
+    },
+    "spec": {
+        "podCIDR": "10.0.2.0/24",
+        "podCIDRs": [
+            "10.0.2.0/24"
+        ]
+    },
+    "status": {
+        "addresses": [
+            {
+                "address": "193.166.180.240",
+                "type": "InternalIP"
+            },
+            {
+                "address": "4090-ubu",
+                "type": "Hostname"
+            }
+        ],
+        "allocatable": {
+            "cpu": "32",
+            "ephemeral-storage": "3542856982397",
+            "hugepages-1Gi": "0",
+            "hugepages-2Mi": "0",
+            "memory": "65503060Ki",
+            "nvidia.com/gpu": "1",
+            "pods": "110"
+        },
+        "capacity": {
+            "cpu": "32",
+            "ephemeral-storage": "3844245864Ki",
+            "hugepages-1Gi": "0",
+            "hugepages-2Mi": "0",
+            "memory": "65605460Ki",
+            "nvidia.com/gpu": "1",
+            "pods": "110"
+        },
+        "conditions": [
+            {
+                "lastHeartbeatTime": "2024-11-04T00:41:17Z",
+                "lastTransitionTime": "2024-11-04T00:41:17Z",
+                "message": "Calico is running on this node",
+                "reason": "CalicoIsUp",
+                "status": "False",
+                "type": "NetworkUnavailable"
+            },
+            {
+                "lastHeartbeatTime": "2024-11-04T12:34:45Z",
+                "lastTransitionTime": "2024-11-04T00:24:20Z",
+                "message": "kubelet has sufficient memory available",
+                "reason": "KubeletHasSufficientMemory",
+                "status": "False",
+                "type": "MemoryPressure"
+            },
+            {
+                "lastHeartbeatTime": "2024-11-04T12:34:45Z",
+                "lastTransitionTime": "2024-11-04T00:24:20Z",
+                "message": "kubelet has no disk pressure",
+                "reason": "KubeletHasNoDiskPressure",
+                "status": "False",
+                "type": "DiskPressure"
+            },
+            {
+                "lastHeartbeatTime": "2024-11-04T12:34:45Z",
+                "lastTransitionTime": "2024-11-04T00:24:20Z",
+                "message": "kubelet has sufficient PID available",
+                "reason": "KubeletHasSufficientPID",
+                "status": "False",
+                "type": "PIDPressure"
+            },
+            {
+                "lastHeartbeatTime": "2024-11-04T12:34:45Z",
+                "lastTransitionTime": "2024-11-04T00:24:21Z",
+                "message": "kubelet is posting ready status. AppArmor enabled",
+                "reason": "KubeletReady",
+                "status": "True",
+                "type": "Ready"
+            }
+        ],
+        "daemonEndpoints": {
+            "kubeletEndpoint": {
+                "Port": 10250
+            }
+        },
+        "images": [
+            {
+                "names": [
+                    "nvidia/cuda@sha256:dac9201a8868301b9ed0f0fd001a453e0c31e991ee14d8875fb15e54a37cc8ea",
+                    "nvidia/cuda:12.2.0-devel-ubuntu20.04"
+                ],
+                "sizeBytes": 6563221448
+            },
+            {
+                "names": [
+                    "bitnami/spark@sha256:df7d0952f6912734c104cd1e7adedaa91fe9c273634f54244895fcc6658c55e0",
+                    "bitnami/spark:latest"
+                ],
+                "sizeBytes": 1664553003
+            },
+            {
+                "names": [
+                    "nvidia/dcgm-exporter@sha256:a1d913783fd185d78ed8b725334f75adc86eb594afe82961a73aa63c5d0ef423",
+                    "nvidia/dcgm-exporter:latest"
+                ],
+                "sizeBytes": 572817930
+            },
+            {
+                "names": [
+                    "nvcr.io/nvidia/k8s-device-plugin@sha256:7089559ce6153018806857f5049085bae15b3bf6f1c8bd19d8b12f707d087dea",
+                    "nvcr.io/nvidia/k8s-device-plugin:v0.17.0"
+                ],
+                "sizeBytes": 539695015
+            },
+            {
+                "names": [
+                    "kong@sha256:0a5b9a7673a4375ac8789b01a81c18c970d0efb010ec510b72c752b9e7f05741",
+                    "kong:3.6"
+                ],
+                "sizeBytes": 297263669
+            },
+            {
+                "names": [
+                    "nvcr.io/nvidia/k8s-device-plugin@sha256:e8343db286ac349f213d7b84e65c0d559d6310e74446986a09b66b21913eef12",
+                    "nvcr.io/nvidia/k8s-device-plugin:v0.13.0"
+                ],
+                "sizeBytes": 286216729
+            },
+            {
+                "names": [
+                    "calico/node@sha256:b46ab5c5409564045ce69e3b823d91afa5447d710175f9463ac856a487a693fb",
+                    "calico/node:v3.26.3"
+                ],
+                "sizeBytes": 247382258
+            },
+            {
+                "names": [
+                    "kubernetesui/dashboard@sha256:2e500d29e9d5f4a086b908eb8dfe7ecac57d2ab09d65b24f588b1d449841ef93",
+                    "kubernetesui/dashboard:v2.7.0"
+                ],
+                "sizeBytes": 245710051
+            },
+            {
+                "names": [
+                    "calico/cni@sha256:a7a5bd0660b241c668cb354827fcb4b24e73bd554f237b03133d6ec098b2c3d7",
+                    "calico/cni:v3.26.3"
+                ],
+                "sizeBytes": 208881677
+            },
+            {
+                "names": [
+                    "kubernetesui/dashboard-web@sha256:67d4304dac880fbdda911842c550a64158245a8a3d3b011464e29c9586292205",
+                    "kubernetesui/dashboard-web:1.6.0"
+                ],
+                "sizeBytes": 187963589
+            },
+            {
+                "names": [
+                    "registry.k8s.io/kube-proxy@sha256:8e039a309ca0dc220e6d4350f78d96d1c4c76dd7444354a3ea6142a890ae8ae5",
+                    "registry.k8s.io/kube-proxy:v1.28.15"
+                ],
+                "sizeBytes": 81787127
+            },
+            {
+                "names": [
+                    "registry.k8s.io/metrics-server/metrics-server@sha256:ffcb2bf004d6aa0a17d90e0247cf94f2865c8901dcab4427034c341951c239f9",
+                    "registry.k8s.io/metrics-server/metrics-server:v0.7.2"
+                ],
+                "sizeBytes": 67074530
+            },
+            {
+                "names": [
+                    "kubernetesui/dashboard-api@sha256:a73ae2274e47dc5339f69bd97c9d80a299c2ae1b45eef4d1b32390e248980dd5",
+                    "kubernetesui/dashboard-api:1.10.1"
+                ],
+                "sizeBytes": 54560808
+            },
+            {
+                "names": [
+                    "kubernetesui/dashboard-auth@sha256:2d292e8fd82155fe0e5c98cac136fd4ea94d4325169527d465e07318d0de4f51",
+                    "kubernetesui/dashboard-auth:1.2.2"
+                ],
+                "sizeBytes": 48044072
+            },
+            {
+                "names": [
+                    "kubernetesui/metrics-scraper@sha256:76049887f07a0476dc93efc2d3569b9529bf982b22d29f356092ce206e98765c",
+                    "kubernetesui/metrics-scraper:v1.0.8"
+                ],
+                "sizeBytes": 43815949
+            },
+            {
+                "names": [
+                    "kubernetesui/dashboard-metrics-scraper@sha256:82afbb4ed7e6f83b88a5950fd7bff9b144034d6390c1d54bef710982c73a7310",
+                    "kubernetesui/dashboard-metrics-scraper:1.2.1"
+                ],
+                "sizeBytes": 38180904
+            },
+            {
+                "names": [
+                    "prom/node-exporter@sha256:d2e48098c364e61ee62d9016eed863b66331d87cf67146f2068b70ed9d9b4f98",
+                    "prom/node-exporter:v1.6.0"
+                ],
+                "sizeBytes": 22706961
+            },
+            {
+                "names": [
+                    "registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097",
+                    "registry.k8s.io/pause:3.9"
+                ],
+                "sizeBytes": 743952
+            },
+            {
+                "names": [
+                    "hello-world@sha256:d211f485f2dd1dee407a80973c8f129f00d54604d2c90732e8e320e5038a0348",
+                    "hello-world:latest"
+                ],
+                "sizeBytes": 13256
+            }
+        ],
+        "nodeInfo": {
+            "architecture": "amd64",
+            "bootID": "8e617bdd-ce87-457d-9753-9b67ac6a68d8",
+            "containerRuntimeVersion": "docker://27.3.1",
+            "kernelVersion": "6.8.0-48-generic",
+            "kubeProxyVersion": "v1.28.15",
+            "kubeletVersion": "v1.28.15",
+            "machineID": "ecd2d0a9e96e4d38aab04e6fee117334",
+            "operatingSystem": "linux",
+            "osImage": "Ubuntu 24.04.1 LTS",
+            "systemUUID": "03560274-043c-05b5-ea06-5f0700080009"
+        }
+    }
+}

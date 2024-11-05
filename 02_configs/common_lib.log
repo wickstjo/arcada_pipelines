@@ -1,0 +1,28 @@
+root
+├── datasets
+│   ├── ...
+├── golam
+│   ├── ...
+├── john
+│   ├── ...
+├── magnus
+│   ├── ...
+└── shohel
+│   ├── ...
+├── common
+│   ├── backtesting
+│   │   ├── signals
+│   │   │   ├── base_signal.py
+│   │   │   ├── binary_plus_exit_signal.py
+│   │   │   ├── binary_signal.py
+│   │   │   ├── multi_class_signal.py
+│   │   └── strategies
+│   │       ├── base_strategy.py
+│   │       ├── binary_plus_exist_strategy.py
+│   │       ├── binary_strategy.py
+│   │       ├── multi_class_strategy.py
+│   ├── cassandra_utils.py
+├── experiment_1.ipynb
+├── experiment_2.ipynb
+├── experiment_3.ipynb
+├── experiment_4.ipynb

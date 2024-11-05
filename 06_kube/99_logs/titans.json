@@ -1,0 +1,269 @@
+{
+    "apiVersion": "v1",
+    "kind": "Node",
+    "metadata": {
+        "annotations": {
+            "kubeadm.alpha.kubernetes.io/cri-socket": "unix:///var/run/cri-dockerd.sock",
+            "node.alpha.kubernetes.io/ttl": "0",
+            "projectcalico.org/IPv4Address": "193.167.37.127/24",
+            "projectcalico.org/IPv4IPIPTunnelAddr": "10.84.60.0",
+            "volumes.kubernetes.io/controller-managed-attach-detach": "true"
+        },
+        "creationTimestamp": "2024-11-04T00:21:47Z",
+        "labels": {
+            "beta.kubernetes.io/arch": "amd64",
+            "beta.kubernetes.io/os": "linux",
+            "kubernetes.io/arch": "amd64",
+            "kubernetes.io/hostname": "titans",
+            "kubernetes.io/os": "linux",
+            "node-role.kubernetes.io/control-plane": "",
+            "node.kubernetes.io/exclude-from-external-load-balancers": "",
+            "nvidia.com/gpu": "true"
+        },
+        "name": "titans",
+        "resourceVersion": "71196",
+        "uid": "07b14809-b246-4d76-8d5b-2eca15fe49d1"
+    },
+    "spec": {
+        "podCIDR": "10.0.0.0/24",
+        "podCIDRs": [
+            "10.0.0.0/24"
+        ]
+    },
+    "status": {
+        "addresses": [
+            {
+                "address": "193.167.37.127",
+                "type": "InternalIP"
+            },
+            {
+                "address": "titans",
+                "type": "Hostname"
+            }
+        ],
+        "allocatable": {
+            "cpu": "8",
+            "ephemeral-storage": "885012729210",
+            "hugepages-1Gi": "0",
+            "hugepages-2Mi": "0",
+            "memory": "32696276Ki",
+            "nvidia.com/gpu": "2",
+            "pods": "110"
+        },
+        "capacity": {
+            "cpu": "8",
+            "ephemeral-storage": "960300272Ki",
+            "hugepages-1Gi": "0",
+            "hugepages-2Mi": "0",
+            "memory": "32798676Ki",
+            "nvidia.com/gpu": "2",
+            "pods": "110"
+        },
+        "conditions": [
+            {
+                "lastHeartbeatTime": "2024-11-04T00:42:04Z",
+                "lastTransitionTime": "2024-11-04T00:42:04Z",
+                "message": "Calico is running on this node",
+                "reason": "CalicoIsUp",
+                "status": "False",
+                "type": "NetworkUnavailable"
+            },
+            {
+                "lastHeartbeatTime": "2024-11-04T12:35:58Z",
+                "lastTransitionTime": "2024-11-04T00:21:47Z",
+                "message": "kubelet has sufficient memory available",
+                "reason": "KubeletHasSufficientMemory",
+                "status": "False",
+                "type": "MemoryPressure"
+            },
+            {
+                "lastHeartbeatTime": "2024-11-04T12:35:58Z",
+                "lastTransitionTime": "2024-11-04T00:21:47Z",
+                "message": "kubelet has no disk pressure",
+                "reason": "KubeletHasNoDiskPressure",
+                "status": "False",
+                "type": "DiskPressure"
+            },
+            {
+                "lastHeartbeatTime": "2024-11-04T12:35:58Z",
+                "lastTransitionTime": "2024-11-04T00:21:47Z",
+                "message": "kubelet has sufficient PID available",
+                "reason": "KubeletHasSufficientPID",
+                "status": "False",
+                "type": "PIDPressure"
+            },
+            {
+                "lastHeartbeatTime": "2024-11-04T12:35:58Z",
+                "lastTransitionTime": "2024-11-04T00:21:48Z",
+                "message": "kubelet is posting ready status. AppArmor enabled",
+                "reason": "KubeletReady",
+                "status": "True",
+                "type": "Ready"
+            }
+        ],
+        "daemonEndpoints": {
+            "kubeletEndpoint": {
+                "Port": 10250
+            }
+        },
+        "images": [
+            {
+                "names": [
+                    "ray-ray-worker:latest"
+                ],
+                "sizeBytes": 13114831181
+            },
+            {
+                "names": [
+                    "ray-ray-head:latest"
+                ],
+                "sizeBytes": 13114831181
+            },
+            {
+                "names": [
+                    "nvidia/cuda@sha256:dac9201a8868301b9ed0f0fd001a453e0c31e991ee14d8875fb15e54a37cc8ea",
+                    "nvidia/cuda:12.2.0-devel-ubuntu20.04"
+                ],
+                "sizeBytes": 6563221448
+            },
+            {
+                "names": [
+                    "rayproject/ray@sha256:c1f95bbf58c5984335f03f8537089e7c46b7248d1e0303ec3e8155227de10c40",
+                    "rayproject/ray:latest"
+                ],
+                "sizeBytes": 2317820345
+            },
+            {
+                "names": [
+                    "bitnami/spark@sha256:df7d0952f6912734c104cd1e7adedaa91fe9c273634f54244895fcc6658c55e0",
+                    "bitnami/spark:latest"
+                ],
+                "sizeBytes": 1664553003
+            },
+            {
+                "names": [
+                    "nvidia/dcgm-exporter@sha256:a1d913783fd185d78ed8b725334f75adc86eb594afe82961a73aa63c5d0ef423",
+                    "nvidia/dcgm-exporter:latest"
+                ],
+                "sizeBytes": 572817930
+            },
+            {
+                "names": [
+                    "nvcr.io/nvidia/k8s-device-plugin@sha256:7089559ce6153018806857f5049085bae15b3bf6f1c8bd19d8b12f707d087dea",
+                    "nvcr.io/nvidia/k8s-device-plugin:v0.17.0"
+                ],
+                "sizeBytes": 539695015
+            },
+            {
+                "names": [
+                    "calico/node@sha256:b46ab5c5409564045ce69e3b823d91afa5447d710175f9463ac856a487a693fb",
+                    "calico/node:v3.26.3"
+                ],
+                "sizeBytes": 247382258
+            },
+            {
+                "names": [
+                    "nvidia/cuda@sha256:0654b44e2515f03b811496d0e2d67e9e2b81ca1f6ed225361bb3e3bb67d22e18",
+                    "nvidia/cuda:12.3.1-base-ubuntu20.04"
+                ],
+                "sizeBytes": 246033627
+            },
+            {
+                "names": [
+                    "calico/cni@sha256:a7a5bd0660b241c668cb354827fcb4b24e73bd554f237b03133d6ec098b2c3d7",
+                    "calico/cni:v3.26.3"
+                ],
+                "sizeBytes": 208881677
+            },
+            {
+                "names": [
+                    "registry.k8s.io/etcd@sha256:a6dc63e6e8cfa0307d7851762fa6b629afb18f28d8aa3fab5a6e91b4af60026a",
+                    "registry.k8s.io/etcd:3.5.15-0"
+                ],
+                "sizeBytes": 147945345
+            },
+            {
+                "names": [
+                    "registry.k8s.io/kube-apiserver@sha256:6dfa84f5d6be711ae0d19758201d337e836ab7de73306ff14725ceaa978fea8f",
+                    "registry.k8s.io/kube-apiserver:v1.28.15"
+                ],
+                "sizeBytes": 125002412
+            },
+            {
+                "names": [
+                    "registry.k8s.io/kube-controller-manager@sha256:dadd2a3784783018a7ee8588d11f787fee4d5424f2cdd6ce89d3ba1844a6c175",
+                    "registry.k8s.io/kube-controller-manager:v1.28.15"
+                ],
+                "sizeBytes": 121312320
+            },
+            {
+                "names": [
+                    "registry.k8s.io/kube-proxy@sha256:8e039a309ca0dc220e6d4350f78d96d1c4c76dd7444354a3ea6142a890ae8ae5",
+                    "registry.k8s.io/kube-proxy:v1.28.15"
+                ],
+                "sizeBytes": 81787127
+            },
+            {
+                "names": [
+                    "ubuntu@sha256:99c35190e22d294cdace2783ac55effc69d32896daaa265f0bbedbcde4fbe3e5",
+                    "ubuntu:latest"
+                ],
+                "sizeBytes": 78112538
+            },
+            {
+                "names": [
+                    "calico/kube-controllers@sha256:3900b8cbd3bddb2622b6ef13a50efc2b36e1fd9849d3b4dcf3c587f65ca01a48",
+                    "calico/kube-controllers:v3.26.3"
+                ],
+                "sizeBytes": 74314478
+            },
+            {
+                "names": [
+                    "registry.k8s.io/kube-scheduler@sha256:82f4a42317450858d3d70fde5b3c0f22153ea155fd053f09865999a4661f2dca",
+                    "registry.k8s.io/kube-scheduler:v1.28.15"
+                ],
+                "sizeBytes": 59282471
+            },
+            {
+                "names": [
+                    "registry.k8s.io/coredns/coredns@sha256:a0ead06651cf580044aeb0a0feba63591858fb2e43ade8c9dea45a6a89ae7e5e",
+                    "registry.k8s.io/coredns/coredns:v1.10.1"
+                ],
+                "sizeBytes": 53612153
+            },
+            {
+                "names": [
+                    "prom/node-exporter@sha256:d2e48098c364e61ee62d9016eed863b66331d87cf67146f2068b70ed9d9b4f98",
+                    "prom/node-exporter:v1.6.0"
+                ],
+                "sizeBytes": 22706961
+            },
+            {
+                "names": [
+                    "registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097",
+                    "registry.k8s.io/pause:3.9"
+                ],
+                "sizeBytes": 743952
+            },
+            {
+                "names": [
+                    "hello-world@sha256:d211f485f2dd1dee407a80973c8f129f00d54604d2c90732e8e320e5038a0348",
+                    "hello-world:latest"
+                ],
+                "sizeBytes": 13256
+            }
+        ],
+        "nodeInfo": {
+            "architecture": "amd64",
+            "bootID": "03ad8d77-5ce0-499f-8ee2-97f65b340272",
+            "containerRuntimeVersion": "docker://27.3.1",
+            "kernelVersion": "6.8.0-48-generic",
+            "kubeProxyVersion": "v1.28.15",
+            "kubeletVersion": "v1.28.15",
+            "machineID": "a573682615714f7881d034755a3f36ba",
+            "operatingSystem": "linux",
+            "osImage": "Ubuntu 24.04.1 LTS",
+            "systemUUID": "1a9c3b20-72c3-11e3-a72a-1c872c60790a"
+        }
+    }
+}
