@@ -1,3 +1,5 @@
+# sudo nano /etc/nvidia-container-runtime/config.toml
+
 #accept-nvidia-visible-devices-as-volume-mounts = false
 
 # THIS IS MODIFIED

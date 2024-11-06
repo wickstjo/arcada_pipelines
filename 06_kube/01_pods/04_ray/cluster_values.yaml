@@ -1,0 +1,136 @@
+nameOverride: "kuberay"
+image:
+    repository: rayproject/ray
+
+    # THE IMAGE IS ~6.5GB SO ONLY FETCH IT WHEN NECESSARY
+    pullPolicy: IfNotPresent
+
+    # SELECT AN IMAGE TAG THAT SUPPORTS:
+    #   1. GPUS
+    #   2. PYTHON 3.121
+    tag: 2.38.0-py312-gpu
+
+# CAN BE CHANGED TO LOADBALANCER
+service:
+    type: ClusterIP
+
+# CLUSTER HEAD
+head:
+    rayStartParams:
+        dashboard-host: '0.0.0.0'
+    resources:
+        limits:
+            cpu: "1"
+            # To avoid out-of-memory issues, never allocate less than 2G memory for the Ray head.
+            memory: "2G"
+            nvidia.com/gpu: "0"
+        requests:
+            cpu: "1"
+            memory: "2G"
+            nvidia.com/gpu: "0"
+    volumes:
+        -   name: log-volume
+            emptyDir: {}
+    volumeMounts:
+        -   mountPath: /tmp/ray
+            name: log-volume
+
+# DISABLE CLUSTER DEFAULT WORKERGROUP
+worker:
+    disabled: true
+
+# REVERSE EACH CLUSTER NODE MANUALLY
+# ONE WORKER PER NODE -- RESERVING ~90% OF ITS RESOURCES
+additionalWorkerGroups:
+
+    # 4090 MACHINE
+    worker-4090:
+        replicas: 1
+        resources:
+            limits:
+                cpu: "28"
+                memory: "40Gi"
+                nvidia.com/gpu: "1"
+            requests:
+                cpu: "28"
+                memory: "40Gi"
+                nvidia.com/gpu: "1"
+        affinity:
+            nodeAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                    nodeSelectorTerms:
+                        - matchExpressions:
+                            -   key: kubernetes.io/hostname
+                                operator: In
+                                values:
+                                    - 4090-ubu
+
+    # 3080 MACHINE
+    worker-3080:
+        replicas: 1
+        resources:
+            limits:
+                cpu: "20"
+                memory: "40Gi"
+                nvidia.com/gpu: "1"
+            requests:
+                cpu: "20"
+                memory: "40Gi"
+                nvidia.com/gpu: "1"
+        affinity:
+            nodeAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                    nodeSelectorTerms:
+                        - matchExpressions:
+                            -   key: kubernetes.io/hostname
+                                operator: In
+                                values:
+                                    - 3080-ubu
+
+    # DUAL-TITANS MACHINE
+    # SPLIT RESOURCES INTO TWO WORKERS -- ONE GPU EACH
+    worker-titans:
+        replicas: 2
+        resources:
+            limits:
+                cpu: "3"
+                memory: "13Gi"
+                nvidia.com/gpu: "1"
+            requests:
+                cpu: "3"
+                memory: "13Gi"
+                nvidia.com/gpu: "1"
+        affinity:
+            nodeAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                    nodeSelectorTerms:
+                        - matchExpressions:
+                            -   key: kubernetes.io/hostname
+                                operator: In
+                                values:
+                                    - titans
+
+    # worker-titans-2:
+    #     replicas: 1
+    #     resources:
+    #         limits:
+    #             cpu: "3"
+    #             memory: "13Gi"
+    #             nvidia.com/gpu: "1"
+    #         requests:
+    #             cpu: "3"
+    #             memory: "13Gi"
+    #             nvidia.com/gpu: "1"
+
+    #     containerEnv:
+    #         -   name: CUDA_VISIBLE_DEVICES
+    #             value: "1"
+    #     affinity:
+    #         nodeAffinity:
+    #             requiredDuringSchedulingIgnoredDuringExecution:
+    #                 nodeSelectorTerms:
+    #                     - matchExpressions:
+    #                         -   key: kubernetes.io/hostname
+    #                             operator: In
+    #                             values:
+    #                                 - titans
