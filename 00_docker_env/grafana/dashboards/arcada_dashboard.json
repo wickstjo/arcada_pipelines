@@ -27,7 +27,7 @@
   "fiscalYearStartMonth": 0,
   "gnetId": 15117,
   "graphTooltip": 0,
-  "id": 8,
+  "id": 7,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -368,6 +368,8 @@
           },
           "links": [],
           "mappings": [],
+          "max": 1,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -377,7 +379,7 @@
               }
             ]
           },
-          "unit": "mbytes"
+          "unit": "percentunit"
         },
         "overrides": []
       },
@@ -409,7 +411,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "DCGM_FI_DEV_FB_USED{}",
+          "expr": "DCGM_FI_DEV_FB_USED{} / (DCGM_FI_DEV_FB_FREE{} + DCGM_FI_DEV_FB_USED{})",
           "interval": "",
           "legendFormat": "{{instance}} GPU #{{gpu}}",
           "range": true,
@@ -639,6 +641,6 @@
   "timezone": "browser",
   "title": "ARCADA_CLUSTER",
   "uid": "xu--jhWNz",
-  "version": 4,
+  "version": 3,
   "weekStart": ""
 }

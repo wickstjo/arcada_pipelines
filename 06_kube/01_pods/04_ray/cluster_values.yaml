@@ -1,14 +1,4 @@
 nameOverride: "kuberay"
-image:
-    repository: rayproject/ray
-
-    # THE IMAGE IS ~6.5GB SO ONLY FETCH IT WHEN NECESSARY
-    pullPolicy: IfNotPresent
-
-    # SELECT AN IMAGE TAG THAT SUPPORTS:
-    #   1. GPUS
-    #   2. PYTHON 3.121
-    tag: 2.38.0-py312-gpu
 
 # CAN BE CHANGED TO LOADBALANCER
 service:
@@ -16,6 +6,9 @@ service:
 
 # CLUSTER HEAD
 head:
+    image:
+        repository: rayproject/ray
+        tag: 2.38.0-py312
     rayStartParams:
         dashboard-host: '0.0.0.0'
     resources:
@@ -23,21 +16,49 @@ head:
             cpu: "1"
             # To avoid out-of-memory issues, never allocate less than 2G memory for the Ray head.
             memory: "2G"
-            nvidia.com/gpu: "0"
+            nvidia.com/gpu: 0
         requests:
             cpu: "1"
             memory: "2G"
-            nvidia.com/gpu: "0"
+            nvidia.com/gpu: 0
     volumes:
         -   name: log-volume
             emptyDir: {}
     volumeMounts:
         -   mountPath: /tmp/ray
             name: log-volume
+    # containerEnv:
+    #     -   name: RAY_GRAFANA_IFRAME_HOST
+    #         value: http://193.167.37.127:3000
+    #     -   name: RAY_GRAFANA_HOST
+    #         value: http://prometheus-grafana.prometheus-system.svc:80
+    #     -   name: RAY_PROMETHEUS_HOST
+    #         value: http://prometheus-kube-prometheus-prometheus.prometheus-system.svc:9090
+    # env:
+    #     -   name: RAY_GRAFANA_IFRAME_HOST
+    #         value: http://193.167.37.127:3000
+    #     -   name: RAY_GRAFANA_HOST
+    #         value: http://prometheus-grafana.prometheus-system.svc:80
+    #     -   name: RAY_PROMETHEUS_HOST
+    #         value: http://prometheus-kube-prometheus-prometheus.prometheus-system.svc:9090
+
 
 # DISABLE CLUSTER DEFAULT WORKERGROUP
 worker:
     disabled: true
+
+image:
+    repository: ray_with_torch
+    tag: latest
+    pullPolicy: IfNotPresent
+
+    # repository: rayproject/ray
+    # pullPolicy: IfNotPresent
+
+    # SELECT AN IMAGE TAG THAT SUPPORTS:
+    #   1. GPUS
+    #   2. PYTHON 3.121
+    # tag: 2.38.0-py312-gpu
 
 # REVERSE EACH CLUSTER NODE MANUALLY
 # ONE WORKER PER NODE -- RESERVING ~90% OF ITS RESOURCES
@@ -65,27 +86,27 @@ additionalWorkerGroups:
                                 values:
                                     - 4090-ubu
 
-    # 3080 MACHINE
-    worker-3080:
-        replicas: 1
-        resources:
-            limits:
-                cpu: "20"
-                memory: "40Gi"
-                nvidia.com/gpu: "1"
-            requests:
-                cpu: "20"
-                memory: "40Gi"
-                nvidia.com/gpu: "1"
-        affinity:
-            nodeAffinity:
-                requiredDuringSchedulingIgnoredDuringExecution:
-                    nodeSelectorTerms:
-                        - matchExpressions:
-                            -   key: kubernetes.io/hostname
-                                operator: In
-                                values:
-                                    - 3080-ubu
+    # # 3080 MACHINE
+    # worker-3080:
+    #     replicas: 1
+    #     resources:
+    #         limits:
+    #             cpu: "20"
+    #             memory: "40Gi"
+    #             nvidia.com/gpu: "1"
+    #         requests:
+    #             cpu: "20"
+    #             memory: "40Gi"
+    #             nvidia.com/gpu: "1"
+    #     affinity:
+    #         nodeAffinity:
+    #             requiredDuringSchedulingIgnoredDuringExecution:
+    #                 nodeSelectorTerms:
+    #                     - matchExpressions:
+    #                         -   key: kubernetes.io/hostname
+    #                             operator: In
+    #                             values:
+    #                                 - 3080-ubu
 
     # DUAL-TITANS MACHINE
     # SPLIT RESOURCES INTO TWO WORKERS -- ONE GPU EACH

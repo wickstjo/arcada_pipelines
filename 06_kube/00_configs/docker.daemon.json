@@ -1,4 +1,10 @@
-// sudo nano /etc/docker/daemon.json
+# sudo nano /etc/nvidia-container-runtime/config.toml
+# sudo systemctl restart docker
+# sudo systemctl restart kubelet
+
+
+
+
 
 {
     "default-runtime": "nvidia",
