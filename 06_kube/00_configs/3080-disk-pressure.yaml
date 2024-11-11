@@ -1,0 +1,14 @@
+# sudo nano /var/lib/kubelet/config.yaml
+
+evictionHard:
+  nodefs.available: "5%"           # Trigger eviction if node filesystem usage goes above 95% (5% available)
+  imagefs.available: "5%"          # Trigger eviction if image filesystem usage goes above 95% (5% available)
+evictionSoft:
+  nodefs.available: "6%"          # Trigger soft eviction if node filesystem usage goes above 90% (10% available)
+  imagefs.available: "6%"         # Trigger soft eviction if image filesystem usage goes above 90% (10% available)
+evictionSoftGracePeriod:
+  nodefs.available: "1m"           # Grace period before soft eviction is enforced
+  imagefs.available: "1m"          # Grace period before soft eviction is enforced
+evictionPressureTransitionPeriod: "1m"  # Time before transitioning to eviction thresholds after pressure is detected
+imageGCHighThresholdPercent: 95      # Image garbage collection happens when disk usage exceeds 85%
+imageGCLowThresholdPercent: 75

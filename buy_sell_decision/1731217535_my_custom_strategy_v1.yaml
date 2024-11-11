@@ -1,0 +1,32 @@
+args:
+    strategy_name: my_custom_strategy_v1
+    batch_window: 3
+init:
+    capital: 1000
+    stocks: 0
+    stock_value: 1
+    liquid: 1000
+final:
+    capital: 958
+    stocks: 7
+    stock_value: 9
+    liquid: 1021
+n_decisions:
+    buy: 7
+    sell: 0
+    hold: 0
+decision_sequence:
+-   decision: buy
+    reason: some valid reason that assists debugging
+-   decision: buy
+    reason: some valid reason that assists debugging
+-   decision: buy
+    reason: some valid reason that assists debugging
+-   decision: buy
+    reason: some valid reason that assists debugging
+-   decision: buy
+    reason: some valid reason that assists debugging
+-   decision: buy
+    reason: some valid reason that assists debugging
+-   decision: buy
+    reason: some valid reason that assists debugging
