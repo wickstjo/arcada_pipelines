@@ -15,4 +15,14 @@ dataset:
 
     # PROVIDE A MIN ROW COUNT FOR THE DATASET
     # FOR SANITY CHECKING
-    min_row_count: 200
+    min_length_threshold: 10
+
+# APPLY FEATURES
+feature_engineering:
+    foo: bar
+
+# APPLY FEATURES
+segmentation:
+    - train: 0.75
+    - validate: 0.15
+    - test: 0.1
