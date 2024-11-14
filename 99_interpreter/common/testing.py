@@ -41,8 +41,8 @@ class unittest_base(unittest.TestCase, ABC):
 ################################################################################################
 
 # WRAPPER TO PROGRAMMATICALLY INVOKE THE UNITTESTS OF A SPECIFIC MODULE
-def run_tests(module_name: str, input_data: dict):
-    assert isinstance(module_name, str), f"ARG 'module_name' MUST BE OF TYPE STR (GOT {type(module_name)})"
+def run_tests(module_dir: str, input_data: dict):
+    assert isinstance(module_dir, str), f"ARG 'module_dir' MUST BE OF TYPE STR (GOT {type(module_dir)})"
     assert isinstance(input_data, dict|list), f"ARG 'input_args' MUST BE OF TYPE DICT (GOT {type(input_data)})"
 
     # MAKE INPUT ARGS AVAILABLE FOR THE UNITTESTS THROUGH ENVIRONMENT
@@ -50,7 +50,7 @@ def run_tests(module_name: str, input_data: dict):
 
     # LOAD THE TESTSUITE
     test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover(start_dir='actions', pattern=f'{module_name}_tests.py')
+    test_suite = test_loader.discover(start_dir=module_dir, pattern=f'*tests.py')
 
     # RUN THE TESTS    
     test_runner = unittest.TextTestRunner(verbosity=2)

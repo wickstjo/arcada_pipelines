@@ -17,12 +17,31 @@ dataset:
     # FOR SANITY CHECKING
     min_length_threshold: 10
 
-# APPLY FEATURES
-feature_engineering:
-    foo: bar
+    # EXPECTED ROW SCHEMA
+    expected_schema:
+        symbol: str
+        timestamp: str
+        open: float
+        close: float
+        high: float
+        low: float
+        volume: int
 
 # APPLY FEATURES
 segmentation:
     - train: 0.75
-    - validate: 0.15
     - test: 0.1
+    - validate: 0.15
+
+# TRADING STRATEGY
+trading_strategy:
+    strategy_name: foobar
+    batch_size: 3
+    init:
+        capital: 100
+        stocks: 0
+
+
+# # APPLY FEATURES
+# feature_engineering:
+#     foo: bar

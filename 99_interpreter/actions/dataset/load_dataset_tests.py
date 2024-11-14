@@ -1,5 +1,7 @@
 from common import misc, cassandra_utils
 from common.testing import unittest_base
+from actions.dataset.load_dataset import load_dataset
+import random
 
 class validation_tests(unittest_base):
     def test_dataset_00_schema(self):
@@ -13,6 +15,7 @@ class validation_tests(unittest_base):
                 'end': str,
             },
             'min_length_threshold': int,
+            'expected_schema': dict
         }
         
         # MAKE SURE INPUT DICT FITS REFERENCE SCHEMA
@@ -57,72 +60,33 @@ class validation_tests(unittest_base):
         except Exception as e:
             self.fail('COULD NOT CONNECT TO CASSANDRA CLUSTER')
 
-
-    ### TODO MOCK CALL TO REAL FUNC WITH
-    #               FAKE PARAMS
-    #               REAL PARAMS
-
-
-
     ##############################################################################################################
     ##############################################################################################################
 
-    def test_dataset_04_dataset_min_length(self):
-        db_table = self.input_params['db_table']
-        stock_symbol = self.input_params['stock_symbol']
-        start_date = self.input_params['timestamps']['start']
-        end_date = self.input_params['timestamps']['end']
-        min_row_count = self.input_params['min_length_threshold']
+    def test_dataset_04_unittesting_limit(self):
+        row_limit = min(random.randrange(10, 50), self.input_params['min_length_threshold'])
+        subset = load_dataset(self.input_params, row_limit)
+        self.assertEqual(len(subset), row_limit)
 
-        # MAKE SURE MINIMUM THRESHOLD IS MET
-        minimum_threshold: int = 5
-        threshold_error = f"ARG 'min_length_threshold' MUST BE LARGER THAN {minimum_threshold}, GOT {min_row_count}"
-        self.assertTrue(min_row_count > minimum_threshold, msg=threshold_error)
-        
-        # STITCH TOGETHER CQL QUERY STRING
-        # NOTICE THAT THIS IS A COUNT QUERY, NOT FETCHING THE DATA ITSELF
-        query_string: str = f"""
-            SELECT count(*) FROM {db_table}
-            WHERE symbol = '{stock_symbol}'
-            AND timestamp >= '{start_date}'
-            AND timestamp <= '{end_date}' 
-            ORDER BY timestamp ASC
-            ALLOW FILTERING
-        """
+    # ##############################################################################################################
+    # ##############################################################################################################
 
-        # FETCH THE DATASET AND VERIFY THAT ITS IN CHRONOLOGICAL ORDER
-        cassandra = cassandra_utils.create_instance()
-        dataset_length: int = cassandra.count(query_string)
+    def test_dataset_05_min_length(self):
+        dataset = load_dataset(self.input_params)
+        dataset_length = len(dataset)
+        min_length_threshold = self.input_params['min_length_threshold']
 
         # MAKE SURE MINIMUM LENGTH WAS REACHED
-        dataset_error = f"QUERY DID NOT YIELD A DATASET OF SUFFICIENT LENGTH (MIN EXPECTED {min_row_count}, GOT {dataset_length})"
-        self.assertTrue(dataset_length >= min_row_count, msg=dataset_error)
+        dataset_error = f"QUERY DID NOT YIELD A DATASET OF SUFFICIENT LENGTH (MIN EXPECTED {min_length_threshold}, GOT {dataset_length})"
+        self.assertTrue(dataset_length >= min_length_threshold, msg=dataset_error)
 
-    ##############################################################################################################
-    ##############################################################################################################
+    # ##############################################################################################################
+    # ##############################################################################################################
 
-    def test_dataset_05_ascending_order(self):
-        db_table = self.input_params['db_table']
-        stock_symbol = self.input_params['stock_symbol']
-        start_date = self.input_params['timestamps']['start']
-        end_date = self.input_params['timestamps']['end']
-        min_row_count = self.input_params['min_length_threshold']
-        
-        # STITCH TOGETHER CQL QUERY STRING
-        # NOTICE THAT THIS IS A COUNT QUERY, NOT FETCHING THE DATA ITSELF
-        query_string: str = f"""
-            SELECT * FROM {db_table}
-            WHERE symbol = '{stock_symbol}'
-            AND timestamp >= '{start_date}'
-            AND timestamp <= '{end_date}' 
-            ORDER BY timestamp ASC
-            LIMIT {min_row_count}
-            ALLOW FILTERING
-        """
-
-        # FETCH A SMALL SUBSET FROM THE DATASET
-        cassandra = cassandra_utils.create_instance()
-        subset: int = cassandra.read(query_string)
+    def test_dataset_06_ascending_order(self):
+        min_length_threshold = self.input_params['min_length_threshold']
+        row_limit = min(random.randrange(50, 150), min_length_threshold)
+        subset = load_dataset(self.input_params, row_limit)
 
         # LOOP THROUGH SEQUENTIAL ENTRYPAIRS
         for nth in range(1, len(subset)):
@@ -132,6 +96,31 @@ class validation_tests(unittest_base):
             # MAKE SURE TIMESTAMPS ARE IN ASCENDING ORDER
             order_error = f"DATASET NOT IN ASCENDING ORDER ({predecessor} !< {successor})"
             self.assertTrue(predecessor < successor, msg=order_error)
+
+    ##############################################################################################################
+    ##############################################################################################################
+
+    def test_dataset_07_expected_row_schema(self):
+        subset = load_dataset(self.input_params, 5)
+        reference_schema = {}
+
+        # YAML REFERS TO TYPES BY STRING NAME
+        type_mapping = {
+            'str': str,
+            'int': int,
+            'float': float,
+        }
+
+        # BUILD THE REFERENCE SCHEMA
+        for key, key_type in self.input_params['expected_schema'].items():
+            key_error = f"TYPE '{key_type}' MISSING FROM UNITTEST MAPPING"
+            self.assertTrue(key_type in type_mapping, msg=key_error)
+
+            reference_schema[key] = type_mapping[key_type]
+
+        # MAKE SURE EACH ROW SCHEMA MATCHES
+        for row in subset:
+            self.validate_schema(row, reference_schema)
 
     ##############################################################################################################
     ##############################################################################################################

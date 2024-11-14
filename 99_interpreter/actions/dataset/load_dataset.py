@@ -1,6 +1,6 @@
 from common import cassandra_utils
 
-def load_dataset(input_data: dict):
+def load_dataset(input_data: dict, unittesting=False):
     assert isinstance(input_data, dict), f"ARG 'input_data' MUST BE OF TYPE DICT"
 
     # EXTRACT INPUT VALUES
@@ -16,11 +16,31 @@ def load_dataset(input_data: dict):
         AND timestamp >= '{start_date}'
         AND timestamp <= '{end_date}' 
         ORDER BY timestamp ASC
-        ALLOW FILTERING
     """
+
+    # WHEN UNITTESTING, ENABLE LIMITED QUERIES
+    if unittesting:
+        assert isinstance(unittesting, int), 'UNITTEST LIMIT MUST BE AN INT'
+        query_string += f" LIMIT {unittesting}"
+
+    # FINALLY, ENABLE FILTERING
+    query_string += " ALLOW FILTERING"
 
     # FETCH THE DATASET FROM CASSANDRA
     cassandra = cassandra_utils.create_instance()
     dataset: list[dict] = cassandra.read(query_string)
 
     return dataset
+
+#######################################
+### EXAMPLE USAGE
+
+# load_dataset({
+#     'db_table': 'shohel.refined_stock_data',
+#     'stock_symbol': 'AAPL',
+#     'timestamps': {
+#         'start': '2019-01-01 00:00:00',
+#         'end': '2019-01-10 00:00:00'
+#     },
+#     'min_length_threshold': 10
+# })

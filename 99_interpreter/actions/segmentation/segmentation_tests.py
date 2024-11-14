@@ -1,5 +1,5 @@
 from common.testing import unittest_base
-from actions.segmentation import segment_dataset
+from actions.segmentation.segmentation import segment_dataset
 
 class validation_tests(unittest_base):
     def test_segmentation_00_single_property(self):
