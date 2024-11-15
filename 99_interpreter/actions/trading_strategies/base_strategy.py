@@ -1,4 +1,3 @@
-# import json, yaml, time
 from dataclasses import dataclass, field
 
 class base_strategy:
@@ -11,6 +10,7 @@ class base_strategy:
             # STATIC INFO
             strategy_name: str = input_params['strategy_name']
             batch_size: int = input_params['batch_size']
+            transaction_fee: int = input_params['transaction_fee']
 
             # LOGGING INFO
             init_capital: int = input_params['strategy_name']
@@ -92,7 +92,7 @@ class base_strategy:
         if buy_decision:
 
             # HOW MUCH CAPITAL DO WE NEED TO BUY n STOCKS?
-            required_capital = buy_n_stocks * latest_known_value
+            required_capital = (buy_n_stocks * latest_known_value) + self.state.transaction_fee
 
             # BLOCK BUYS WHEN WE DONT HAVE ENOUGH CAPITAL
             if self.state.num_capital < required_capital:
@@ -119,7 +119,7 @@ class base_strategy:
 
             # OTHERWISE, UPDATE STATE
             self.state.num_stock -= sell_n_stocks
-            self.state.num_capital += (sell_n_stocks * latest_known_value)
+            self.state.num_capital += (sell_n_stocks * latest_known_value) - self.state.transaction_fee
 
             # UPDATE WATERMARK AND EXIT
             return self.log_decision({

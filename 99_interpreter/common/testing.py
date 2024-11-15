@@ -34,24 +34,36 @@ class unittest_base(unittest.TestCase, ABC):
                 value_type = type(user_dict[key])
                 expected_type = ref_dict[key]
 
-                value_error: str = f"KEY '{path}' IS OF WRONG TYPE (EXPECTED {value_type}, GOT {expected_type})"
-                self.assertTrue(value_type == expected_type, msg=value_error)
+                value_error: str = f"KEY '{path}' IS OF WRONG TYPE"
+                self.assertEqual(value_type, expected_type, msg=value_error)
 
 ################################################################################################
 ################################################################################################
 
 # WRAPPER TO PROGRAMMATICALLY INVOKE THE UNITTESTS OF A SPECIFIC MODULE
-def run_tests(module_dir: str, input_data: dict):
+def run_tests(module_dir: str, input_data: dict|list):
     assert isinstance(module_dir, str), f"ARG 'module_dir' MUST BE OF TYPE STR (GOT {type(module_dir)})"
     assert isinstance(input_data, dict|list), f"ARG 'input_args' MUST BE OF TYPE DICT (GOT {type(input_data)})"
 
-    # MAKE INPUT ARGS AVAILABLE FOR THE UNITTESTS THROUGH ENVIRONMENT
-    os.environ[env_var_name] = json.dumps(input_data)
+    # MAKE SURE THE MODULE EXISTS
+    if os.path.isdir(module_dir):
+        for filename in os.listdir(module_dir):
 
-    # LOAD THE TESTSUITE
-    test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover(start_dir=module_dir, pattern=f'*tests.py')
+            # MAKE SURE IT CONTAINS UNITTEST FILES
+            if filename.endswith('_tests.py'):
 
-    # RUN THE TESTS    
-    test_runner = unittest.TextTestRunner(verbosity=2)
-    test_runner.run(test_suite)
+                # MAKE INPUT ARGS AVAILABLE FOR THE UNITTESTS THROUGH ENVIRONMENT
+                os.environ[env_var_name] = json.dumps(input_data)
+
+                # LOAD THE TESTSUITE
+                test_loader = unittest.TestLoader()
+                test_suite = test_loader.discover(start_dir=module_dir, pattern=f'*_tests.py')
+
+                # RUN THE TESTS    
+                test_runner = unittest.TextTestRunner(verbosity=2)
+                output = test_runner.run(test_suite)
+
+                return output.errors
+    
+    # OTHERWISE, THE MODULE PATH WAS BAD -- CANCEL THE EXPERIMENT
+    raise Exception(f"UNITTESTS FOR MODULE '{module_dir}' COULD NOT BE FOUND")

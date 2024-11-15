@@ -1,5 +1,5 @@
 from common.testing import unittest_base
-from mock_strategy import mock_strategy
+from actions.trading_strategies.strategies.mock_strategy import mock_strategy
 import random
 
 class validation_tests(unittest_base):
@@ -7,11 +7,15 @@ class validation_tests(unittest_base):
         self.validate_schema(self.input_params, {
             'strategy_name': str,
             'batch_size': int,
+            'transaction_fee': int,
             'init': {
                 'capital': int,
                 'stocks': int,
             }
         })
+
+    ################################################################################################
+    ################################################################################################
 
     def create_mock_strategy(self, prefilled=False, init_capital=None, init_stocks=None):
 
@@ -32,6 +36,9 @@ class validation_tests(unittest_base):
 
         return strategy
 
+    ################################################################################################
+    ################################################################################################
+
     def test_strategy_01_default_values(self):
         strategy = self.create_mock_strategy(prefilled=True)
 
@@ -44,6 +51,12 @@ class validation_tests(unittest_base):
 
         # PREVENT BOTH CAPITAL AND STOCK COUNT TO BE ZERO
         self.assertTrue(strategy.state.num_stock > 0 or strategy.state.num_capital > 0, msg='BOTH CAPITAL AND STOCK COUNT CANNOT START FROM ZERO')
+
+        # MAKE SURE THE TRADE PENALTY IS POSITIVE
+        self.assertTrue(strategy.state.transaction_fee >= 0, msg='TRANSACTION FEE CANNOT BE NEGATIVE')
+
+    ################################################################################################
+    ################################################################################################
 
     def test_strategy_02_batch_windows_logic(self):
         strategy = self.create_mock_strategy(prefilled=True, init_capital=100)
@@ -66,6 +79,9 @@ class validation_tests(unittest_base):
         self.assertEqual(len(strategy.state.model_predictions), strategy.state.batch_size)
         self.assertEqual(len(strategy.state.real_values), strategy.state.batch_size)
 
+    ################################################################################################
+    ################################################################################################
+
     def test_strategy_03_buying_state_change(self):
         strategy = self.create_mock_strategy(prefilled=True, init_capital=11)
 
@@ -83,14 +99,20 @@ class validation_tests(unittest_base):
         stocks_delta = strategy.state.num_stock - pre_stocks
 
         # MAKE SURE THEY'RE CORRECT
-        self.assertEqual(capital_delta, -rng_price)
+        self.assertEqual(capital_delta, -(rng_price + strategy.state.transaction_fee))
         self.assertEqual(stocks_delta, 1)
+
+    ################################################################################################
+    ################################################################################################
 
     def test_strategy_04_buying_without_capital(self):
         strategy = self.create_mock_strategy(prefilled=True, init_capital=0)
 
         output = strategy.make_decision(1, 2)
         self.assertEqual(output['decision'], 'hold')
+
+    ################################################################################################
+    ################################################################################################
 
     def test_strategy_05_selling_state_change(self):
         strategy = self.create_mock_strategy(prefilled=True, init_stocks=1)
@@ -109,14 +131,20 @@ class validation_tests(unittest_base):
         stocks_delta = strategy.state.num_stock - pre_stocks
 
         # MAKE SURE THEY'RE CORRECT
-        self.assertEqual(capital_delta, rng_price)
+        self.assertEqual(capital_delta, (rng_price - strategy.state.transaction_fee))
         self.assertEqual(stocks_delta, -1)
+
+    ################################################################################################
+    ################################################################################################
 
     def test_strategy_06_selling_without_stocks(self):
         strategy = self.create_mock_strategy(prefilled=True, init_stocks=0)
 
         output = strategy.make_decision(2, 1)
         self.assertEqual(output['decision'], 'hold')
+
+    ################################################################################################
+    ################################################################################################
 
     def test_strategy_07_holding_state_change(self):
         strategy = self.create_mock_strategy(prefilled=True)
@@ -136,6 +164,9 @@ class validation_tests(unittest_base):
         # MAKE SURE THEY'RE CORRECT
         self.assertEqual(capital_delta, 0)
         self.assertEqual(stocks_delta, 0)
+
+    ################################################################################################
+    ################################################################################################
 
     def test_strategy_08_outputs_match_log(self):
         strategy = self.create_mock_strategy()

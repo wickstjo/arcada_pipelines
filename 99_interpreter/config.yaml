@@ -3,6 +3,9 @@ experiment:
     name: my_first_experiment
     version: 1
 
+#######################################################################################
+#######################################################################################
+
 # FETCH DATASET FROM CASSANDRA
 dataset:
     db_table: shohel.refined_stock_data
@@ -27,21 +30,39 @@ dataset:
         low: float
         volume: int
 
+#######################################################################################
+#######################################################################################
+
 # APPLY FEATURES
 segmentation:
     - train: 0.75
     - test: 0.1
     - validate: 0.15
 
+#######################################################################################
+#######################################################################################
+
 # TRADING STRATEGY
 trading_strategy:
     strategy_name: foobar
+
+    # WHAT SIZE MOVING WINDOW SHOULD
+    # PREDICTIONS & REAL VALUES COME IN?
     batch_size: 3
+
+    # HOW MUCH EXTRA CAPITAL DO WE LOSE
+    # WITH EACH TRADE?
+    transaction_fee: 2
+
+    # INITIAL STRATEGY FUNDS
     init:
         capital: 100
         stocks: 0
 
+#######################################################################################
+#######################################################################################
 
-# # APPLY FEATURES
-# feature_engineering:
-#     foo: bar
+# APPLY FEATURES
+feature_engineering:
+    stochastic_k:
+        window_size: 14
