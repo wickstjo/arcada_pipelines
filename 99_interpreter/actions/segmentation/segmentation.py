@@ -21,14 +21,3 @@ def segment_dataset(segment_ratios: list[dict], dataset: list[dict]):
             old_limit = new_limit
 
     return container
-
-#######################################
-### EXAMPLE USAGE
-
-# result = segment_dataset([
-#     { 'test': 0.32 },
-#     { 'validate': 0.118 },
-#     { 'train': 0.562 },
-# ], [x for x in range(420)])
-
-# print(result)

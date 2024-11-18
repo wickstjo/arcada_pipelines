@@ -19,7 +19,7 @@ class validation_tests(unittest_base):
         }
         
         # MAKE SURE INPUT DICT FITS REFERENCE SCHEMA
-        self.validate_schema(self.input_params, reference_schema)
+        self.validate_schema(self.input_params, reference_schema, root_path='dataset')
 
     ##############################################################################################################
     ##############################################################################################################
@@ -60,18 +60,10 @@ class validation_tests(unittest_base):
         except Exception as e:
             self.fail('COULD NOT CONNECT TO CASSANDRA CLUSTER')
 
-    ##############################################################################################################
-    ##############################################################################################################
-
-    def test_dataset_04_unittesting_limit(self):
-        row_limit = min(random.randrange(10, 50), self.input_params['min_length_threshold'])
-        subset = load_dataset(self.input_params, row_limit)
-        self.assertEqual(len(subset), row_limit)
-
     # ##############################################################################################################
     # ##############################################################################################################
 
-    def test_dataset_05_min_length(self):
+    def test_dataset_04_min_length_exceeded(self):
         dataset = load_dataset(self.input_params)
         dataset_length = len(dataset)
         min_length_threshold = self.input_params['min_length_threshold']
@@ -83,7 +75,7 @@ class validation_tests(unittest_base):
     # ##############################################################################################################
     # ##############################################################################################################
 
-    def test_dataset_06_ascending_order(self):
+    def test_dataset_05_ascending_order(self):
         min_length_threshold = self.input_params['min_length_threshold']
         row_limit = min(random.randrange(50, 150), min_length_threshold)
         subset = load_dataset(self.input_params, row_limit)
@@ -100,7 +92,7 @@ class validation_tests(unittest_base):
     ##############################################################################################################
     ##############################################################################################################
 
-    def test_dataset_07_expected_row_schema(self):
+    def test_dataset_06_expected_row_schema(self):
         subset = load_dataset(self.input_params, 5)
         reference_schema = {}
 

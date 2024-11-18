@@ -8,19 +8,12 @@ class base_strategy:
         class create_state:
 
             # STATIC INFO
-            strategy_name: str = input_params['strategy_name']
-            batch_size: int = input_params['batch_size']
-            transaction_fee: int = input_params['transaction_fee']
-
-            # LOGGING INFO
-            init_capital: int = input_params['strategy_name']
-            init_stock_count: int = input_params['batch_size']
-            init_stock_value: int = None
-            final_stock_value: int = None
+            batch_size: int = input_params['base_strategy']['batch_size']
+            transaction_fee: int = input_params['base_strategy']['transaction_fee']
 
             # TRACK CURRENT CAPITAL & STOCK OWNERSHIP
-            num_capital: int = input_params['init']['capital']
-            num_stock: int = input_params['init']['stocks']
+            num_capital: int = input_params['base_strategy']['init_capital']
+            num_stock: int = input_params['base_strategy']['init_stocks']
 
             # MOVING WINDOW OF REAL VALUES & PREDICTIONS
             model_predictions: list[float] = field(default_factory=list)
@@ -29,8 +22,34 @@ class base_strategy:
             # TRACK BUY/SELL/HOLD DECISION SEQUENCE
             decision_log: list[dict] = field(default_factory=list)
 
+            # VALUES NEEDED TO CREATE YAML OVERVIEW
+            init_capital: int = input_params['base_strategy']['init_capital']
+            init_stock_count: int = input_params['base_strategy']['init_stocks']
+            init_stock_value: int = None
+            final_stock_value: int = None
+
         # CREATE THE STATE
         self.state = create_state()
+
+        # MAKE THE CUSTOM STRATEGYS' PARAMS AVAILABLE
+        self.custom_strategy_params: dict = input_params['custom_strategy']['strategy_params']
+
+    ################################################################################################
+    ################################################################################################
+
+    # SAFE GETTER FUNCS FOR CHILD STRATEGIES
+    # INSTEAD OF DIRECTLY INTERACTING WITH THE BASE STATE, WHICH IS DANGEROUS
+    def get_capital(self): return self.state.num_capital
+    def get_stocks(self): return self.state.num_stock
+    def get_transaction_fee(self): return self.state.transaction_fee
+
+    # RETURNS TRUE/FALSE, THE NUMBER OF STOCKS TO BUY, AND A HUMAN-READABLE REASON
+    def buy(self, latest_values: list[dict], predicted_values: list[dict]):
+        raise NotImplementedError()
+    
+    # RETURNS TRUE/FALSE, THE NUMBER OF STOCKS TO SELL, AND A HUMAN-READABLE REASON
+    def sell(self, latest_values: list[dict], predicted_values: list[dict]):
+        raise NotImplementedError()
 
     ################################################################################################
     ################################################################################################
@@ -68,8 +87,20 @@ class base_strategy:
     ################################################################################################
 
         # RUN THE CHILD-STRATEGY'S BUY/SELL DECISIONS
-        buy_decision, buy_n_stocks, buy_reason = self.buy(self.state.real_values, self.state.model_predictions)
-        sell_decision, sell_n_stocks, sell_reason = self.sell(self.state.real_values, self.state.model_predictions)
+        buy_block = self.buy(self.state.real_values, self.state.model_predictions)
+        sell_block = self.sell(self.state.real_values, self.state.model_predictions)
+
+        # MAKE SURE THEY HAVE RETURN VALUES
+        assert buy_block != None, f"BUY FUNC RETURNED NONE, EXPECTING (BOOL, INT, STR)"
+        assert sell_block != None, f"sell FUNC RETURNED NONE, EXPECTING (BOOL, INT, STR)"
+
+        # MAKE SURE THERE ARE THREE RETURN VALUES
+        assert len(buy_block) == 3, f"BUY FUNC RETURNED TOO {len(buy_block)} VALUES, EXPECTING (BOOL, INT, STR)"
+        assert len(sell_block) == 3, f"SELL FUNC RETURNED TOO {len(sell_block)} VALUES, EXPECTING (BOOL, INT, STR)"
+
+        # EXTRACT THE VALUES
+        buy_decision, buy_n_stocks, buy_reason = buy_block
+        sell_decision, sell_n_stocks, sell_reason = sell_block
 
         # ENFORCE RETURN TYPES
         assert isinstance(buy_decision, bool), f"RETURN VALUE 'buy_decision' MUST BE OF TYPE BOOL, GOT {type(buy_decision)}"
@@ -117,9 +148,12 @@ class base_strategy:
                 decision_watermark['reason'] = 'SELL BLOCKED DUE TO LACK OF STOCKS'
                 return self.log_decision(decision_watermark)
 
+            # HOW MUCH MONEY DID WE MAKE?
+            cumulative_capital = (sell_n_stocks * latest_known_value) - self.state.transaction_fee
+
             # OTHERWISE, UPDATE STATE
             self.state.num_stock -= sell_n_stocks
-            self.state.num_capital += (sell_n_stocks * latest_known_value) - self.state.transaction_fee
+            self.state.num_capital += cumulative_capital
 
             # UPDATE WATERMARK AND EXIT
             return self.log_decision({
@@ -138,21 +172,6 @@ class base_strategy:
     def log_decision(self, decision_watermark: dict):
         self.state.decision_log.append(decision_watermark)
         return decision_watermark
-
-    ################################################################################################
-    ################################################################################################
-
-    # GETTER FUNCS FOR CAPITAL & STOCKS FOR CHILD STRATEGIES
-    def current_capital(self): return self.state.num_capital
-    def current_stocks(self): return self.state.num_stock
-
-    # RETURNS TRUE/FALSE, AND A HUMAN-READABLE REASON
-    def buy(self, latest_values: list[dict], predicted_values: list[dict]):
-        raise NotImplementedError()
-    
-    # RETURNS TRUE/FALSE, AND A HUMAN-READABLE REASON
-    def sell(self, latest_values: list[dict], predicted_values: list[dict]):
-        raise NotImplementedError()
     
     ################################################################################################
     ################################################################################################

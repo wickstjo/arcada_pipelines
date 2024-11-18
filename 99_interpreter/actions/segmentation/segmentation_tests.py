@@ -4,9 +4,13 @@ from actions.segmentation.segmentation import segment_dataset
 class validation_tests(unittest_base):
     def test_segmentation_00_single_property(self):
         for item in self.input_params:
-            num_properties = len(item)
 
-            count_error = f"SEGMENT SHOULD ONLY HAVE 1 PROPERTY, FOUND {num_properties}"
+            # MAKE SURE THE ITEM IS A DICT
+            type_error = f"SEGMENT ITEM HAS THE WRONG TYPE"
+            self.assertEqual(type(item), dict, msg=type_error)
+            
+            num_properties = len(item)
+            count_error = f"SEGMENT SHOULD ONLY HAVE 1 PROPERTY"
             self.assertEqual(num_properties, 1, msg=count_error)
 
     ##############################################################################################################
@@ -18,6 +22,11 @@ class validation_tests(unittest_base):
 
         for item in self.input_params:
             segment_name = list(item.keys())[0]
+
+            # MAKE SURE SEGMENT LABEL HAS NOT BEEN SEEN BEFORE
+            duplicate_error = f"SEGMENT LABEL '{segment_name}' WAS FOUND TWICE"
+            self.assertTrue(segment_name not in found_properties, msg=duplicate_error)
+
             found_properties.append(segment_name)
         
         # FIND THE INTERSECTION
@@ -35,13 +44,13 @@ class validation_tests(unittest_base):
         total_sum = sum(list_values)
 
         # MAKE SURE THE SUM OF ALL THE SEGMENTS ADD UP TO 1
-        sum_error = f"SUM OF SEGMENTS MUST EQUAL 1, GOT {total_sum}"
+        sum_error = f"SUM OF SEGMENTS MUST EQUAL 1"
         self.assertEqual(total_sum, 1, msg=sum_error)
 
     ##############################################################################################################
     ##############################################################################################################
 
-    def mock_call(self, mock_input):
+    def validate_simulation(self, mock_input):
 
         # SEGMENT USING THE REAL FUNCTION
         segments = segment_dataset(mock_input['segmentation'], mock_input['dataset'])
@@ -66,7 +75,7 @@ class validation_tests(unittest_base):
     ##############################################################################################################
 
     def test_segmentation_03_train_test_validate(self):
-        self.mock_call({
+        self.validate_simulation({
             'dataset': [x for x in range(100)],
             'segmentation': [
                 { 'train': 0.75 },
@@ -84,7 +93,7 @@ class validation_tests(unittest_base):
     ##############################################################################################################
 
     def test_segmentation_04_test_train_validate(self):
-        self.mock_call({
+        self.validate_simulation({
             'dataset': [x for x in range(69)],
             'segmentation': [
                 { 'test': 0.19 },
@@ -102,7 +111,7 @@ class validation_tests(unittest_base):
     ##############################################################################################################
 
     def test_segmentation_05_test_validate_train(self):
-        self.mock_call({
+        self.validate_simulation({
             'dataset': [x for x in range(420)],
             'segmentation': [
                 { 'test': 0.32 },
@@ -120,7 +129,7 @@ class validation_tests(unittest_base):
     ##############################################################################################################
 
     def test_segmentation_06_no_validation(self):
-        self.mock_call({
+        self.validate_simulation({
             'dataset': [x for x in range(123)],
             'segmentation': [
                 { 'train': 0.5 },

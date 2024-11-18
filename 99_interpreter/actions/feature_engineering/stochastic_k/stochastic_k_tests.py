@@ -9,7 +9,7 @@ class validation_tests(unittest_base):
         # MAKE SURE INPUT PARAMS MATCH REFERENCE SCHEMA
         self.validate_schema(self.input_params, {
             'window_size': int
-        })
+        }, root_path='feature_params')
 
         # MAKE SURE WINDOW SIZE IS LARGER THAN 1
         window_size = self.input_params['window_size']
@@ -43,7 +43,7 @@ class validation_tests(unittest_base):
     def test_feature_stochastic_k_01_with_mock_dataset(self):
 
         # MAKE DATASET SIZE LARGER THAN WINDOW SIZE
-        dataset_size = self.input_params['window_size'] + 20
+        dataset_size = self.input_params['window_size'] + random.randrange(10, 50)
 
         # CREATE A FAKE DATASET
         dataset = [{
