@@ -5,7 +5,6 @@ experiment:
 #######################################################################################
 #######################################################################################
 
-# FETCH DATASET FROM CASSANDRA
 dataset:
     db_table: shohel.refined_stock_data
     stock_symbol: AAPL
@@ -32,18 +31,23 @@ dataset:
 #######################################################################################
 #######################################################################################
 
-# APPLY FEATURES
 feature_engineering:
     features:
+
+        # ADD STOCHASTIC K FEATURE
         -   feature_name: stochastic_k
             feature_params:
                 window_size: 5
             output_column: sk5
-        -   feature_name: stochastic_k
+
+        # SHIFT CLOSE COLUMN FORWARD BY 14 STEPS
+        # THIS WILL BE THE TARGET COLUMN FOR MODEL TRAINING
+        -   feature_name: shift_column_forward
             feature_params:
-                window_size: 14
-            output_column: sk14
-    
+                target_column: close
+                shift_by: 14
+            output_column: shifted_close
+
     # AFTER ALL FEATURES ARE APPLIED
     # SHOULD WE DROP ROWS WITH NANs?
     drop_nans: True
@@ -51,7 +55,6 @@ feature_engineering:
 #######################################################################################
 #######################################################################################
 
-# APPLY FEATURES
 segmentation:
     - train: 0.75
     - test: 0.1
@@ -60,15 +63,29 @@ segmentation:
 #######################################################################################
 #######################################################################################
 
-# TODO: TEST MODEL TRAINING
-# TODO: TEST MODEL TRAINING
-# TODO: TEST MODEL TRAINING
+model_training:
+
+    # WHAT COLUMNS TO USE FOR FEATURES
+    feature_columns:
+        - open
+        - close
+        - high
+        - low
+        - volume
+        - sk5
+
+    # WHAT COLUMN DO WE WANT TO PREDICT
+    label_column: shifted_close
+
+    # WHAT SCALAR SHOULD WE USE?
+    scalar: sklearn.standard_scalar
 
 #######################################################################################
 #######################################################################################
 
-# TRADING STRATEGY
 trading_strategy:
+
+    # STATIC PARAMS FOR THE BASE STRATEGY
     base_strategy:
         batch_size: 3
         transaction_fee: 2
@@ -76,6 +93,8 @@ trading_strategy:
         init_stocks: 0
         # allow_short_selling: True
 
+    # WHAT CHILD STRATEGY SHOULD IMPLEMEMENT THE
+    # BUY/SELL FUNCTIONALITY
     custom_strategy:
         strategy_name: weighted_strategy
         strategy_params:

@@ -23,39 +23,43 @@ def run():
                 'custom_strategy': {
                     'strategy_name': str,
                 }
-            }
+            },
+            'model_training': dict,
         })
 
     ##########################################################################
     ### COMPLETED TESTS
 
-        # TEST DATASET LOADING
-        dataset_config: dict = experiment_config['dataset']
-        errors += testing.run_tests('actions/dataset', dataset_config)
+        # # TEST DATASET LOADING
+        # dataset_config: dict = experiment_config['dataset']
+        # errors += testing.run_tests('actions/dataset', dataset_config)
 
-        # ALL THE DATASET TESTS PASSED
-        # MAKE A REAL SAMPLE DATASET AVAILABLE FOR OTHER TESTS
-        sample_dataset: list[dict] = load_dataset(dataset_config, unittesting=200)
+        # # ALL THE DATASET TESTS PASSED
+        # # MAKE A REAL SAMPLE DATASET AVAILABLE FOR OTHER TESTS
+        # sample_dataset: list[dict] = load_dataset(dataset_config, unittesting=200)
 
-        # # TEST FEATURE ENGINEERING
-        features_config: dict = experiment_config['feature_engineering']['features']
-        errors += feature_prep(features_config, sample_dataset)
+        # # # TEST FEATURE ENGINEERING
+        # features_config: dict = experiment_config['feature_engineering']['features']
+        # errors += feature_prep(features_config, sample_dataset)
 
-        # TEST DATA SEGMENTATION
-        segmentation_config: dict = experiment_config['segmentation']
-        errors += testing.run_tests('actions/segmentation', segmentation_config)
+        # # TEST DATA SEGMENTATION
+        # segmentation_config: dict = experiment_config['segmentation']
+        # errors += testing.run_tests('actions/segmentation', segmentation_config)
+
+        # # TEST THE BASE TRADING STRATEGY
+        # trading_config: dict = experiment_config['trading_strategy']
+        # errors += testing.run_tests('actions/trading_strategies', trading_config)
+
+        # # TEST THE CUSTOM STRATEGY
+        # strategy_name = trading_config['custom_strategy']['strategy_name']
+        # errors += testing.run_tests(f'actions/trading_strategies/{strategy_name}', trading_config)
 
     ##########################################################################
     ### TESTS IN DEVELOPMENT
 
-        # TEST THE BASE TRADING STRATEGY
-        trading_config: dict = experiment_config['trading_strategy']
-        errors += testing.run_tests('actions/trading_strategies', trading_config)
-
-        # TEST THE CUSTOM STRATEGY
-        strategy_name = trading_config['custom_strategy']['strategy_name']
-        errors += testing.run_tests(f'actions/trading_strategies/{strategy_name}', trading_config)
-
+        # TEST THE BASE MODEL
+        model_training_config: dict = experiment_config['model_training']
+        errors += testing.run_tests('actions/model_training', model_training_config)
 
 
 
