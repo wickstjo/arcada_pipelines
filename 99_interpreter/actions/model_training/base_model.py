@@ -1,4 +1,4 @@
-class my_model:
+class base_model:
     def fit(self, features, labels=None):
         raise NotImplementedError()
 

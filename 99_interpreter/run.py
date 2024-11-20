@@ -1,5 +1,9 @@
 from common import misc, testing
 from actions.dataset.load_dataset import load_dataset
+from actions.feature_engineering.stochastic_k.stochastic_k import stochastic_k
+from actions.feature_engineering.shift_column.shift_column import shift_column
+from actions.feature_engineering.vectorize_df.vectorize_df import vectorize_df
+from pandas import DataFrame
 
 def run():
     try:
@@ -15,32 +19,53 @@ def run():
             'dataset': dict,
             'feature_engineering': {
                 'features': list,
-                'drop_nans': bool
+                'drop_nan_rows': bool
             },
-            'segmentation': list,
+            'model_training': {
+                'feature_columns': list,
+                'label_column': str,
+                'segmentation': list,
+                'scalar': str or bool,
+            },
             'trading_strategy': {
                 'base_strategy': dict,
                 'custom_strategy': {
                     'strategy_name': str,
                 }
             },
-            'model_training': dict,
         })
 
     ##########################################################################
     ### COMPLETED TESTS
 
-        # # TEST DATASET LOADING
-        # dataset_config: dict = experiment_config['dataset']
-        # errors += testing.run_tests('actions/dataset', dataset_config)
+        # TEST DATASET LOADING
+        dataset_config: dict = experiment_config['dataset']
+        errors += testing.run_tests('actions/dataset', dataset_config)
+        if len(errors) > 0: return print(errors)
 
-        # # ALL THE DATASET TESTS PASSED
-        # # MAKE A REAL SAMPLE DATASET AVAILABLE FOR OTHER TESTS
-        # sample_dataset: list[dict] = load_dataset(dataset_config, unittesting=200)
+        # ALL THE DATASET TESTS PASSED
+        # MAKE A REAL SAMPLE DATASET AVAILABLE FOR OTHER TESTS
+        sample_dataset: DataFrame = load_dataset(dataset_config, unittesting=200)
+        print(sample_dataset.head(10))
+        print()
 
-        # # # TEST FEATURE ENGINEERING
+        # # TEST FEATURE ENGINEERING
         # features_config: dict = experiment_config['feature_engineering']['features']
-        # errors += feature_prep(features_config, sample_dataset)
+        # errors += testing.feature_suite(features_config, sample_dataset)
+
+        # feature = stochastic_k({ 'window_size': 5, 'output_column': 'sk5' })
+        # modified_df = feature.transform(sample_dataset)
+        # print(modified_df.head(10))
+
+        # feature = shift_column({ 'target_column': 'close', 'shift_by': 2, 'output_column': 'shifted_close' })
+        # modified_df = feature.transform(sample_dataset)
+        # print(modified_df.head(10))
+
+        # feature = vectorize_df({ 'feature_columns': [
+        #     'open', 'close', 'high', 'low', 'volume',
+        # ] })
+        # output = feature.transform(sample_dataset)
+        # print(output[:10])
 
         # # TEST DATA SEGMENTATION
         # segmentation_config: dict = experiment_config['segmentation']
@@ -57,9 +82,9 @@ def run():
     ##########################################################################
     ### TESTS IN DEVELOPMENT
 
-        # TEST THE BASE MODEL
-        model_training_config: dict = experiment_config['model_training']
-        errors += testing.run_tests('actions/model_training', model_training_config)
+        # # TEST THE BASE MODEL
+        # model_training_config: dict = experiment_config['model_training']
+        # errors += testing.run_tests('actions/model_training', model_training_config)
 
 
 
@@ -81,32 +106,5 @@ def run():
     except Exception as error:
         return print(f'\nFATAL EXCEPTION: {error}')
 
-
-def feature_prep(features_config, sample_dataset):
-    errors = []
-    feature_columns = set()
-
-    # LOOP THROUGH EACH FEATURE
-    for nth, feature_block in enumerate(features_config):
-
-        # MAKE SURE IT CONTAINS THE CORRECT PROPERTIES
-        for prop_name in ['feature_name', 'feature_params', 'output_column']:
-            assert prop_name in feature_block, f"PROPERTY '{prop_name}' MISSING FROM FEATURE #{nth+1}"
-
-        feature_name = feature_block['feature_name']
-        feature_params = feature_block['feature_params']
-        output_column = feature_block['output_column']
-
-        # MAKE SURE OUTPUT COLUMN NAMES ARE UNIQUE
-        assert output_column not in feature_columns, f"DUPLICATE FEATURE OUTPUT COLUMN FOUND ({output_column})"
-        feature_columns.add(output_column)
-
-        # UNITTEST THE FEATURE
-        errors += testing.run_tests(f"actions/feature_engineering/{feature_name}", {
-            **feature_params,
-            '_sample_dataset': sample_dataset
-        })
-
-    return errors
-
-run()
+if __name__ == '__main__':
+    run()

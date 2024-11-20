@@ -1,16 +1,24 @@
-import pandas as pd
+from actions.feature_engineering.base_feature import base_feature
+from pandas import DataFrame
 
-def stochastic_k(df: pd.DataFrame, input_params: dict):
-    assert isinstance(df, pd.DataFrame), f"ARG 'df' MUST OF A PANDAS DATAFRAME, GOT {type(df)}"
-    assert isinstance(input_params, dict), f"ARG 'input_params' MUST OF A DICT INT, GOT {type(input_params)}"
+class stochastic_k(base_feature):
+    def __init__(self, input_params: dict):
+        self.window_size = input_params['window_size']
+        self.output_column = input_params['output_column']
 
-    # YANK OUT THE FEATURE WINDOW SIZE
-    window_size: int = input_params['window_size']
+    # CREATE THE FEATURE VECTOR THROUGH SEPARATE
+    # FUNCTION TO MAKE IT EASIER TO UNITTEST
+    def transform(self, dataframe: DataFrame):
+        dataframe[self.output_column] = self.create_feature_vector(dataframe)
+        return dataframe
+    
+        # UNITTEST TODO: REQUIRED COLUMNS EXIST
+        # UNITTEST TODO: COMPARE AGAINST EXPECTED VECTOR VALUES -- INCLUDE NANS
+        # UNITTEST TODO: CHECK THAT VECTOR IS SAME LENGTH AS DF -- NO DROP NANS
+    
+    def create_feature_vector(self, dataframe: DataFrame):
+        p1 = dataframe['close'] - dataframe['low'].rolling(self.window_size).min()
+        p2 = dataframe['high'].rolling(self.window_size).max() - dataframe['low'].rolling(self.window_size).min()
+        series = 100 * (p1 / p2)
 
-    # CREATE THE FEATURE
-    p1 = df['close'] - df['low'].rolling(window_size).min()
-    p2 = df['high'].rolling(window_size).max() - df['low'].rolling(window_size).min()
-    series = 100 * (p1 / p2)
-
-    # RETURN AS A SELF-CONTAINED LIST
-    return series.to_list()
+        return list(series)

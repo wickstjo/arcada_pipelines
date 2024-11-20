@@ -38,27 +38,36 @@ feature_engineering:
         -   feature_name: stochastic_k
             feature_params:
                 window_size: 5
-            output_column: sk5
+                output_column: sk5
 
         # SHIFT CLOSE COLUMN FORWARD BY 14 STEPS
         # THIS WILL BE THE TARGET COLUMN FOR MODEL TRAINING
-        -   feature_name: shift_column_forward
+        -   feature_name: shift_column
             feature_params:
                 target_column: close
                 shift_by: 14
-            output_column: shifted_close
+                output_column: shifted_close
+
+        # SHIFT CLOSE COLUMN FORWARD BY 14 STEPS
+        # THIS WILL BE THE TARGET COLUMN FOR MODEL TRAINING
+        -   feature_name: vectorize_df
+            feature_params:
+                feature_columns:
+                    - open
+                    - close
+                    - high
+                    - low
+                    - volume
+                    - sk5
+                    - shifted_close
 
     # AFTER ALL FEATURES ARE APPLIED
     # SHOULD WE DROP ROWS WITH NANs?
-    drop_nans: True
-
-#######################################################################################
-#######################################################################################
-
-segmentation:
-    - train: 0.75
-    - test: 0.1
-    - validate: 0.15
+    
+    # TODO
+    # TODO
+    # TODO
+    drop_nan_rows: True
 
 #######################################################################################
 #######################################################################################
@@ -76,6 +85,12 @@ model_training:
 
     # WHAT COLUMN DO WE WANT TO PREDICT
     label_column: shifted_close
+
+    # HOW SHOULD THE DATASET BE SEGMENTED?
+    segmentation:
+        - train: 0.75
+        - test: 0.1
+        - validate: 0.15
 
     # WHAT SCALAR SHOULD WE USE?
     scalar: sklearn.standard_scalar
