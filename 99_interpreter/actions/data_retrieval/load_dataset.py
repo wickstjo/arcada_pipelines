@@ -1,5 +1,4 @@
 from common import cassandra_utils
-from pandas import DataFrame
 
 # def load_dataset(db_table: str, stock_symbol: str, timestamps: dict, unittesting=False):
 #     assert isinstance(input_data, dict), f"ARG 'input_data' MUST BE OF TYPE DICT"
@@ -37,5 +36,4 @@ def load_dataset(input_data: dict, unittesting=False):
     cassandra = cassandra_utils.create_instance()
     dataset: list[dict] = cassandra.read(query_string)
 
-    # RETURN DATASET AS DATAFRAME
-    return DataFrame(dataset)
+    return dataset

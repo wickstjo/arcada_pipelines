@@ -6,19 +6,16 @@ class stochastic_k(base_feature):
         self.window_size = input_params['window_size']
         self.output_column = input_params['output_column']
 
-    # CREATE THE FEATURE VECTOR THROUGH SEPARATE
-    # FUNCTION TO MAKE IT EASIER TO UNITTEST
+    def __repr__(self):
+        return "stochastic_k()"
+
     def transform(self, dataframe: DataFrame):
-        dataframe[self.output_column] = self.create_feature_vector(dataframe)
-        return dataframe
-    
-        # UNITTEST TODO: REQUIRED COLUMNS EXIST
-        # UNITTEST TODO: COMPARE AGAINST EXPECTED VECTOR VALUES -- INCLUDE NANS
-        # UNITTEST TODO: CHECK THAT VECTOR IS SAME LENGTH AS DF -- NO DROP NANS
-    
-    def create_feature_vector(self, dataframe: DataFrame):
+
+        # CREATE THE FEATURE VECTOR
         p1 = dataframe['close'] - dataframe['low'].rolling(self.window_size).min()
         p2 = dataframe['high'].rolling(self.window_size).max() - dataframe['low'].rolling(self.window_size).min()
-        series = 100 * (p1 / p2)
+        feature_vector = 100 * (p1 / p2)
 
-        return list(series)
+        # PUSH IT INTO THE DF
+        dataframe[self.output_column] = feature_vector
+        return dataframe

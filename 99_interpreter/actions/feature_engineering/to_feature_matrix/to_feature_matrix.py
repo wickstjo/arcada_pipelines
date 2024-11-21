@@ -1,9 +1,12 @@
 from actions.feature_engineering.base_feature import base_feature
 from pandas import DataFrame
 
-class vectorize_df(base_feature):
+class to_feature_matrix(base_feature):
     def __init__(self, input_params: dict):
         self.feature_columns = input_params['feature_columns']
+
+    def __repr__(self):
+        return "to_feature_matrix()"
     
     def transform(self, dataframe: DataFrame):
         df_columns = list(dataframe.columns)

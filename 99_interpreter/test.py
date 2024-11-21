@@ -1,74 +1,107 @@
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-import random, time
+from common import misc, testing
+from actions.data_retrieval.load_dataset import load_dataset
+from pandas import DataFrame
 
-class my_model:
-    def fit(self, features, labels=None):
-        # raise NotImplementedError()
-        return self
+def run():
+    try:
 
-    def predict(self, features):
-        # raise NotImplementedError()
-        print(features)
-        return features
-    
-class base_feature:
-    
-    # REQUIRED METHOD, EVEN THO IT DOES NOTHING FOR FEATURES
-    # ...TO COMPLY WITH SKLEARN PIPELINES
-    def fit(self, features, labels=None):
-        return self
+    ##########################################################################
+    ### LOAD EXPERIMENT YAML CONFIG
 
-    def transform(self, features):
-        raise NotImplementedError()
-    
-class to_feature_vectors(base_feature):
-    def __init__(self, input_params: dict):
-        assert isinstance(input_params, dict)
-        assert 'required_keys' in input_params
-        assert isinstance(input_params['required_keys'], list)
-        assert len(input_params['required_keys']) > 0
-        
-        self.required_keys = input_params['required_keys']
+        experiment_config: dict = misc.load_yaml('config.yaml')
+        errors: list = []
 
-    def transform(self, input_data):
-        assert isinstance(input_data, list)
-        assert len(input_data) > 0
-        assert isinstance(input_data[0], dict)
+        # COMPARE CONFIG AGAINST MINIMUM REQUIRED SCHEMA
+        testing.validate_schema(experiment_config, {
+            'dataset': dict,
+            'feature_engineering': {
+                'features': list,
+                'drop_nan_rows': bool
+            },
+            'model_training': {
+                'feature_columns': list,
+                'label_column': str,
+                'segmentation': list,
+                'scalar': str or bool,
+            },
+            'trading_strategy': {
+                'base_strategy': dict,
+                'custom_strategy': {
+                    'strategy_name': str,
+                }
+            },
+        })
 
-        # CONVERT LIST OF DICTS TO LIST OF PURE VALUES 
-        return [self.vectorize(row_as_dict) for row_as_dict in input_data]
+    ##########################################################################
+    ### COMPLETED TESTS
 
-    def vectorize(self, dict_row: dict):
-        container = []
+        # TEST DATASET LOADING
+        dataset_config: dict = experiment_config['dataset']
+        # errors += testing.run_tests('actions/dataset', dataset_config)
+        if len(errors) > 0: return print(errors)
 
-        for key in self.required_keys:
-            assert key in dict_row, f"KEY '{key}' MISSING FROM INPUT ROW"
-            container.append(dict_row[key])
-        
-        return container
-    
-def dict_dataset(length: int):
-    return [{
-        'symbol': 'SYNTH',
-        'timestamp': int(time.time()) + x,
-        'open': round(random.uniform(1, 10), 3),
-        'close': round(random.uniform(1, 10), 3),
-        'high': round(random.uniform(1, 10), 3),
-        'low': round(random.uniform(1, 10), 3),
-        'volume': random.randrange(50, 200),
-    } for x in range(length)]
+        # ALL THE DATASET TESTS PASSED
+        # MAKE A REAL SAMPLE DATASET AVAILABLE FOR OTHER TESTS
+        sample_dataset: DataFrame = load_dataset(dataset_config, unittesting=200)
+        print(sample_dataset.head(5))
+        print()
 
-foo = Pipeline([
-    ('feature', to_feature_vectors({ 'required_keys': ['open', 'close'] })),
-    ('scaler', StandardScaler()),
-    ('custom_regressor', my_model())
-])
+        # TEST FEATURE ENGINEERING
+        features_config: dict = experiment_config['feature_engineering']['features']
+        errors += testing.feature_suite(features_config, sample_dataset)
 
-dataset = dict_dataset(20)
-train_data = dataset[:16]
-test_data = dataset[16:]
+        # feature = stochastic_k({ 'window_size': 5, 'output_column': 'sk5' })
+        # modified_df = feature.transform(sample_dataset)
+        # print(modified_df.head(10))
 
-pipe = foo.fit(train_data)
-print('----')
-pipe.predict(test_data)
+        # feature = shift_column({ 'target_column': 'close', 'shift_by': 2, 'output_column': 'shifted_close' })
+        # modified_df = feature.transform(sample_dataset)
+        # print(modified_df.head(10))
+
+        # feature = vectorize_df({ 'feature_columns': [
+        #     'open', 'close', 'high', 'low', 'volume',
+        # ] })
+        # output = feature.transform(sample_dataset)
+        # print(output[:10])
+
+        # # TEST DATA SEGMENTATION
+        # segmentation_config: dict = experiment_config['segmentation']
+        # errors += testing.run_tests('actions/segmentation', segmentation_config)
+
+        # # TEST THE BASE TRADING STRATEGY
+        # trading_config: dict = experiment_config['trading_strategy']
+        # errors += testing.run_tests('actions/trading_strategies', trading_config)
+
+        # # TEST THE CUSTOM STRATEGY
+        # strategy_name = trading_config['custom_strategy']['strategy_name']
+        # errors += testing.run_tests(f'actions/trading_strategies/{strategy_name}', trading_config)
+
+    ##########################################################################
+    ### TESTS IN DEVELOPMENT
+
+        # # TEST THE BASE MODEL
+        # model_training_config: dict = experiment_config['model_training']
+        # errors += testing.run_tests('actions/model_training', model_training_config)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # OTHERWISE, STOP THE EXPERIMENT HERE
+    except Exception as error:
+        return print(f'\nFATAL EXCEPTION: {error}')
+
+if __name__ == '__main__':
+    run()
