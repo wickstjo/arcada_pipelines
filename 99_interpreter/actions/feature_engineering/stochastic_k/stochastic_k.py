@@ -7,7 +7,7 @@ class stochastic_k(base_feature):
         self.output_column = input_params['output_column']
 
     def __repr__(self):
-        return "stochastic_k()"
+        return f"stochastic_k(window_size={self.window_size})"
 
     def transform(self, dataframe: DataFrame):
 

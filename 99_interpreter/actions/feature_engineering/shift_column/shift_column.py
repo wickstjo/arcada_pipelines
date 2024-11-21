@@ -8,7 +8,7 @@ class shift_column(base_feature):
         self.output_column = input_params['output_column']
 
     def __repr__(self):
-        return "shift_column()"
+        return f"shift_column(column={self.target_column}, shift_by={self.shift_by})"
 
     def transform(self, dataframe: DataFrame):
         dataframe[self.output_column] = dataframe[self.target_column].shift(periods=self.shift_by)

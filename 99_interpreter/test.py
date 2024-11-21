@@ -14,15 +14,12 @@ def run():
         # COMPARE CONFIG AGAINST MINIMUM REQUIRED SCHEMA
         testing.validate_schema(experiment_config, {
             'dataset': dict,
-            'feature_engineering': {
-                'features': list,
-                'drop_nan_rows': bool
-            },
+            'feature_engineering': list,
             'model_training': {
                 'feature_columns': list,
                 'label_column': str,
                 'segmentation': list,
-                'scalar': str or bool,
+                'scaler': str or bool,
             },
             'trading_strategy': {
                 'base_strategy': dict,
