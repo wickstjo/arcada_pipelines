@@ -1,16 +1,7 @@
 from common import misc
-
 from actions.data_retrieval.load_dataset import load_dataset
-from actions.feature_engineering.to_dataframe.to_dataframe import to_dataframe
-from actions.feature_engineering.shift_column.shift_column import shift_column
-from actions.feature_engineering.stochastic_k.stochastic_k import stochastic_k
-from actions.feature_engineering.to_feature_matrix.to_feature_matrix import to_feature_matrix
-from actions.feature_engineering.drop_nan_rows.drop_nan_rows import drop_nan_rows
-
 from actions.segmentation.segmentation import train_test_validation_split
-
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.linear_model import LinearRegression
+from common.constants import feature_repo, scaler_repo, model_repo
 from sklearn.pipeline import Pipeline
 
 def run():
@@ -27,31 +18,27 @@ def run():
     dataset_config: dict = experiment_config['dataset']
     # dataset: list[dict] = load_dataset(dataset_config, unittesting=200)
     dataset: list[dict] = load_dataset(dataset_config)
-
     print(f'DATASET LENGTH:\t\t{len(dataset)}')
 
     ########################################################################################
     ########################################################################################
-    ### APPLY FEATURES
+    ### ADD FEATURES
 
-    available_features = {
-        'shift_column': shift_column,
-        'stochastic_k': stochastic_k,
-    }
-
-    # CONVERT INPUT TO DATAFRAME
-    pipeline_components.append(('hidden_input_conversion', to_dataframe()))
+    # ADD FEATURE THAT CONVERS INPUT TO DATAFRAME
+    to_df_feature = feature_repo.create('to_dataframe')
+    pipeline_components.append(('hidden_input_conversion', to_df_feature))
 
     # ADD EACH CUSTOM FEATURE
     for nth, block in enumerate(experiment_config['feature_engineering']):
         feature_name = block['feature_name']
         feature_params = block['feature_params']
 
-        feature_instance = available_features[feature_name](feature_params)
+        feature_instance = feature_repo.create(feature_name, feature_params)
         pipeline_components.append((f'yaml_feature_{nth+1}', feature_instance))
 
-    # DROP ALL ROWS WITH NAN VALUES
-    pipeline_components.append(('hidden_cleanup', drop_nan_rows()))
+    # ADD FEATURE THAT DROPS ALL NAN ROWS FROM FINAL DATAFRAME
+    drop_nan_feature = feature_repo.create('drop_nan_rows')
+    pipeline_components.append(('hidden_cleanup', drop_nan_feature))
 
     ########################################################################################
     ########################################################################################
@@ -74,29 +61,27 @@ def run():
 
     ########################################################################################
     ########################################################################################
-    ### SCALER SELECTION
+    ### ADD SCALER
 
-    # CONVERT DATAFRAME TO FLOAT MATRIX
-    pipeline_components.append(('hidden_ouput_conversion', to_feature_matrix({
+    # ADD FEATURE THAT CONVERTS FINAL DATAFRAME TO FLOAT MATRIX
+    # OTHERWISE, THE SCALER WONT KNOW WHAT TO DO
+
+    to_matrix_feature = feature_repo.create('to_feature_matrix', {
         'feature_columns': model_training['feature_columns']
-    })))
+    })
+    pipeline_components.append(('hidden_ouput_conversion', to_matrix_feature))
 
-    available_scalers = {
-        'standard_scaler': StandardScaler,
-        'minmax_scaler': MinMaxScaler
-    }
-
-    # ADD A SCALER
     scaler_name = model_training['scaler']
-    assert scaler_name in available_scalers, f"SCALER '{scaler_name}' MISSING FROM SELECTION"
-    pipeline_components.append(('standard_scaler', available_scalers[scaler_name]()))
+    scaler_instance = scaler_repo.create(scaler_name)
+    pipeline_components.append(('scaler', scaler_instance))
 
     ########################################################################################
     ########################################################################################
-    ### MODEL SELECTION
+    ### ADD MODEL
 
-    # ADD A MODEL
-    pipeline_components.append(('linreg_model', LinearRegression()))
+    model_name = model_training['model']
+    model_instance = model_repo.create(model_name)
+    pipeline_components.append(('model', model_instance))
 
     ########################################################################################
     ########################################################################################

@@ -1,4 +1,4 @@
-from actions.feature_engineering.base_feature import base_feature
+from actions.features.base_feature import base_feature
 from pandas import DataFrame
 
 class shift_column(base_feature):

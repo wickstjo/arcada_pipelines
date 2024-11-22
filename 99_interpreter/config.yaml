@@ -96,6 +96,9 @@ model_training:
     scaler: standard_scaler
     # scaler: minmax_scaler
 
+    # WHAT MODEL SHOULD WE USE?
+    model: linear_regression
+
 #######################################################################################
 #######################################################################################
 
